@@ -101,7 +101,7 @@ def to_number(s: str) -> Optional[float]:
 
 
 # ------------------------------------------------------------------ status
-@app.get("/api/status")
+@app.api_route("/api/status", methods=["GET", "HEAD"])
 def status():
     return {"ai": llm.mode(), "provider": llm.provider(), "model": llm.model_name() if llm.mode() == "live" else None}
 
@@ -211,7 +211,7 @@ async def proof_check(
 
 
 # ------------------------------------------------------------------- trainer
-@app.get("/api/trainer/scenarios")
+@app.api_route("/api/trainer/scenarios", methods=["GET", "HEAD"])
 def trainer_scenarios():
     return SCENARIOS
 

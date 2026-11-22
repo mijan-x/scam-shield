@@ -203,3 +203,9 @@ def test_gemini_error_falls_back_to_rules(monkeypatch):
     monkeypatch.setattr(httpx, "post", lambda *a, **k: R())
     d = client.post("/api/pretx", json={"text": "Apnar PIN ta bolun", "lang": "en"}).json()
     assert d["risk"] == "high" and d["source"] == "rules" and "429" in d["ai_error"]
+
+
+def test_head_requests_supported():
+    assert client.head("/api/status").status_code == 200
+    assert client.head("/api/trainer/scenarios").status_code == 200
+    assert client.head("/").status_code == 200
