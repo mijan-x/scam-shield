@@ -8,6 +8,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "anthropic>=0.40",
     "httpx>=0.27",
+    "pillow>=10",
 ]
 
 [tool.vercel]

@@ -37,7 +37,7 @@ def metrics(rows, threshold):
 
 def main():
     use_ai = "--ai" in sys.argv
-    rows = list(csv.DictReader(open(ROOT / "eval" / "messages.csv", encoding="utf-8")))
+    rows = list(csv.DictReader(open(ROOT / "app" / "data" / "messages.csv", encoding="utf-8")))
     for r in rows:
         r["pred"] = risk_of(r["text"], use_ai)
     print(f"mode: {'rules + AI' if use_ai else 'rules only'}   rows: {len(rows)}")

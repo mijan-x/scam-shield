@@ -42,10 +42,13 @@ def parse_dt(s: Optional[str]) -> Optional[datetime]:
     return None
 
 
-def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict) -> dict:
+def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
+          meta: Optional[dict] = None, seen_img: Optional[list] = None) -> dict:
     """extracted: fields read from the image (or typed by the seller).
-    expected: {amount, recipient, chat_time, order_ref}. now: naive Dhaka time."""
-    checks = []  # each: {id, status ok|warn|fail, en, bn}
+    expected: {amount, recipient, chat_time, order_ref}. now: naive Dhaka time.
+    meta: output of forensics.inspect() when an image was uploaded.
+    seen_img: list of (fingerprint, order_ref) seen in this server session."""
+    checks = []  # each: {id, status ok|warn|fail|info, en, bn}
 
     def add(cid, status, en, bn):
         checks.append({"id": cid, "status": status, "en": en, "bn": bn})
@@ -124,6 +127,29 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict) -> dic
     if extracted.get("is_payment_screenshot") is False:
         add("kind", "fail", "This does not look like a payment confirmation screenshot.", "এটি পেমেন্ট নিশ্চিতকরণের স্ক্রিনশট বলে মনে হচ্ছে না।")
 
+    # 6. the image file itself (works without AI)
+    if meta:
+        order = (expected.get("order_ref") or "").strip().lower()
+        if meta.get("editor"):
+            add("meta_editor", "fail",
+                f"The image file says it was saved by an editing app ({meta['editor']}). Real payment screenshots come straight from the phone.",
+                f"ছবির ফাইলে লেখা আছে এটি একটি এডিটিং অ্যাপে ({meta['editor']}) সেভ করা। আসল পেমেন্ট স্ক্রিনশট সরাসরি ফোন থেকে আসে।")
+        else:
+            add("meta_editor", "info",
+                "No editing-app trace in the file. (Editing apps can remove these traces, so this proves nothing on its own.)",
+                "ফাইলে কোনো এডিটিং অ্যাপের চিহ্ন নেই। (এডিটিং অ্যাপ এই চিহ্ন মুছে দিতে পারে, তাই শুধু এটা দিয়ে কিছু প্রমাণ হয় না।)")
+        if min(meta.get("width", 0), meta.get("height", 0)) < 300:
+            add("meta_size", "warn", "The image is very small, so details are hard to verify. Ask for the original screenshot.",
+                "ছবিটি খুব ছোট, তাই খুঁটিনাটি যাচাই করা কঠিন। আসল স্ক্রিনশট চেয়ে নিন।")
+        if seen_img is not None and meta.get("hash") is not None:
+            from .forensics import hamming
+            dup = next((o for h, o in seen_img if hamming(h, meta["hash"]) <= 4 and o != order), None)
+            if dup is not None:
+                add("image_reuse", "fail", "The same screenshot was already used for a different order in this session.",
+                    "একই স্ক্রিনশট আগেই অন্য একটি অর্ডারের জন্য ব্যবহার করা হয়েছে।")
+            elif not any(hamming(h, meta["hash"]) <= 4 and o == order for h, o in seen_img):
+                seen_img.append((meta["hash"], order))
+
     fails = [c for c in checks if c["status"] == "fail"]
     warns = [c for c in checks if c["status"] == "warn"]
     if len(fails) >= 2 or (fails and susp == "high"):
@@ -132,9 +158,17 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict) -> dic
         verdict = "suspicious"
     else:
         verdict = "consistent"
+    score = min(100, 35 * len(fails) + 12 * len(warns) + {"high": 25, "medium": 12}.get(susp, 0))
+    if verdict == "likely_fake":
+        score = max(score, 70)
+    elif verdict == "suspicious":
+        score = max(min(score, 69), 30)
+    else:
+        score = min(score, 29)
 
     return {
         "verdict": verdict,
+        "score": score,
         "checks": checks,
         "fields": {
             "amount": extracted.get("amount"), "trx_id": trx or None, "sender": extracted.get("sender"),

@@ -158,16 +158,50 @@ PATTERNS = [
         "advice_bn": "কিছু পাওয়ার আগে টাকা দিতে বলা একটি সতর্কসংকেত। থামুন এবং অফিসিয়াল মাধ্যমে যাচাই করুন।",
     },
     {
-        "id": "suspicious_link",
-        "name_en": "Unexpected link",
-        "name_bn": "অপ্রত্যাশিত লিংক",
-        "weight": 30,
-        "groups": [[r"https?://\S+|bit\.ly|tinyurl|\.xyz\b|\.top\b|\.click\b|\.icu\b"]],
-        "unless": [],
-        "why_en": "The message contains a link. Scam links often imitate bKash, Nagad or banks.",
-        "why_bn": "বার্তায় একটি লিংক আছে। প্রতারণার লিংক প্রায়ই বিকাশ, নগদ বা ব্যাংকের নকল করে।",
-        "advice_en": "Do not open links in unexpected messages. Open the official app or type the website yourself.",
-        "advice_bn": "অপ্রত্যাশিত বার্তার লিংক খুলবেন না। নিজে অফিসিয়াল অ্যাপ বা ওয়েবসাইট খুলুন।",
+        "id": "govt_allowance",
+        "name_en": "Fake government allowance or stipend",
+        "name_bn": "ভুয়া সরকারি ভাতা বা উপবৃত্তি",
+        "weight": 65,
+        "groups": [
+            [r"bhata|ভাতা|allowance|stipend|upobritti|উপবৃত্তি|sorkari|সরকারি|government|govt|প্রণোদনা|relief|ত্রাণ"],
+            [SECRET + r"|fee|ফি|charge|চার্জ|joma|জমা|taka pathan|টাকা পাঠান|code|কোড"],
+        ],
+        "unless": [WARNING],
+        "why_en": "Someone says you will get a government allowance or stipend, but first wants a code, PIN or fee.",
+        "why_bn": "বলা হচ্ছে আপনি সরকারি ভাতা বা উপবৃত্তি পাবেন, কিন্তু আগে কোড, পিন বা ফি চাওয়া হচ্ছে।",
+        "advice_en": "Government payments never need your PIN, OTP or a fee. Check with your school or the local office in person.",
+        "advice_bn": "সরকারি টাকা পেতে কখনো পিন, ওটিপি বা ফি লাগে না। স্কুল বা স্থানীয় অফিসে সরাসরি যাচাই করুন।",
+    },
+    {
+        "id": "emergency_relative",
+        "name_en": "Emergency money request",
+        "name_bn": "জরুরি বিপদের কথা বলে টাকা চাওয়া",
+        "weight": 50,
+        "groups": [
+            [r"accident|এক্সিডেন্ট|দুর্ঘটনা|hospital|হাসপাতাল|haspatal|arrest|গ্রেফতার|police|পুলিশ|thana|থানা|"
+             r"bipode|বিপদে|emergency|ইমার্জেন্সি|notun number|নতুন নম্বর|new number|phone hariye|ফোন হারিয়ে"],
+            [r"taka|টাকা|tk|send|pathao|pathan|পাঠাও|পাঠান|bkash|nagad|বিকাশ|নগদ|lagbe|লাগবে"],
+        ],
+        "unless": [WARNING],
+        "why_en": "A message claims an emergency or a 'new number' and asks for money quickly.",
+        "why_bn": "বিপদ বা 'নতুন নম্বর'-এর কথা বলে তাড়াতাড়ি টাকা চাওয়া হচ্ছে।",
+        "advice_en": "Call the person on the number you already know before sending anything.",
+        "advice_bn": "কিছু পাঠানোর আগে মানুষটির আগের চেনা নম্বরে ফোন করে নিশ্চিত হোন।",
+    },
+    {
+        "id": "cashback_offer",
+        "name_en": "Too-good cashback or bonus offer",
+        "name_bn": "অবিশ্বাস্য ক্যাশব্যাক বা বোনাস অফার",
+        "weight": 45,
+        "groups": [
+            [r"cashback|cash back|ক্যাশব্যাক|bonus|বোনাস|free taka|ফ্রি টাকা|gift|গিফট|offer|অফার|reward|রিওয়ার্ড"],
+            [r"click|ক্লিক|link|লিংক|লিঙ্ক|claim|ক্লেইম|code|কোড|" + SECRET],
+        ],
+        "unless": [WARNING],
+        "why_en": "An offer of free money or cashback asks you to click a link or share a code.",
+        "why_bn": "ফ্রি টাকা বা ক্যাশব্যাকের অফারে লিংকে ক্লিক বা কোড দিতে বলা হচ্ছে।",
+        "advice_en": "Real offers appear inside the official app. Do not click links or share codes.",
+        "advice_bn": "সত্যিকারের অফার অফিসিয়াল অ্যাপের ভেতরেই দেখা যায়। লিংকে ক্লিক বা কোড শেয়ার করবেন না।",
     },
     {
         "id": "urgency_pressure",
@@ -199,6 +233,12 @@ PATTERNS = [
 ]
 
 BY_ID = {p["id"]: p for p in PATTERNS}
+
+HOTLINES = [
+    {"name": "bKash", "number": "16247"},
+    {"name": "Nagad", "number": "16167"},
+    {"name": "Rocket", "number": "16216"},
+]
 
 SAFE_NOTE_EN = "We cannot prove a message is safe. If in doubt, stop and use the official app or hotline."
 SAFE_NOTE_BN = "আমরা নিশ্চিত করতে পারি না যে কোনো বার্তা নিরাপদ। সন্দেহ হলে থামুন এবং অফিসিয়াল অ্যাপ বা হটলাইন ব্যবহার করুন।"
