@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 os.environ.pop("ANTHROPIC_API_KEY", None)
+os.environ.pop("GEMINI_API_KEY", None)
 os.environ.pop("MOCK_LLM", None)
 
 from fastapi.testclient import TestClient  # noqa: E402
@@ -160,3 +161,45 @@ def test_rate_limit(monkeypatch):
     codes = [client.post("/api/pretx", json={"text": "hello there", "lang": "en"}).status_code for _ in range(5)]
     assert codes[:3] == [200, 200, 200] and codes[3] == 429
     m._hits.clear()
+
+
+# ------------------------------------------------------- gemini wiring (no network)
+def test_gemini_request_shape(monkeypatch):
+    import httpx
+    from app import llm
+    sent = {}
+
+    class R:
+        status_code = 200
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": "thinking", "thought": True}, {"text": '{"risk": "high"}'}]}}]}
+
+    def fake_post(url, json, timeout, headers):
+        sent.update(url=url, body=json, headers=headers)
+        return R()
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.delenv("MOCK_LLM", raising=False)
+    monkeypatch.setattr(httpx, "post", fake_post)
+    out = llm.complete("extract", "sys", "read it", image=(b"img", "image/png"))
+    assert out == '{"risk": "high"}'
+    assert "gemini-3.5-flash-lite:generateContent" in sent["url"]
+    assert sent["headers"]["x-goog-api-key"] == "test-key"
+    assert sent["body"]["contents"][0]["parts"][0]["inline_data"]["mime_type"] == "image/png"
+    assert sent["body"]["generationConfig"]["responseMimeType"] == "application/json"
+    assert client.get("/api/status").json() == {"ai": "live", "provider": "gemini", "model": "gemini-3.5-flash-lite"}
+
+
+def test_gemini_error_falls_back_to_rules(monkeypatch):
+    import httpx
+
+    class R:
+        status_code = 429
+        text = "quota"
+        def json(self):
+            return {"error": {"message": "quota exceeded"}}
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(httpx, "post", lambda *a, **k: R())
+    d = client.post("/api/pretx", json={"text": "Apnar PIN ta bolun", "lang": "en"}).json()
+    assert d["risk"] == "high" and d["source"] == "rules" and "429" in d["ai_error"]

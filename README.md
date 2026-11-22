@@ -11,16 +11,17 @@ Three tools for Bangladesh's mobile-money users, in Bangla and English:
 ```
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-...                     # optional; Windows: set ANTHROPIC_API_KEY=...
+export GEMINI_API_KEY=...        # optional, free tier at aistudio.google.com (or ANTHROPIC_API_KEY)
+                                 # Windows: set GEMINI_API_KEY=...
 uvicorn app.main:app --port 8000
 ```
-Open http://localhost:8000. Without a key it runs in **rules mode** (pre-transaction check and scripted trainer work; screenshot reading needs the key or manual fields). `MOCK_LLM=1` gives canned AI replies for UI testing.
+Open http://localhost:8000. AI provider: `GEMINI_API_KEY` (model from `GEMINI_MODEL`, default `gemini-3.5-flash-lite`) or `ANTHROPIC_API_KEY`; Gemini wins if both are set. Without a key it runs in **rules mode** (pre-transaction check and scripted trainer work; screenshot reading needs the key or manual fields). `MOCK_LLM=1` gives canned AI replies for UI testing.
 
 ## Test and evaluate
 ```
 python -m pytest -q tests
 python eval/run_eval.py          # rules only
-python eval/run_eval.py --ai     # rules + AI (needs key)
+python eval/run_eval.py --ai     # rules + AI (needs a key)
 ```
 `eval/messages.csv` holds 60 messages we wrote ourselves (Bangla, English, Banglish; scam and genuine). This is a **small, self-written set**, so treat the numbers as a sanity check, not a benchmark. Patterns were tuned on the `dev` rows. The `holdout` rows were written afterwards; 2 holdout misses were then fixed and moved to `dev`, and 6 fresh holdout rows were added, so only those 6 are truly unseen.
 
@@ -32,7 +33,7 @@ python eval/run_eval.py --ai     # rules + AI (needs key)
 
 ## Credits (fill in before submitting)
 - Code written by the team with **Claude (Anthropic) as an AI coding assistant**.
-- Runtime AI: Anthropic Claude API (`SHIELD_MODEL`, vision + text).
+- Runtime AI: Google Gemini API (`GEMINI_MODEL`) or Anthropic Claude API (`SHIELD_MODEL`), vision + text.
 - Libraries: FastAPI, Uvicorn, python-multipart, anthropic SDK, httpx, pytest.
 - Scam patterns, scenarios and the evaluation set are our own work, written from public scam warnings.
 - Project code started on/after 21 Nov 2026 per contest rules.

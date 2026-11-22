@@ -103,7 +103,7 @@ def to_number(s: str) -> Optional[float]:
 # ------------------------------------------------------------------ status
 @app.get("/api/status")
 def status():
-    return {"ai": llm.mode(), "model": llm.MODEL if llm.mode() == "live" else None}
+    return {"ai": llm.mode(), "provider": llm.provider(), "model": llm.model_name() if llm.mode() == "live" else None}
 
 
 # ----------------------------------------------------- pre-transaction check

@@ -1,6 +1,7 @@
 """Thin LLM client. One function, so you can swap the provider in one place.
 
-Set ANTHROPIC_API_KEY to enable AI features. Without it the app still works in
+Set GEMINI_API_KEY (Google AI Studio, has a free tier) or ANTHROPIC_API_KEY to
+enable AI features. If both are set, Gemini is used. Without either the app still works in
 "rules mode": rules-based message check, manual fields for the Payment Proof Check
 and the scripted Scam Trainer. Set MOCK_LLM=1 to develop without any key.
 """
@@ -10,16 +11,34 @@ import re
 from typing import Optional, Tuple
 
 MODEL = os.getenv("SHIELD_MODEL", "claude-sonnet-5-5")
+GEMINI_MODEL_DEFAULT = "gemini-3.5-flash-lite"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+JSON_TASKS = {"pretx", "extract", "trainer_grade"}
+
+
+def provider() -> Optional[str]:
+    if os.getenv("GEMINI_API_KEY"):
+        return "gemini"
+    if os.getenv("ANTHROPIC_API_KEY"):
+        return "anthropic"
+    return None
+
+
+def model_name() -> Optional[str]:
+    p = provider()
+    if p == "gemini":
+        return os.getenv("GEMINI_MODEL") or GEMINI_MODEL_DEFAULT
+    return MODEL if p == "anthropic" else None
 
 
 def available() -> bool:
-    return bool(os.getenv("ANTHROPIC_API_KEY")) or os.getenv("MOCK_LLM") == "1"
+    return provider() is not None or os.getenv("MOCK_LLM") == "1"
 
 
 def mode() -> str:
     if os.getenv("MOCK_LLM") == "1":
         return "mock"
-    return "live" if os.getenv("ANTHROPIC_API_KEY") else "rules"
+    return "live" if provider() else "rules"
 
 
 def extract_json(text: str) -> dict:
@@ -67,8 +86,11 @@ def complete(task: str, system: str, user: str, image: Optional[Tuple[bytes, str
     """Return the model's text reply. `image` is (bytes, media_type)."""
     if os.getenv("MOCK_LLM") == "1":
         return _mock(task, user)
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        raise RuntimeError("No ANTHROPIC_API_KEY set")
+    p = provider()
+    if p is None:
+        raise RuntimeError("No GEMINI_API_KEY or ANTHROPIC_API_KEY set")
+    if p == "gemini":
+        return _gemini(task, system, user, image, max_tokens)
     import base64
     import anthropic
 
@@ -86,3 +108,36 @@ def complete(task: str, system: str, user: str, image: Optional[Tuple[bytes, str
         messages=[{"role": "user", "content": content}],
     )
     return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+
+
+def _gemini(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]], max_tokens: int) -> str:
+    """Call the Gemini REST API directly (no extra SDK needed)."""
+    import base64
+    import httpx
+
+    parts = []
+    if image:
+        data, media_type = image
+        parts.append({"inline_data": {"mime_type": media_type, "data": base64.b64encode(data).decode()}})
+    parts.append({"text": user})
+    # thinking models spend part of the output budget on reasoning, so give them room
+    config = {"maxOutputTokens": max(max_tokens * 2, 2048)}
+    if task in JSON_TASKS:
+        config["responseMimeType"] = "application/json"
+    body = {
+        "system_instruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": parts}],
+        "generationConfig": config,
+    }
+    r = httpx.post(GEMINI_URL.format(model=model_name()), json=body, timeout=45.0,
+                   headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
+    if r.status_code != 200:
+        try:
+            msg = r.json().get("error", {}).get("message", "")
+        except ValueError:
+            msg = r.text
+        raise RuntimeError(f"Gemini error {r.status_code}: {msg[:150]}")
+    cands = r.json().get("candidates") or []
+    if not cands:
+        raise RuntimeError("Gemini returned no answer (possibly blocked by safety filters)")
+    return "".join(pt.get("text", "") for pt in cands[0].get("content", {}).get("parts", []) if not pt.get("thought"))
