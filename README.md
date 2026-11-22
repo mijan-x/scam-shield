@@ -23,7 +23,7 @@ python -m pytest -q tests
 python eval/run_eval.py          # rules only
 python eval/run_eval.py --ai     # rules + AI (needs a key)
 ```
-`eval/messages.csv` holds 60 messages we wrote ourselves (Bangla, English, Banglish; scam and genuine). This is a **small, self-written set**, so treat the numbers as a sanity check, not a benchmark. Patterns were tuned on the `dev` rows. The `holdout` rows were written afterwards; 2 holdout misses were then fixed and moved to `dev`, and 6 fresh holdout rows were added, so only those 6 are truly unseen.
+`app/data/messages.csv` holds 60 messages we wrote ourselves (Bangla, English, Banglish; scam and genuine). This is a **small, self-written set**, so treat the numbers as a sanity check, not a benchmark. Patterns were tuned on the `dev` rows. The `holdout` rows were written afterwards; 2 holdout misses were then fixed and moved to `dev`, and 6 fresh holdout rows were added, so only those 6 are truly unseen.
 
 ## Limits (be upfront with judges)
 - The screenshot check finds inconsistencies; it cannot prove a payment is real. Edited-image detection is the vision model's judgement, not forensics.

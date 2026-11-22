@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import Depends
 from pydantic import BaseModel
 
-from . import llm, proof, rules
+from . import forensics, llm, proof, rules
 from .library import PATTERNS
 from .scenarios import BY_ID, PERSONA, SCENARIOS
 
@@ -50,6 +50,7 @@ async def _any_error(request, exc):
     return JSONResponse({"detail": "Something went wrong on our side. Please try again."}, status_code=500)
 STATIC = Path(__file__).parent / "static"
 SEEN_TRX: dict = {}  # transaction IDs seen in this server session -> order reference
+SEEN_IMG: list = []  # (image fingerprint, order reference) seen in this server session
 RANK = {"low": 0, "medium": 1, "high": 2}
 MAX_IMAGE = 4 * 1024 * 1024  # Vercel rejects request bodies over ~4.5 MB
 
@@ -173,6 +174,7 @@ async def proof_check(
         manual_fields = {}
     extracted: dict = {}
     extract_error = None
+    meta = None
 
     if image is not None and image.filename:
         data = await image.read()
@@ -181,6 +183,10 @@ async def proof_check(
         media = image.content_type or "image/png"
         if media not in ("image/png", "image/jpeg", "image/webp", "image/gif"):
             raise HTTPException(415, "Please upload a PNG, JPEG or WebP image.")
+        try:
+            meta = forensics.inspect(data)
+        except ValueError:
+            raise HTTPException(415, "That file is not a readable image.")
         if llm.available():
             try:
                 extracted = llm.extract_json(llm.complete(
@@ -198,18 +204,70 @@ async def proof_check(
             extracted[k] = to_number(str(v)) if k == "amount" else v
 
     if not extracted:
-        return {"needs_manual": True, "error": extract_error or "Upload a screenshot or enter the fields by hand."}
+        out = {"needs_manual": True, "error": extract_error or "Upload a screenshot or enter the fields by hand."}
+        if meta:
+            out["image"] = {k: meta[k] for k in ("format", "width", "height", "editor")}
+        return out
 
     res = proof.check(
         extracted,
         {"amount": to_number(expected_amount), "recipient": expected_recipient,
          "chat_time": chat_time, "order_ref": order_ref},
-        dhaka_now(), SEEN_TRX,
+        dhaka_now(), SEEN_TRX, meta=meta, seen_img=SEEN_IMG,
     )
+    if meta:
+        res["image"] = {k: meta[k] for k in ("format", "width", "height", "editor")}
     res["extract_error"] = extract_error
     res["needs_manual"] = False
     res["read_by_ai"] = bool(image is not None and image.filename and not extract_error)
     return res
+
+
+# ------------------------------------------------------- transparency
+@app.api_route("/api/health", methods=["GET", "HEAD"])
+def health():
+    return {"ok": True}
+
+
+@app.api_route("/api/meta", methods=["GET", "HEAD"])
+def meta_info():
+    """The pattern library and hotlines, shown on the 'How it works' page."""
+    from .library import HOTLINES
+    return {
+        "patterns": [{k: p[k] for k in ("id", "name_en", "name_bn", "why_en", "why_bn", "weight")} for p in PATTERNS],
+        "link_checks": ["lookalike_link", "short_link", "risky_domain", "unknown_link", "personal_number_care"],
+        "hotlines": HOTLINES,
+        "thresholds": {"medium": rules.MEDIUM_AT, "high": rules.HIGH_AT},
+    }
+
+
+_METRICS: dict = {}
+
+
+@app.api_route("/api/metrics", methods=["GET", "HEAD"])
+def metrics():
+    """Rules-only accuracy on our own small labelled set (computed once per server start)."""
+    if not _METRICS:
+        import csv
+        rows = list(csv.DictReader(open(Path(__file__).parent / "data" / "messages.csv", encoding="utf-8")))
+        out = {}
+        for split in ("dev", "holdout"):
+            part = [r for r in rows if r["split"] == split]
+            preds = [(r["label"], rules.analyze(r["text"])["risk"]) for r in part]
+            tp = sum(1 for l, p in preds if l == "scam" and p != "low")
+            fn = sum(1 for l, p in preds if l == "scam" and p == "low")
+            fp = sum(1 for l, p in preds if l == "genuine" and p != "low")
+            tn = sum(1 for l, p in preds if l == "genuine" and p == "low")
+            out[split] = {
+                "scam": tp + fn, "genuine": fp + tn, "tp": tp, "fp": fp, "fn": fn, "tn": tn,
+                "precision": round(tp / (tp + fp), 3) if tp + fp else None,
+                "recall": round(tp / (tp + fn), 3) if tp + fn else None,
+                "false_alarm_rate": round(fp / (fp + tn), 3) if fp + tn else None,
+            }
+        out["note"] = ("Small set written by the team (Bangla, English, Banglish). Patterns were tuned on 'dev'; "
+                       "'holdout' was written afterwards. Treat as a sanity check, not a benchmark.")
+        _METRICS.update(out)
+    return _METRICS
 
 
 # ------------------------------------------------------------------- trainer

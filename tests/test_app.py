@@ -209,3 +209,83 @@ def test_head_requests_supported():
     assert client.head("/api/status").status_code == 200
     assert client.head("/api/trainer/scenarios").status_code == 200
     assert client.head("/").status_code == 200
+
+
+# ------------------------------------------------------- explainability & entities
+def test_highlights_map_to_original_text():
+    t = "Apnar  bKash   PIN ta BOLUN\nnow"
+    r = rules.analyze(t)
+    words = {t[h["start"]:h["end"]].lower() for h in r["highlights"]}
+    assert "pin" in words and "bolun" in words
+
+
+def test_bangla_digits_and_highlight_positions():
+    t = "আপনার উপবৃত্তির টাকা পেতে ওটিপি কোডটি বলুন"
+    r = rules.analyze(t)
+    assert r["risk"] == "high"
+    assert any(t[h["start"]:h["end"]] == "ওটিপি" for h in r["highlights"])
+
+
+def test_lookalike_link_flagged_official_not():
+    bad = rules.analyze("Verify now: http://bkash-secure-login.top/verify")
+    assert bad["risk"] == "high" and bad["entities"][0]["verdict"] == "danger"
+    good = rules.analyze("Download the app from https://www.bkash.com/app")
+    assert good["risk"] == "low" and good["entities"][0]["verdict"] == "official"
+
+
+def test_personal_number_with_care_is_flagged():
+    r = rules.analyze("Nagad customer care: call 01812345678 to fix your account")
+    assert r["risk"] in ("medium", "high")
+    assert any(e["kind"] == "phone" and e["verdict"] == "caution" for e in r["entities"])
+
+
+def test_hotline_recognised():
+    r = rules.analyze("Problem hole 16247 e call korun")
+    assert any(e["text"] == "16247" and e["verdict"] == "official" for e in r["entities"])
+
+
+# ------------------------------------------------------- image forensics
+def _png(text_chunk=None, size=(400, 800), color=(255, 255, 255)):
+    import io
+    from PIL import Image, PngImagePlugin
+    info = PngImagePlugin.PngInfo()
+    if text_chunk:
+        info.add_text("Software", text_chunk)
+    buf = io.BytesIO()
+    Image.new("RGB", size, color).save(buf, "PNG", pnginfo=info)
+    return buf.getvalue()
+
+
+def test_editor_metadata_detected():
+    from app import forensics
+    assert forensics.inspect(_png("Adobe Photoshop 25.0"))["editor"].lower() == "photoshop"
+    assert forensics.inspect(_png())["editor"] is None
+
+
+def test_proof_flags_editor_and_reused_image():
+    SEEN_TRX.clear()
+    import app.main as m
+    m.SEEN_IMG.clear()
+    manual = json.dumps({"amount": "3500", "trx_id": "8N7A6D5EF3", "datetime": "2026-11-01T11:20"})
+    img = _png("PicsArt")
+    r1 = client.post("/api/proof", data={"expected_amount": "3500", "order_ref": "a", "manual": manual},
+                     files={"image": ("s.png", img, "image/png")}).json()
+    assert any(c["id"] == "meta_editor" and c["status"] == "fail" for c in r1["checks"])
+    manual2 = json.dumps({"amount": "3500", "trx_id": "9K2L4M6N8P", "datetime": "2026-11-01T11:20"})
+    r2 = client.post("/api/proof", data={"expected_amount": "3500", "order_ref": "b", "manual": manual2},
+                     files={"image": ("s.png", img, "image/png")}).json()
+    assert any(c["id"] == "image_reuse" for c in r2["checks"]) and r2["verdict"] == "likely_fake"
+    assert 0 <= r2["score"] <= 100
+
+
+def test_unreadable_image_rejected():
+    assert client.post("/api/proof", files={"image": ("x.png", b"not an image", "image/png")}).status_code == 415
+
+
+# ------------------------------------------------------- transparency endpoints
+def test_meta_and_metrics():
+    meta = client.get("/api/meta").json()
+    assert len(meta["patterns"]) >= 14 and meta["hotlines"][0]["number"] == "16247"
+    mt = client.get("/api/metrics").json()
+    assert mt["holdout"]["scam"] > 0 and 0 <= mt["holdout"]["recall"] <= 1
+    assert client.get("/api/health").json() == {"ok": True}
