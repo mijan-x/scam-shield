@@ -5,10 +5,9 @@ Run:  uvicorn app.main:app --reload --port 8000
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Optional
-from zoneinfo import ZoneInfo
 
 import time
 from collections import defaultdict, deque
@@ -90,8 +89,11 @@ GRADE_SYSTEM = (
 )
 
 
+DHAKA = timezone(timedelta(hours=6))  # Bangladesh has no daylight saving; avoids needing tzdata
+
+
 def dhaka_now() -> datetime:
-    return datetime.now(ZoneInfo("Asia/Dhaka")).replace(tzinfo=None)
+    return datetime.now(DHAKA).replace(tzinfo=None)
 
 
 def to_number(s: str) -> Optional[float]:
