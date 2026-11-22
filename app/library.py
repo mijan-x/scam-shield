@@ -119,7 +119,7 @@ PATTERNS = [
         "id": "investment_doubling",
         "name_en": "Guaranteed returns or money doubling",
         "name_bn": "নিশ্চিত লাভ বা টাকা দ্বিগুণ",
-        "weight": 60,
+        "weight": 65,
         "groups": [
             [r"double|দ্বিগুণ|dugun|invest|বিনিয়োগ|profit|লাভ|guaranteed|নিশ্চিত"],
             [r"daily|prottek din|প্রতিদিন|per day|weekly|সাপ্তাহিক|2x|3x|bkash|nagad|taka|টাকা|বিকাশ|নগদ"],
