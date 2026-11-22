@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile Money Scam Shield</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div>
+      <h1 data-t="title">Mobile Money Scam Shield</h1>
+      <p class="sub" data-t="subtitle">Check a payment or a message before you act.</p>
+    </div>
+    <div class="right">
+      <span id="aiBadge" class="badge" title=""></span>
+      <button id="langBtn" class="lang" aria-label="Switch language">বাংলা</button>
+    </div>
+  </div>
+  <nav class="wrap tabs" role="tablist">
+    <button class="tab on" data-tab="proof" data-t="tabProof">Payment Proof Check</button>
+    <button class="tab" data-tab="pretx" data-t="tabPretx">Check Before You Pay</button>
+    <button class="tab" data-tab="trainer" data-t="tabTrainer">Scam Trainer</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <!-- PROOF -->
+  <section id="proof" class="panel on">
+    <p class="hint" data-t="proofHint">For sellers: upload the buyer's payment screenshot and tell us what you expected. We compare the two. The final check is always your own bKash or Nagad app.</p>
+    <div class="grid">
+      <div class="card">
+        <label data-t="shot">Payment screenshot</label>
+        <input type="file" id="pImage" accept="image/png,image/jpeg,image/webp">
+        <img id="pPreview" alt="" hidden>
+        <div class="row2">
+          <div><label data-t="expAmount">Expected amount (Tk)</label><input id="pAmount" inputmode="decimal" placeholder="3500"></div>
+          <div><label data-t="expRecipient">Your number</label><input id="pRecipient" inputmode="tel" placeholder="01XXXXXXXXX"></div>
+        </div>
+        <div class="row2">
+          <div><label data-t="chatTime">Time buyer said they paid</label><input id="pChat" type="datetime-local"></div>
+          <div><label data-t="orderRef">Order reference</label><input id="pOrder" placeholder="order-101"></div>
+        </div>
+        <details>
+          <summary data-t="manual">Enter details by hand (if no screenshot or AI is off)</summary>
+          <div class="row2">
+            <div><label data-t="mAmount">Amount in screenshot</label><input id="mAmount" inputmode="decimal"></div>
+            <div><label data-t="mTrx">Transaction ID</label><input id="mTrx"></div>
+          </div>
+          <div class="row2">
+            <div><label data-t="mRecipient">Recipient number</label><input id="mRecipient" inputmode="tel"></div>
+            <div><label data-t="mTime">Time in screenshot</label><input id="mTime" type="datetime-local"></div>
+          </div>
+        </details>
+        <button id="pGo" class="primary" data-t="check">Check</button>
+      </div>
+      <div id="pOut" class="out"></div>
+    </div>
+  </section>
+
+  <!-- PRETX -->
+  <section id="pretx" class="panel">
+    <p class="hint" data-t="pretxHint">Paste the message, or describe what the caller is asking. Works with Bangla, English and Banglish.</p>
+    <div class="grid">
+      <div class="card">
+        <label for="tText" data-t="msgLabel">Message or situation</label>
+        <textarea id="tText" rows="7" data-tp="msgPh" placeholder="Example: someone says they sent money by mistake and wants it back"></textarea>
+        <div class="btns">
+          <button id="tMic" class="ghost" data-t="mic">🎤 Speak</button>
+          <button id="tGo" class="primary" data-t="check">Check</button>
+        </div>
+        <div class="examples">
+          <span data-t="tryEx">Try an example:</span>
+          <button class="chip" data-ex="Apnar bKash account block hoye jabe. Ekhoni PIN ta bolun.">Banglish</button>
+          <button class="chip" data-ex="আপনি ১০ লক্ষ টাকা জিতেছেন! পুরস্কার পেতে ৫০০ টাকা ফি পাঠান।">বাংলা</button>
+          <button class="chip" data-ex="You have received Tk 500.00 from 01712345678. TrxID 8N7A6D5EF3. Balance Tk 1,250.00">Genuine SMS</button>
+        </div>
+      </div>
+      <div id="tOut" class="out"></div>
+    </div>
+  </section>
+
+  <!-- TRAINER -->
+  <section id="trainer" class="panel">
+    <div id="trHome"></div>
+    <div id="trPlay" hidden></div>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p data-t="footer">This tool gives warnings, not guarantees. It never sees your PIN or OTP, and never says a payment is "safe". Built by JU_Segfault for CoU AI Hackathon 2026.</p>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
