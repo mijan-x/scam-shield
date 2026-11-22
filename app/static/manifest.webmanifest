@@ -1,0 +1,10 @@
+{
+  "name": "Scam Shield",
+  "short_name": "Scam Shield",
+  "description": "Check payment screenshots and suspicious messages before you act. Bangla and English.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EEF1F0",
+  "theme_color": "#2546A8",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

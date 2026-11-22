@@ -129,6 +129,9 @@ def pretx(body: PretxIn):
         "reasons": reasons,
         "advice_en": r["advice_en"],
         "advice_bn": r["advice_bn"],
+        "highlights": r["highlights"],
+        "entities": r["entities"],
+        "hotlines": r["hotlines"],
         "source": "rules",
         "ai_error": None,
     }
@@ -142,7 +145,7 @@ def pretx(body: PretxIn):
             for pid in ai.get("pattern_ids", []):
                 if pid in {p["id"] for p in PATTERNS} and pid not in seen:
                     pat = next(p for p in PATTERNS if p["id"] == pid)
-                    out["patterns"].append({k: pat[k] for k in ("id", "name_en", "name_bn", "why_en", "why_bn")})
+                    out["patterns"].append({k: pat[k] for k in ("id", "name_en", "name_bn", "why_en", "why_bn", "weight")})
             en, bn = ai.get("reasons_en", []), ai.get("reasons_bn", [])
             ai_reasons = [{"en": e, "bn": bn[i] if i < len(bn) else e} for i, e in enumerate(en)]
             if ai_reasons:
@@ -152,6 +155,8 @@ def pretx(body: PretxIn):
                 out["advice_en"] = ai["advice_en"]
                 out["advice_bn"] = ai.get("advice_bn") or out["advice_bn"]
             out["risk"] = final
+            if RANK[final] > RANK[r["risk"]]:
+                out["score"] = max(out["score"], {"medium": rules.MEDIUM_AT, "high": rules.HIGH_AT}[final])
             out["source"] = "ai+rules"
         except Exception as e:  # keep the rules answer if the AI call fails
             out["ai_error"] = str(e)[:160]

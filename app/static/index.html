@@ -1,96 +1,171 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mobile Money Scam Shield</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scam Shield: check bKash and Nagad payments and messages</title>
+<meta name="description" content="Check a payment screenshot or a suspicious message before you act. Bangla and English. Built by JU_Segfault.">
+<meta name="theme-color" content="#2546A8">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="style.css">
+<script>
+  try { var th = localStorage.getItem("theme"); if (th) document.documentElement.dataset.theme = th;
+        else if (matchMedia("(prefers-color-scheme: dark)").matches) document.documentElement.dataset.theme = "dark"; } catch (e) {}
+</script>
 </head>
 <body>
-<header>
-  <div class="wrap bar">
-    <div>
-      <h1 data-t="title">Mobile Money Scam Shield</h1>
-      <p class="sub" data-t="subtitle">Check a payment or a message before you act.</p>
-    </div>
-    <div class="right">
-      <span id="aiBadge" class="badge" title=""></span>
-      <button id="langBtn" class="lang" aria-label="Switch language">বাংলা</button>
+<a class="skip" href="#main" data-t="skip">Skip to the tools</a>
+
+<header class="top">
+  <div class="wrap top-row">
+    <a class="brand" href="#proof" aria-label="Scam Shield home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2 4 6.5v8.6c0 7.4 5 13.5 12 14.9 7-1.4 12-7.5 12-14.9V6.5L16 2Z" fill="currentColor"/><path d="m10.5 16 4 4 7-8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span class="brand-text"><b data-t="title">Scam Shield</b><small data-t="subtitle">Check before you send, ship or share</small></span>
+    </a>
+    <div class="controls">
+      <span id="aiBadge" class="ai-badge" role="status"></span>
+      <button id="themeBtn" class="icon-btn" type="button" aria-label="Switch dark or light mode">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" fill="currentColor"/></svg>
+      </button>
+      <button id="langBtn" class="lang-btn" type="button">বাংলা</button>
     </div>
   </div>
-  <nav class="wrap tabs" role="tablist">
-    <button class="tab on" data-tab="proof" data-t="tabProof">Payment Proof Check</button>
-    <button class="tab" data-tab="pretx" data-t="tabPretx">Check Before You Pay</button>
-    <button class="tab" data-tab="trainer" data-t="tabTrainer">Scam Trainer</button>
+  <nav class="wrap tabs" role="tablist" aria-label="Tools">
+    <button class="tab" role="tab" id="tab-proof" aria-controls="proof" data-tab="proof"><span data-t="tabProof">Payment proof</span></button>
+    <button class="tab" role="tab" id="tab-pretx" aria-controls="pretx" data-tab="pretx"><span data-t="tabPretx">Message check</span></button>
+    <button class="tab" role="tab" id="tab-trainer" aria-controls="trainer" data-tab="trainer"><span data-t="tabTrainer">Scam trainer</span></button>
+    <button class="tab" role="tab" id="tab-how" aria-controls="how" data-tab="how"><span data-t="tabHow">How it works</span></button>
   </nav>
 </header>
 
-<main class="wrap">
-  <!-- PROOF -->
-  <section id="proof" class="panel on">
-    <p class="hint" data-t="proofHint">For sellers: upload the buyer's payment screenshot and tell us what you expected. We compare the two. The final check is always your own bKash or Nagad app.</p>
-    <div class="grid">
-      <div class="card">
-        <label data-t="shot">Payment screenshot</label>
-        <input type="file" id="pImage" accept="image/png,image/jpeg,image/webp">
-        <img id="pPreview" alt="" hidden>
-        <div class="row2">
-          <div><label data-t="expAmount">Expected amount (Tk)</label><input id="pAmount" inputmode="decimal" placeholder="3500"></div>
-          <div><label data-t="expRecipient">Your number</label><input id="pRecipient" inputmode="tel" placeholder="01XXXXXXXXX"></div>
-        </div>
-        <div class="row2">
-          <div><label data-t="chatTime">Time buyer said they paid</label><input id="pChat" type="datetime-local"></div>
-          <div><label data-t="orderRef">Order reference</label><input id="pOrder" placeholder="order-101"></div>
-        </div>
-        <details>
-          <summary data-t="manual">Enter details by hand (if no screenshot or AI is off)</summary>
-          <div class="row2">
-            <div><label data-t="mAmount">Amount in screenshot</label><input id="mAmount" inputmode="decimal"></div>
-            <div><label data-t="mTrx">Transaction ID</label><input id="mTrx"></div>
+<main id="main" class="wrap">
+
+  <!-- ============ PAYMENT PROOF ============ -->
+  <section id="proof" class="panel" role="tabpanel" aria-labelledby="tab-proof">
+    <div class="intro">
+      <h1 data-t="proofH">Did the buyer really pay?</h1>
+      <p data-t="proofHint">Upload the buyer's payment screenshot and say what you expected. We compare them and look for signs of editing. Your own bKash or Nagad app is always the final word.</p>
+    </div>
+    <div class="split">
+      <form id="proofForm" class="form" novalidate>
+        <div id="drop" class="drop" tabindex="0" role="button" aria-describedby="dropHelp">
+          <input type="file" id="pImage" accept="image/png,image/jpeg,image/webp" hidden>
+          <div class="drop-empty">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3M12 4v11m0-11-4 4m4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <b data-t="dropTitle">Add the payment screenshot</b>
+            <span id="dropHelp" data-t="dropHelp">Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.</span>
           </div>
-          <div class="row2">
-            <div><label data-t="mRecipient">Recipient number</label><input id="mRecipient" inputmode="tel"></div>
-            <div><label data-t="mTime">Time in screenshot</label><input id="mTime" type="datetime-local"></div>
+          <div class="drop-full" hidden>
+            <img id="pPreview" alt="">
+            <div class="drop-meta"><span id="pName"></span><button type="button" id="pRemove" class="link" data-t="remove">Remove</button></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <label><span data-t="expAmount">Amount you expected (Tk)</span><input id="pAmount" inputmode="decimal" autocomplete="off" placeholder="3500"></label>
+          <label><span data-t="expRecipient">Your bKash/Nagad number</span><input id="pRecipient" inputmode="tel" autocomplete="off" placeholder="01XXXXXXXXX"></label>
+          <label><span data-t="chatTime">When the buyer said they paid</span><input id="pChat" type="datetime-local"></label>
+          <label><span data-t="orderRef">Order name or number</span><input id="pOrder" autocomplete="off" placeholder="Order 101"></label>
+        </div>
+
+        <details class="manual">
+          <summary data-t="manual">Type the screenshot details yourself</summary>
+          <p class="fine" data-t="manualHint">Use this if you have no screenshot, or to correct what was read. Anything you type here is used instead.</p>
+          <div class="grid2">
+            <label><span data-t="mAmount">Amount shown</span><input id="mAmount" inputmode="decimal" autocomplete="off"></label>
+            <label><span data-t="mTrx">Transaction ID (TrxID)</span><input id="mTrx" autocomplete="off" class="mono"></label>
+            <label><span data-t="mRecipient">Number it was sent to</span><input id="mRecipient" inputmode="tel" autocomplete="off"></label>
+            <label><span data-t="mTime">Time shown</span><input id="mTime" type="datetime-local"></label>
           </div>
         </details>
-        <button id="pGo" class="primary" data-t="check">Check</button>
-      </div>
-      <div id="pOut" class="out"></div>
+
+        <button id="pGo" class="primary" type="submit"><span data-t="checkPayment">Check payment</span></button>
+        <div class="history" id="pHist"></div>
+      </form>
+
+      <article id="pOut" class="slip" aria-live="polite"></article>
     </div>
   </section>
 
-  <!-- PRETX -->
-  <section id="pretx" class="panel">
-    <p class="hint" data-t="pretxHint">Paste the message, or describe what the caller is asking. Works with Bangla, English and Banglish.</p>
-    <div class="grid">
-      <div class="card">
-        <label for="tText" data-t="msgLabel">Message or situation</label>
-        <textarea id="tText" rows="7" data-tp="msgPh" placeholder="Example: someone says they sent money by mistake and wants it back"></textarea>
-        <div class="btns">
-          <button id="tMic" class="ghost" data-t="mic">🎤 Speak</button>
-          <button id="tGo" class="primary" data-t="check">Check</button>
+  <!-- ============ MESSAGE CHECK ============ -->
+  <section id="pretx" class="panel" role="tabpanel" aria-labelledby="tab-pretx">
+    <div class="intro">
+      <h1 data-t="pretxH">Got a strange call or message?</h1>
+      <p data-t="pretxHint">Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.</p>
+    </div>
+    <div class="split">
+      <form id="pretxForm" class="form" novalidate>
+        <label class="block"><span data-t="msgLabel">Message or what happened</span>
+          <textarea id="tText" rows="8" maxlength="4000" data-tp="msgPh" placeholder="Example: a man says he sent money to my number by mistake and wants it back"></textarea>
+        </label>
+        <div class="row-between">
+          <span class="fine" id="tCount">0 / 4000</span>
+          <button type="button" id="tMic" class="ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span data-t="mic">Speak</span></button>
         </div>
         <div class="examples">
-          <span data-t="tryEx">Try an example:</span>
-          <button class="chip" data-ex="Apnar bKash account block hoye jabe. Ekhoni PIN ta bolun.">Banglish</button>
-          <button class="chip" data-ex="আপনি ১০ লক্ষ টাকা জিতেছেন! পুরস্কার পেতে ৫০০ টাকা ফি পাঠান।">বাংলা</button>
-          <button class="chip" data-ex="You have received Tk 500.00 from 01712345678. TrxID 8N7A6D5EF3. Balance Tk 1,250.00">Genuine SMS</button>
+          <span class="fine" data-t="tryEx">Try one:</span>
+          <button type="button" class="chip" data-ex="Apnar bKash account block hoye jabe. Ekhoni customer care e call korun 01812345678 ar PIN ta bolun.">Banglish PIN call</button>
+          <button type="button" class="chip" data-ex="অভিনন্দন! আপনি ১০ লক্ষ টাকা জিতেছেন। পুরস্কার পেতে ৫০০ টাকা ফি পাঠান এবং এই লিংকে ক্লিক করুন: bit.ly/nagad-prize">বাংলা লটারি</button>
+          <button type="button" class="chip" data-ex="Dear customer, your Nagad account will be suspended today. Update KYC now: http://nagad-kyc-update.xyz">Fake KYC link</button>
+          <button type="button" class="chip" data-ex="You have received Tk 500.00 from 01712345678. Fee Tk 0.00. Balance Tk 1,250.00. TrxID 8N7A6D5EF3 at 21/11/2026 10:30">Real bKash SMS</button>
         </div>
-      </div>
-      <div id="tOut" class="out"></div>
+        <button id="tGo" class="primary" type="submit"><span data-t="checkMsg">Check message</span></button>
+        <p class="fine kbd-hint" data-t="kbd">Tip: Ctrl+Enter checks too.</p>
+        <div class="history" id="tHist"></div>
+      </form>
+
+      <article id="tOut" class="slip" aria-live="polite"></article>
     </div>
   </section>
 
-  <!-- TRAINER -->
-  <section id="trainer" class="panel">
+  <!-- ============ TRAINER ============ -->
+  <section id="trainer" class="panel" role="tabpanel" aria-labelledby="tab-trainer">
+    <div class="intro">
+      <h1 data-t="trainerH">Practise saying no</h1>
+      <p data-t="trHome">Play through a real scam, step by step. Nothing here is real and no one is calling you.</p>
+    </div>
     <div id="trHome"></div>
     <div id="trPlay" hidden></div>
   </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section id="how" class="panel" role="tabpanel" aria-labelledby="tab-how">
+    <div class="intro">
+      <h1 data-t="howH">How Scam Shield decides</h1>
+      <p data-t="howP">Every answer comes from rules you can read below. AI, when switched on, adds reasoning and reads screenshots, but it can only raise a warning, never lower one.</p>
+    </div>
+    <div class="how-grid">
+      <ol class="pipeline">
+        <li><b data-t="st1">Read</b><span data-t="st1d">The message text, or the fields in the screenshot (by AI or typed by you).</span></li>
+        <li><b data-t="st2">Match</b><span data-t="st2d">Known scam patterns in Bangla, English and Banglish; links and phone numbers are checked separately.</span></li>
+        <li><b data-t="st3">Compare</b><span data-t="st3d">For payments: amount, your number, time, TrxID, editing-app traces and reused screenshots.</span></li>
+        <li><b data-t="st4">Explain</b><span data-t="st4d">You see which words or checks caused the warning, and what to do next.</span></li>
+      </ol>
+      <div class="how-side">
+        <h2 data-t="accH">How accurate is it?</h2>
+        <div id="metrics" class="metrics"></div>
+        <h2 data-t="privH">Privacy</h2>
+        <p data-t="privP">We never ask for your PIN or OTP. Checks are not stored on our server; your recent checks stay in this browser only. With AI on, the text or image is sent to the AI provider to be read.</p>
+        <h2 data-t="limitsH">What it cannot do</h2>
+        <ul class="plain">
+          <li data-t="lim1">It cannot prove a payment is real. Only your own account can.</li>
+          <li data-t="lim2">New scam wording may not match any pattern yet.</li>
+          <li data-t="lim3">Spotting edited images is a clue, not forensic proof.</li>
+        </ul>
+      </div>
+    </div>
+    <h2 data-t="libH">The pattern library</h2>
+    <div id="library" class="library"></div>
+  </section>
 </main>
 
-<footer class="wrap">
-  <p data-t="footer">This tool gives warnings, not guarantees. It never sees your PIN or OTP, and never says a payment is "safe". Built by JU_Segfault for CoU AI Hackathon 2026.</p>
+<footer class="wrap foot">
+  <p data-t="footer">Warnings, not guarantees. Scam Shield never asks for your PIN or OTP and never calls a payment safe.</p>
+  <p class="fine" data-t="built">Built by team JU_Segfault for CoU AI Hackathon 2026.</p>
 </footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script src="app.js"></script>
 </body>
 </html>

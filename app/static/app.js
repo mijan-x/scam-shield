@@ -1,5 +1,7 @@
 (function () {
   "use strict";
+
+  /* ------------------------------------------------------------ helpers */
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var esc = function (s) {
@@ -7,259 +9,530 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   };
+  var store = {
+    get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  };
 
+  /* ------------------------------------------------------------ strings */
   var T = {
     en: {
-      title: "Mobile Money Scam Shield", subtitle: "Check a payment or a message before you act.",
-      tabProof: "Payment Proof Check", tabPretx: "Check Before You Pay", tabTrainer: "Scam Trainer",
-      proofHint: "For sellers: upload the buyer's payment screenshot and tell us what you expected. We compare the two. The final check is always your own bKash or Nagad app.",
-      shot: "Payment screenshot", expAmount: "Expected amount (Tk)", expRecipient: "Your number",
-      chatTime: "Time buyer said they paid", orderRef: "Order reference",
-      manual: "Enter details by hand (if no screenshot or AI is off)",
-      mAmount: "Amount in screenshot", mTrx: "Transaction ID", mRecipient: "Recipient number", mTime: "Time in screenshot",
-      check: "Check", checking: "Checking…",
-      pretxHint: "Paste the message, or describe what the caller is asking. Works with Bangla, English and Banglish.",
-      msgLabel: "Message or situation", msgPh: "Example: someone says they sent money by mistake and wants it back",
-      mic: "🎤 Speak", micStop: "⏹ Stop", tryEx: "Try an example:",
-      footer: "This tool gives warnings, not guarantees. It never sees your PIN or OTP, and never says a payment is \"safe\". Built by JU_Segfault for CoU AI Hackathon 2026.",
-      riskhigh: "High risk", riskmedium: "Be careful", risklow: "No known scam pattern found",
-      vcons: "Looks consistent", vsusp: "Suspicious", vfake: "Likely fake",
-      why: "Why", next: "What to do", pats: "Matches", checksH: "Checks", read: "Read from the screenshot",
-      flags: "Signs the image may be edited", viaAI: "Checked by rules and AI", viaRules: "Checked by rules",
-      needInput: "Upload a screenshot or enter the details by hand.",
-      aiOn: "AI on", aiMock: "AI demo mode", aiOff: "Rules mode",
-      trHome: "Pick a scam to practise against. Nothing here is real; no one is calling you.",
-      start: "Start", step: "Step", of: "of", feedback: "Feedback", nextStep: "Next", seeResult: "See result",
-      scoreH: "Your result", flagsH: "Red flags in this scam", safeH: "What to do in real life", again: "Back to scenarios",
-      freeChat: "Free chat (AI plays the scammer)", send: "Send", end: "End and grade", you: "You", scammer: "Scammer",
-      typeReply: "Type your reply…", grading: "Grading…", caught: "You handled well", missed: "You missed", tip: "Tip",
-      noMic: "Voice input is not supported in this browser.", close: "Reminder",
-      excellent: "Strong. You spotted the traps.", okay: "Mixed. Replay and try the safer choices.", weak: "Risky. Read the red flags and try again."
+      skip: "Skip to the tools", title: "Scam Shield", subtitle: "Check before you send, ship or share",
+      tabProof: "Payment proof", tabPretx: "Message check", tabTrainer: "Scam trainer", tabHow: "How it works",
+      proofH: "Did the buyer really pay?",
+      proofHint: "Upload the buyer's payment screenshot and say what you expected. We compare them and look for signs of editing. Your own bKash or Nagad app is always the final word.",
+      dropTitle: "Add the payment screenshot", dropHelp: "Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.",
+      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your bKash/Nagad number",
+      chatTime: "When the buyer said they paid", orderRef: "Order name or number",
+      manual: "Type the screenshot details yourself",
+      manualHint: "Use this if you have no screenshot, or to correct what was read. Anything you type here is used instead.",
+      mAmount: "Amount shown", mTrx: "Transaction ID (TrxID)", mRecipient: "Number it was sent to", mTime: "Time shown",
+      checkPayment: "Check payment",
+      pretxH: "Got a strange call or message?",
+      pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
+      msgLabel: "Message or what happened", msgPh: "Example: a man says he sent money to my number by mistake and wants it back",
+      mic: "Speak", micStop: "Stop", tryEx: "Try one:", checkMsg: "Check message", kbd: "Tip: Ctrl+Enter checks too.",
+      trainerH: "Practise saying no", trHome: "Play through a real scam, step by step. Nothing here is real and no one is calling you.",
+      howH: "How Scam Shield decides",
+      howP: "Every answer comes from rules you can read below. AI, when switched on, adds reasoning and reads screenshots, but it can only raise a warning, never lower one.",
+      st1: "Read", st1d: "The message text, or the fields in the screenshot (by AI or typed by you).",
+      st2: "Match", st2d: "Known scam patterns in Bangla, English and Banglish; links and phone numbers are checked separately.",
+      st3: "Compare", st3d: "For payments: amount, your number, time, TrxID, editing-app traces and reused screenshots.",
+      st4: "Explain", st4d: "You see which words or checks caused the warning, and what to do next.",
+      accH: "How accurate is it?", privH: "Privacy",
+      privP: "We never ask for your PIN or OTP. Checks are not stored on our server; your recent checks stay in this browser only. With AI on, the text or image is sent to the AI provider to be read.",
+      limitsH: "What it cannot do", lim1: "It cannot prove a payment is real. Only your own account can.",
+      lim2: "New scam wording may not match any pattern yet.", lim3: "Spotting edited images is a clue, not forensic proof.",
+      libH: "The pattern library",
+      footer: "Warnings, not guarantees. Scam Shield never asks for your PIN or OTP and never calls a payment safe.",
+      built: "Built by team JU_Segfault for CoU AI Hackathon 2026.",
+      aiOn: "AI on", aiDemo: "AI demo mode", aiOff: "Rules only",
+      s_high: "High risk", s_medium: "Be careful", s_low: "No known pattern",
+      s_likely_fake: "Likely fake", s_suspicious: "Suspicious", s_consistent: "Matches",
+      h_high: "Stop. This looks like a scam.", h_medium: "Slow down and check first.", h_low: "We found no known scam pattern.",
+      h_likely_fake: "Do not ship this order yet.", h_suspicious: "Some details do not add up.", h_consistent: "The details match what you expected.",
+      riskScore: "Risk score", yourMsg: "Your message, warning signs marked", lgStrong: "Strong warning sign", lgWeak: "Warning sign",
+      whyH: "Why", linksH: "Links and numbers in the message", doH: "What to do", hotH: "Official hotlines (call them yourself)",
+      checksH: "What we checked", readH: "Read from the screenshot", imgH: "The image file",
+      copy: "Copy result", copied: "Result copied", share: "Share on WhatsApp", copyFail: "Could not copy. Select the text instead.",
+      viaAI: "Checked by our rules and AI", viaRules: "Checked by our rules", aiFail: "AI was not available, so this is the rules result.",
+      emptyT: "Paste a message and press Check message. Your result appears here.",
+      emptyP: "Add a screenshot or type the details, then press Check payment. Your result appears here.",
+      needInput: "Add a screenshot, or type the details under \"Type the screenshot details yourself\".",
+      needText: "Type or paste a message first.",
+      noMic: "Voice input does not work in this browser. Try Chrome.",
+      recent: "Recent checks on this device", clear: "Clear",
+      tooBig: "That image is larger than 4 MB. Send a smaller screenshot.", badType: "Use a PNG, JPEG or WebP image.",
+      offline: "Cannot reach Scam Shield. Check your internet connection and try again.",
+      start: "Start", step: "Step", of: "of", nextStep: "Next", seeResult: "See my result", scoreH: "Your result",
+      flagsH: "Warning signs in this scam", safeH: "What to do in real life", again: "Choose another scenario",
+      freeH: "Free chat with an AI scammer", freeP: "The AI plays the scammer and grows more pushy. End the chat to get graded.",
+      freeStart: "Start free chat", send: "Send", end: "End and grade", you: "You", scammer: "Caller",
+      typeReply: "Type your reply", grading: "Grading your chat", caught: "You handled well", missed: "You missed", tip: "Tip",
+      excellent: "Strong. You spotted the traps.", okay: "Mixed. Replay and try the safer choices.", weak: "Risky. Read the warning signs and try again.",
+      f_amount: "Amount", f_trx_id: "TrxID", f_sender: "Sender", f_recipient: "Sent to", f_datetime: "Time", f_provider: "Provider",
+      i_format: "Format", i_size: "Size", i_editor: "Editing app",
+      m_set: "Set", m_dev: "Tuning set", m_holdout: "Unseen set", m_caught: "Scams flagged", m_false: "Real messages wrongly flagged",
+      m_note: "These are our own small test sets (Bangla, English, Banglish). We tuned the patterns on the tuning set only. Treat this as a sanity check, not a benchmark.",
+      libName: "Pattern", libWhy: "What it looks for", libWeight: "Weight",
+      linkChecks: "Plus link and number checks: look-alike links, hidden short links, risky domains, and personal numbers posing as customer care.",
+      shareTpl: "Scam Shield check: {v}. {why} Check yours at {url}",
+      rate: "Too many checks in a minute. Wait a little and try again."
     },
     bn: {
-      title: "মোবাইল মানি স্ক্যাম শিল্ড", subtitle: "টাকা পাঠানোর বা কিছু করার আগে যাচাই করুন।",
-      tabProof: "পেমেন্ট প্রুফ চেক", tabPretx: "পাঠানোর আগে যাচাই", tabTrainer: "স্ক্যাম ট্রেনার",
-      proofHint: "বিক্রেতাদের জন্য: ক্রেতার পেমেন্ট স্ক্রিনশট দিন এবং কী আশা করেছিলেন লিখুন। আমরা দুটো মিলিয়ে দেখব। চূড়ান্ত যাচাই সবসময় আপনার নিজের বিকাশ বা নগদ অ্যাপে।",
-      shot: "পেমেন্টের স্ক্রিনশট", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর",
-      chatTime: "ক্রেতা কখন পেমেন্ট করেছেন বলেছেন", orderRef: "অর্ডার রেফারেন্স",
-      manual: "হাতে লিখুন (স্ক্রিনশট না থাকলে বা এআই বন্ধ থাকলে)",
-      mAmount: "স্ক্রিনশটে টাকার পরিমাণ", mTrx: "লেনদেন আইডি", mRecipient: "প্রাপকের নম্বর", mTime: "স্ক্রিনশটে সময়",
-      check: "যাচাই করুন", checking: "যাচাই হচ্ছে…",
-      pretxHint: "মেসেজটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে।",
-      msgLabel: "মেসেজ বা ঘটনা", msgPh: "যেমন: কেউ বলছে ভুল করে টাকা পাঠিয়েছে, ফেরত চায়",
-      mic: "🎤 বলুন", micStop: "⏹ থামুন", tryEx: "উদাহরণ দেখুন:",
-      footer: "এই টুল সতর্কতা দেয়, নিশ্চয়তা নয়। এটি আপনার পিন বা ওটিপি দেখে না এবং কোনো পেমেন্টকে \"নিরাপদ\" বলে না। জেইউ_সেগফল্ট, সিওইউ এআই হ্যাকাথন ২০২৬।",
-      riskhigh: "উচ্চ ঝুঁকি", riskmedium: "সতর্ক থাকুন", risklow: "পরিচিত কোনো প্রতারণার ধরন পাওয়া যায়নি",
-      vcons: "সঙ্গতিপূর্ণ মনে হচ্ছে", vsusp: "সন্দেহজনক", vfake: "ভুয়া হওয়ার সম্ভাবনা বেশি",
-      why: "কেন", next: "কী করবেন", pats: "মিলেছে", checksH: "যাচাইয়ের ফল", read: "স্ক্রিনশট থেকে পড়া তথ্য",
-      flags: "ছবি এডিট করার সম্ভাব্য চিহ্ন", viaAI: "নিয়ম ও এআই দিয়ে যাচাই", viaRules: "নিয়ম দিয়ে যাচাই",
-      needInput: "স্ক্রিনশট দিন অথবা হাতে তথ্য লিখুন।",
-      aiOn: "এআই চালু", aiMock: "এআই ডেমো", aiOff: "নিয়মভিত্তিক মোড",
-      trHome: "কোন প্রতারণার বিরুদ্ধে অনুশীলন করবেন বেছে নিন। এখানে সবকিছু নকল; কেউ আপনাকে ফোন করছে না।",
-      start: "শুরু", step: "ধাপ", of: "/", feedback: "প্রতিক্রিয়া", nextStep: "পরের ধাপ", seeResult: "ফল দেখুন",
-      scoreH: "আপনার ফল", flagsH: "এই প্রতারণার লাল সংকেত", safeH: "বাস্তবে কী করবেন", again: "সব দৃশ্যে ফিরুন",
-      freeChat: "ফ্রি চ্যাট (এআই প্রতারক সাজবে)", send: "পাঠান", end: "শেষ করে মূল্যায়ন", you: "আপনি", scammer: "প্রতারক",
-      typeReply: "উত্তর লিখুন…", grading: "মূল্যায়ন হচ্ছে…", caught: "যা ভালো করেছেন", missed: "যা মিস করেছেন", tip: "পরামর্শ",
-      noMic: "এই ব্রাউজারে ভয়েস ইনপুট চলে না।", close: "মনে রাখুন",
-      excellent: "চমৎকার। ফাঁদগুলো ধরতে পেরেছেন।", okay: "মিশ্র ফল। আবার খেলে নিরাপদ বিকল্পগুলো বেছে দেখুন।", weak: "ঝুঁকিপূর্ণ। লাল সংকেতগুলো পড়ে আবার চেষ্টা করুন।"
+      skip: "টুলে যান", title: "স্ক্যাম শিল্ড", subtitle: "পাঠানো, ডেলিভারি বা শেয়ার করার আগে যাচাই করুন",
+      tabProof: "পেমেন্ট প্রুফ", tabPretx: "মেসেজ যাচাই", tabTrainer: "স্ক্যাম ট্রেনার", tabHow: "কীভাবে কাজ করে",
+      proofH: "ক্রেতা কি সত্যিই টাকা পাঠিয়েছেন?",
+      proofHint: "ক্রেতার পেমেন্ট স্ক্রিনশট দিন এবং কী আশা করেছিলেন লিখুন। আমরা দুটো মিলিয়ে দেখব এবং এডিটের চিহ্ন খুঁজব। চূড়ান্ত প্রমাণ সবসময় আপনার নিজের বিকাশ বা নগদ অ্যাপ।",
+      dropTitle: "পেমেন্টের স্ক্রিনশট দিন", dropHelp: "এখানে টেনে আনুন, পেস্ট করুন (Ctrl+V), বা ট্যাপ করে বেছে নিন। PNG, JPEG বা WebP, ৪ MB পর্যন্ত।",
+      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার বিকাশ/নগদ নম্বর",
+      chatTime: "ক্রেতা কখন পাঠিয়েছেন বলেছেন", orderRef: "অর্ডারের নাম বা নম্বর",
+      manual: "স্ক্রিনশটের তথ্য নিজে লিখুন",
+      manualHint: "স্ক্রিনশট না থাকলে, বা পড়া তথ্য ঠিক করতে এটি ব্যবহার করুন। এখানে যা লিখবেন সেটাই ধরা হবে।",
+      mAmount: "স্ক্রিনশটে টাকার পরিমাণ", mTrx: "লেনদেন আইডি (TrxID)", mRecipient: "যে নম্বরে পাঠানো হয়েছে", mTime: "স্ক্রিনশটে সময়",
+      checkPayment: "পেমেন্ট যাচাই করুন",
+      pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
+      pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
+      msgLabel: "মেসেজ বা কী ঘটেছে", msgPh: "যেমন: একজন বলছে ভুল করে আমার নম্বরে টাকা পাঠিয়েছে, ফেরত চায়",
+      mic: "বলুন", micStop: "থামুন", tryEx: "উদাহরণ:", checkMsg: "মেসেজ যাচাই করুন", kbd: "Ctrl+Enter চাপলেও যাচাই হবে।",
+      trainerH: "না বলা অনুশীলন করুন", trHome: "ধাপে ধাপে একটি বাস্তব প্রতারণা খেলে দেখুন। এখানে সবকিছু নকল, কেউ আপনাকে ফোন করছে না।",
+      howH: "স্ক্যাম শিল্ড কীভাবে সিদ্ধান্ত নেয়",
+      howP: "প্রতিটি উত্তর আসে নিচের নিয়মগুলো থেকে, যা আপনি পড়তে পারবেন। এআই চালু থাকলে যুক্তি যোগ করে ও স্ক্রিনশট পড়ে, কিন্তু সতর্কতা শুধু বাড়াতে পারে, কমাতে পারে না।",
+      st1: "পড়া", st1d: "মেসেজের লেখা, বা স্ক্রিনশটের তথ্য (এআই পড়ে বা আপনি লেখেন)।",
+      st2: "মেলানো", st2d: "বাংলা, ইংরেজি ও বাংলিশে পরিচিত প্রতারণার ধরন; লিংক ও ফোন নম্বর আলাদা করে যাচাই।",
+      st3: "তুলনা", st3d: "পেমেন্টের জন্য: টাকা, আপনার নম্বর, সময়, TrxID, এডিটিং অ্যাপের চিহ্ন ও একই স্ক্রিনশট আবার ব্যবহার।",
+      st4: "ব্যাখ্যা", st4d: "কোন শব্দ বা যাচাইয়ের জন্য সতর্কতা এল এবং এখন কী করবেন, তা দেখতে পাবেন।",
+      accH: "এটি কতটা নির্ভুল?", privH: "গোপনীয়তা",
+      privP: "আমরা কখনো আপনার পিন বা ওটিপি চাই না। যাচাইগুলো আমাদের সার্ভারে রাখা হয় না; সাম্প্রতিক যাচাই শুধু এই ব্রাউজারে থাকে। এআই চালু থাকলে লেখা বা ছবি পড়ার জন্য এআই প্রতিষ্ঠানের কাছে যায়।",
+      limitsH: "যা পারে না", lim1: "পেমেন্ট আসল কি না প্রমাণ করতে পারে না। শুধু আপনার নিজের অ্যাকাউন্ট পারে।",
+      lim2: "নতুন ধরনের প্রতারণার ভাষা হয়তো এখনো কোনো নিয়মে মেলে না।", lim3: "এডিট করা ছবি চেনা একটি সংকেত, ফরেনসিক প্রমাণ নয়।",
+      libH: "প্রতারণার ধরনের তালিকা",
+      footer: "এটি সতর্কতা দেয়, নিশ্চয়তা নয়। স্ক্যাম শিল্ড কখনো পিন বা ওটিপি চায় না এবং কোনো পেমেন্টকে নিরাপদ বলে না।",
+      built: "তৈরি করেছে টিম JU_Segfault, সিওইউ এআই হ্যাকাথন ২০২৬-এর জন্য।",
+      aiOn: "এআই চালু", aiDemo: "এআই ডেমো", aiOff: "শুধু নিয়ম",
+      s_high: "উচ্চ ঝুঁকি", s_medium: "সতর্ক থাকুন", s_low: "পরিচিত ধরন নেই",
+      s_likely_fake: "সম্ভবত ভুয়া", s_suspicious: "সন্দেহজনক", s_consistent: "মিলেছে",
+      h_high: "থামুন। এটি প্রতারণা বলে মনে হচ্ছে।", h_medium: "তাড়াহুড়ো নয়, আগে যাচাই করুন।", h_low: "পরিচিত কোনো প্রতারণার ধরন পাওয়া যায়নি।",
+      h_likely_fake: "এই অর্ডার এখনই পাঠাবেন না।", h_suspicious: "কিছু তথ্য মিলছে না।", h_consistent: "তথ্য আপনার প্রত্যাশার সঙ্গে মিলেছে।",
+      riskScore: "ঝুঁকির স্কোর", yourMsg: "আপনার মেসেজ, বিপদের সংকেত চিহ্নিত", lgStrong: "বড় বিপদের সংকেত", lgWeak: "সতর্কতার সংকেত",
+      whyH: "কেন", linksH: "মেসেজের লিংক ও নম্বর", doH: "কী করবেন", hotH: "অফিসিয়াল হটলাইন (নিজে ফোন করুন)",
+      checksH: "যা যাচাই করা হয়েছে", readH: "স্ক্রিনশট থেকে পড়া তথ্য", imgH: "ছবির ফাইল",
+      copy: "ফল কপি করুন", copied: "ফল কপি হয়েছে", share: "হোয়াটসঅ্যাপে শেয়ার", copyFail: "কপি করা যায়নি। লেখাটি সিলেক্ট করে নিন।",
+      viaAI: "আমাদের নিয়ম ও এআই দিয়ে যাচাই", viaRules: "আমাদের নিয়ম দিয়ে যাচাই", aiFail: "এআই পাওয়া যায়নি, তাই এটি নিয়মভিত্তিক ফল।",
+      emptyT: "মেসেজ পেস্ট করে মেসেজ যাচাই করুন চাপুন। ফল এখানে দেখাবে।",
+      emptyP: "স্ক্রিনশট দিন বা তথ্য লিখুন, তারপর পেমেন্ট যাচাই করুন চাপুন। ফল এখানে দেখাবে।",
+      needInput: "স্ক্রিনশট দিন, অথবা \"স্ক্রিনশটের তথ্য নিজে লিখুন\" অংশে তথ্য লিখুন।",
+      needText: "আগে একটি মেসেজ লিখুন বা পেস্ট করুন।",
+      noMic: "এই ব্রাউজারে ভয়েস ইনপুট চলে না। ক্রোম ব্যবহার করুন।",
+      recent: "এই ডিভাইসে সাম্প্রতিক যাচাই", clear: "মুছুন",
+      tooBig: "ছবিটি ৪ MB-এর বেশি। ছোট স্ক্রিনশট দিন।", badType: "PNG, JPEG বা WebP ছবি দিন।",
+      offline: "স্ক্যাম শিল্ডে পৌঁছানো যাচ্ছে না। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।",
+      start: "শুরু", step: "ধাপ", of: "/", nextStep: "পরের ধাপ", seeResult: "ফল দেখুন", scoreH: "আপনার ফল",
+      flagsH: "এই প্রতারণার বিপদ সংকেত", safeH: "বাস্তবে কী করবেন", again: "অন্য দৃশ্য বেছে নিন",
+      freeH: "এআই প্রতারকের সঙ্গে ফ্রি চ্যাট", freeP: "এআই প্রতারক সাজবে এবং ক্রমশ চাপ বাড়াবে। চ্যাট শেষ করলে মূল্যায়ন পাবেন।",
+      freeStart: "ফ্রি চ্যাট শুরু", send: "পাঠান", end: "শেষ করে মূল্যায়ন", you: "আপনি", scammer: "কলকারী",
+      typeReply: "উত্তর লিখুন", grading: "মূল্যায়ন হচ্ছে", caught: "যা ভালো করেছেন", missed: "যা মিস করেছেন", tip: "পরামর্শ",
+      excellent: "চমৎকার। ফাঁদগুলো ধরতে পেরেছেন।", okay: "মিশ্র ফল। আবার খেলে নিরাপদ বিকল্প বেছে দেখুন।", weak: "ঝুঁকিপূর্ণ। বিপদ সংকেতগুলো পড়ে আবার চেষ্টা করুন।",
+      f_amount: "টাকা", f_trx_id: "TrxID", f_sender: "প্রেরক", f_recipient: "প্রাপক", f_datetime: "সময়", f_provider: "প্রতিষ্ঠান",
+      i_format: "ধরন", i_size: "মাপ", i_editor: "এডিটিং অ্যাপ",
+      m_set: "সেট", m_dev: "টিউনিং সেট", m_holdout: "অদেখা সেট", m_caught: "প্রতারণা ধরা পড়েছে", m_false: "আসল মেসেজ ভুল করে সতর্কিত",
+      m_note: "এগুলো আমাদের নিজেদের লেখা ছোট পরীক্ষার সেট (বাংলা, ইংরেজি, বাংলিশ)। নিয়মগুলো শুধু টিউনিং সেটে ঠিক করা হয়েছে। এটিকে প্রাথমিক যাচাই হিসেবে দেখুন, মানদণ্ড হিসেবে নয়।",
+      libName: "ধরন", libWhy: "যা খোঁজে", libWeight: "ওজন",
+      linkChecks: "সঙ্গে লিংক ও নম্বর যাচাই: নকল লিংক, লুকানো ছোট লিংক, ঝুঁকিপূর্ণ ডোমেইন, এবং কাস্টমার কেয়ার সাজা ব্যক্তিগত নম্বর।",
+      shareTpl: "স্ক্যাম শিল্ড যাচাই: {v}। {why} আপনিও যাচাই করুন: {url}",
+      rate: "এক মিনিটে অনেক বেশি যাচাই। একটু অপেক্ষা করে আবার চেষ্টা করুন।"
     }
   };
 
-  var lang = (function () { try { return localStorage.getItem("lang") || "en"; } catch (e) { return "en"; } })();
+  var lang = store.get("lang", "en");
+  if (lang !== "en" && lang !== "bn") lang = "en";
   var aiMode = "rules";
-  var scenarios = [];
-  var lastRender = {};
-  var tr = function (k) { return T[lang][k] || T.en[k] || k; };
+  var scenarios = [], meta = null, metrics = null;
+  var rerender = {};
+  var tr = function (k) { return (T[lang] && T[lang][k]) || T.en[k] || k; };
   var pick = function (o, base) { return o[base + "_" + lang] || o[base + "_en"] || ""; };
+  var fmtNum = function (n) {
+    var s = Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+    return lang === "bn" ? s.replace(/\d/g, function (d) { return "০১২৩৪৫৬৭৮৯"[d]; }) : s;
+  };
 
+  function toast(msg) {
+    var el = $("#toast"); el.textContent = msg; el.classList.add("show");
+    clearTimeout(toast._t); toast._t = setTimeout(function () { el.classList.remove("show"); }, 2600);
+  }
+
+  /* ------------------------------------------------------------ i18n / theme */
   function applyLang() {
     document.documentElement.lang = lang;
     $("#langBtn").textContent = lang === "en" ? "বাংলা" : "English";
+    $("#langBtn").setAttribute("aria-label", lang === "en" ? "বাংলায় দেখুন" : "Switch to English");
     $$("[data-t]").forEach(function (el) { el.textContent = tr(el.getAttribute("data-t")); });
     $$("[data-tp]").forEach(function (el) { el.placeholder = tr(el.getAttribute("data-tp")); });
-    var mic = $("#tMic"); if (mic && !mic.classList.contains("rec")) mic.textContent = tr("mic");
+    var micSpan = $("#tMic span"); if (micSpan) micSpan.textContent = rec ? tr("micStop") : tr("mic");
     var b = $("#aiBadge");
-    b.textContent = aiMode === "live" ? tr("aiOn") : aiMode === "mock" ? tr("aiMock") : tr("aiOff");
-    b.className = "badge" + (aiMode === "live" ? " live" : "");
-    Object.keys(lastRender).forEach(function (k) { lastRender[k](); });
-    renderTrainerHome();
+    b.textContent = aiMode === "live" ? tr("aiOn") : aiMode === "mock" ? tr("aiDemo") : tr("aiOff");
+    b.classList.toggle("on", aiMode === "live");
+    Object.keys(rerender).forEach(function (k) { rerender[k](false); });
+    renderHistory("pretx"); renderHistory("proof");
+    renderTrainerHome(); renderHow();
   }
+  $("#langBtn").addEventListener("click", function () {
+    lang = lang === "en" ? "bn" : "en"; store.set("lang", lang); applyLang();
+  });
+  $("#themeBtn").addEventListener("click", function () {
+    var next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch (e) {}
+  });
 
-  // ----- tabs
-  $$(".tab").forEach(function (b) {
-    b.addEventListener("click", function () {
-      $$(".tab").forEach(function (x) { x.classList.toggle("on", x === b); });
-      $$(".panel").forEach(function (p) { p.classList.toggle("on", p.id === b.dataset.tab); });
+  /* ------------------------------------------------------------ tabs */
+  var TABS = ["proof", "pretx", "trainer", "how"];
+  function showTab(id, focus) {
+    if (TABS.indexOf(id) < 0) id = "proof";
+    $$(".tab").forEach(function (t) {
+      var on = t.dataset.tab === id;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus();
+    });
+    $$(".panel").forEach(function (p) { p.hidden = p.id !== id; });
+    if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
+  }
+  $$(".tab").forEach(function (t, i, all) {
+    t.addEventListener("click", function () { showTab(t.dataset.tab); });
+    t.addEventListener("keydown", function (e) {
+      var d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+      if (d) { e.preventDefault(); showTab(all[(i + d + all.length) % all.length].dataset.tab, true); }
     });
   });
-  $("#langBtn").addEventListener("click", function () {
-    lang = lang === "en" ? "bn" : "en";
-    try { localStorage.setItem("lang", lang); } catch (e) {}
-    applyLang();
-  });
+  window.addEventListener("hashchange", function () { showTab(location.hash.slice(1)); });
 
+  /* ------------------------------------------------------------ api */
   function api(path, opts) {
     return fetch(path, opts).then(function (r) {
       return r.json().catch(function () { return {}; }).then(function (j) {
+        if (r.status === 429) throw new Error(tr("rate"));
         if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
         return j;
+      });
+    }, function () { throw new Error(tr("offline")); });
+  }
+  function busy(btn, on) { btn.setAttribute("aria-busy", on ? "true" : "false"); btn.disabled = on; }
+
+  /* ------------------------------------------------------------ shared slip parts */
+  var EMPTY_ICON = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 4h28v40l-4-3-4 3-4-3-4 3-4-3-4 3-4-3V4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 14h16M16 21h16M16 28h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  function empty(el, key) { el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + "<p>" + esc(tr(key)) + "</p></div></div>"; }
+  function head(kind, score, sub, animate) {
+    return '<div class="slip-head"><div><h2 style="margin:0">' + esc(tr("h_" + kind)) + "</h2>" +
+      (sub ? '<p class="fine">' + esc(sub) + "</p>" : "") +
+      '<div class="score"><span class="fine">' + esc(tr("riskScore")) + ": <b>" + fmtNum(score) + "</b>/100</span>" +
+      '<div class="score-bar" role="img" aria-label="' + esc(tr("riskScore")) + " " + score + '/100"><i class="b-' + kind + '" style="width:' + Math.max(4, score) + '%"></i></div></div></div>' +
+      '<span class="stamp t-' + kind + (animate ? " land" : "") + '">' + esc(tr("s_" + kind)) + "</span></div>";
+  }
+  function hotlinesHtml(list) {
+    if (!list || !list.length) return "";
+    return '<div class="hotlines">' + list.map(function (h) {
+      return '<a href="tel:' + esc(h.number) + '">' + esc(h.name) + "<b>" + esc(h.number) + "</b></a>";
+    }).join("") + "</div>";
+  }
+  function actionsHtml() {
+    return '<div class="actions"><button type="button" class="ghost" data-act="copy">' + esc(tr("copy")) +
+      '</button><button type="button" class="ghost" data-act="share">' + esc(tr("share")) + "</button></div>";
+  }
+  function wireActions(root, summary) {
+    $$("[data-act]", root).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var text = summary();
+        if (b.dataset.act === "copy") {
+          (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject())
+            .then(function () { toast(tr("copied")); }, function () { toast(tr("copyFail")); });
+        } else {
+          window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank", "noopener");
+        }
       });
     });
   }
 
-  // ----- Pre-transaction check
-  var riskLabel = function (r) { return tr("risk" + r); };
-  function renderPretx(d) {
-    var h = '<div class="res"><span class="verdict ' + esc(d.risk) + '">' + esc(riskLabel(d.risk)) + "</span>";
-    if (d.patterns && d.patterns.length) {
-      h += "<h3>" + tr("pats") + "</h3><ul>" + d.patterns.map(function (p) { return "<li>" + esc(pick(p, "name")) + "</li>"; }).join("") + "</ul>";
-    }
-    if (d.reasons && d.reasons.length) {
-      h += "<h3>" + tr("why") + "</h3><ul>" + d.reasons.map(function (r) { return "<li>" + esc(r[lang] || r.en) + "</li>"; }).join("") + "</ul>";
-    }
-    h += "<h3>" + tr("next") + "</h3><p>" + esc(d["advice_" + lang] || d.advice_en) + "</p>";
-    h += '<p class="note">' + (d.source === "ai+rules" ? tr("viaAI") : tr("viaRules")) + "</p></div>";
-    $("#tOut").innerHTML = h;
+  /* ------------------------------------------------------------ history */
+  var HKEY = { pretx: "hist_pretx", proof: "hist_proof" };
+  function addHistory(kind, item) {
+    var list = store.get(HKEY[kind], []);
+    list.unshift(item); store.set(HKEY[kind], list.slice(0, 6)); renderHistory(kind);
   }
-  $("#tGo").addEventListener("click", function () {
-    var btn = $("#tGo"), text = $("#tText").value.trim();
-    if (!text) return;
-    btn.disabled = true; $("#tOut").innerHTML = '<p class="spin">' + tr("checking") + "</p>";
-    api("/api/pretx", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, lang: lang }) })
-      .then(function (d) { lastRender.pretx = function () { renderPretx(d); }; renderPretx(d); })
-      .catch(function (e) { $("#tOut").innerHTML = '<p class="err">' + esc(e.message) + "</p>"; })
-      .then(function () { btn.disabled = false; });
-  });
-  $$(".chip[data-ex]").forEach(function (c) { c.addEventListener("click", function () { $("#tText").value = c.dataset.ex; }); });
+  function renderHistory(kind) {
+    var box = $(kind === "pretx" ? "#tHist" : "#pHist"), list = store.get(HKEY[kind], []);
+    if (!list.length) { box.innerHTML = ""; return; }
+    box.innerHTML = "<h3>" + esc(tr("recent")) + "</h3>" + list.map(function (it, i) {
+      var v = it.res.risk || it.res.verdict;
+      var when = new Date(it.ts).toLocaleTimeString(lang === "bn" ? "bn-BD" : "en-GB", { hour: "2-digit", minute: "2-digit" });
+      return '<button type="button" data-i="' + i + '"><span class="dot b-' + esc(v) + '"></span><span class="txt">' +
+        esc(it.label) + "</span><time>" + esc(when) + "</time></button>";
+    }).join("") + '<button type="button" class="link" data-clear style="width:auto;margin-top:4px">' + esc(tr("clear")) + "</button>";
+    $$("button[data-i]", box).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var it = list[+b.dataset.i];
+        if (kind === "pretx") { $("#tText").value = it.input; countChars(); showPretx(it.res, it.input, true); }
+        else showProof(it.res, true);
+      });
+    });
+    $("[data-clear]", box).addEventListener("click", function () { store.set(HKEY[kind], []); renderHistory(kind); });
+  }
 
-  // voice input (Web Speech API; needs Chrome/Edge and internet)
+  /* ------------------------------------------------------------ message check */
+  function markText(text, hl) {
+    var cps = Array.from(text), out = "", pos = 0;
+    (hl || []).slice().sort(function (a, b) { return a.start - b.start; }).forEach(function (h) {
+      if (h.start < pos || h.end > cps.length) return;
+      out += esc(cps.slice(pos, h.start).join(""));
+      out += '<mark class="' + (h.kind === "danger" ? "danger" : "caution") + '" title="' + esc(pick(h, "label")) + '">' +
+        esc(cps.slice(h.start, h.end).join("")) + "</mark>";
+      pos = h.end;
+    });
+    return out + esc(cps.slice(pos).join(""));
+  }
+  function showPretx(d, text, fromHistory) {
+    var render = function (animate) {
+      var el = $("#tOut"), h = head(d.risk, d.score, null, animate);
+      if (d.highlights && d.highlights.length) {
+        h += '<div class="sec"><h3>' + esc(tr("yourMsg")) + '</h3><div class="quote">' + markText(text, d.highlights) + "</div>" +
+          '<div class="legend"><span><i style="background:var(--mark-danger);border-bottom:2px solid var(--red)"></i>' + esc(tr("lgStrong")) +
+          '</span><span><i style="background:var(--mark-caution)"></i>' + esc(tr("lgWeak")) + "</span></div></div>";
+      }
+      if (d.patterns && d.patterns.length) {
+        h += '<div class="sec"><h3>' + esc(tr("whyH")) + '</h3><ul class="finds">' + d.patterns.map(function (p) {
+          return "<li><b>" + esc(pick(p, "name")) + "</b><span>" + esc(pick(p, "why")) + "</span></li>";
+        }).join("");
+        var extra = (d.reasons || []).filter(function (r) { return !d.patterns.some(function (p) { return p.why_en === r.en; }); });
+        h += extra.map(function (r) { return "<li><span>" + esc(r[lang] || r.en) + "</span></li>"; }).join("") + "</ul></div>";
+      }
+      var ents = (d.entities || []);
+      if (ents.length) {
+        h += '<div class="sec"><h3>' + esc(tr("linksH")) + '</h3><div class="ents">' + ents.map(function (e) {
+          return '<div class="ent ' + esc(e.verdict) + '"><code>' + esc(e.text) + "</code>" +
+            (e["reasons_" + lang] || e.reasons_en || []).map(function (r) { return "<p>" + esc(r) + "</p>"; }).join("") + "</div>";
+        }).join("") + "</div></div>";
+      }
+      h += '<div class="sec"><h3>' + esc(tr("doH")) + '</h3><div class="advice">' + esc(d["advice_" + lang] || d.advice_en) + "</div>";
+      if (d.risk !== "low") h += '<p class="fine" style="margin-top:10px">' + esc(tr("hotH")) + "</p>" + hotlinesHtml(d.hotlines);
+      h += "</div>" + actionsHtml();
+      h += '<p class="via">' + esc(d.source === "ai+rules" ? tr("viaAI") : tr("viaRules")) +
+        (d.ai_error ? " " + esc(tr("aiFail")) : "") + "</p>";
+      el.innerHTML = h;
+      wireActions(el, function () {
+        var why = (d.patterns || []).map(function (p) { return pick(p, "name"); }).join(", ");
+        return tr("shareTpl").replace("{v}", tr("s_" + d.risk)).replace("{why}", why ? why + "." : "")
+          .replace("{url}", location.origin);
+      });
+    };
+    rerender.pretx = render; render(!fromHistory);
+    if (!fromHistory && window.matchMedia("(max-width: 840px)").matches) $("#tOut").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function countChars() { var n = $("#tText").value.length; $("#tCount").textContent = fmtNum(n) + " / " + fmtNum(4000); }
+  $("#tText").addEventListener("input", countChars);
+  $("#tText").addEventListener("keydown", function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); $("#pretxForm").requestSubmit(); }
+  });
+  $("#pretxForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var btn = $("#tGo"), text = $("#tText").value.trim();
+    if (text.length < 3) { toast(tr("needText")); $("#tText").focus(); return; }
+    busy(btn, true);
+    api("/api/pretx", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, lang: lang }) })
+      .then(function (d) {
+        showPretx(d, text);
+        addHistory("pretx", { ts: Date.now(), label: text.slice(0, 60), input: text, res: d });
+      })
+      .catch(function (err) { $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
+      .then(function () { busy(btn, false); });
+  });
+  $$(".chip[data-ex]").forEach(function (c) {
+    c.addEventListener("click", function () { $("#tText").value = c.dataset.ex; countChars(); $("#tText").focus(); });
+  });
+
+  // voice input (Web Speech API: Chrome / Edge, needs internet)
   var rec = null;
   $("#tMic").addEventListener("click", function () {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition, btn = $("#tMic");
-    if (!SR) { alert(tr("noMic")); return; }
+    if (!SR) { toast(tr("noMic")); return; }
     if (rec) { rec.stop(); return; }
     rec = new SR(); rec.lang = lang === "bn" ? "bn-BD" : "en-US"; rec.interimResults = false;
     rec.onresult = function (e) {
       var t = Array.prototype.map.call(e.results, function (r) { return r[0].transcript; }).join(" ");
-      var box = $("#tText"); box.value = (box.value ? box.value + " " : "") + t;
+      var box = $("#tText"); box.value = (box.value ? box.value + " " : "") + t; countChars();
     };
-    rec.onend = function () { rec = null; btn.classList.remove("rec"); btn.textContent = tr("mic"); };
-    rec.onerror = function () { rec = null; btn.classList.remove("rec"); btn.textContent = tr("mic"); };
-    btn.classList.add("rec"); btn.textContent = tr("micStop"); rec.start();
+    var stop = function () { rec = null; btn.classList.remove("rec"); $("span", btn).textContent = tr("mic"); };
+    rec.onend = stop; rec.onerror = stop;
+    btn.classList.add("rec"); $("span", btn).textContent = tr("micStop"); rec.start();
   });
 
-  // ----- Proof check
-  $("#pImage").addEventListener("change", function (e) {
-    var f = e.target.files[0], im = $("#pPreview");
-    if (!f) { im.hidden = true; return; }
-    im.src = URL.createObjectURL(f); im.hidden = false;
-  });
-  var verdictLabel = { consistent: "vcons", suspicious: "vsusp", likely_fake: "vfake" };
-  var ICON = { ok: "✓", warn: "!", fail: "✗" };
-  function renderProof(d) {
-    if (d.needs_manual) {
-      $("#pOut").innerHTML = '<div class="res"><p class="err">' + esc(d.error || tr("needInput")) + "</p></div>";
-      return;
-    }
-    var h = '<div class="res"><span class="verdict ' + esc(d.verdict) + '">' + esc(tr(verdictLabel[d.verdict] || "vsusp")) + "</span>";
-    h += "<h3>" + tr("checksH") + "</h3>" + (d.checks || []).map(function (c) {
-      return '<div class="chk ' + esc(c.status) + '"><b>' + (ICON[c.status] || "•") + "</b><span>" + esc(c[lang] || c.en) + "</span></div>";
-    }).join("");
-    if (d.visual_flags && d.visual_flags.length) {
-      h += "<h3>" + tr("flags") + "</h3><ul>" + d.visual_flags.map(function (f) {
-        return "<li>" + esc(typeof f === "string" ? f : (f[lang] || f.en || f.text || JSON.stringify(f))) + "</li>";
-      }).join("") + "</ul>";
-    }
-    var fl = d.fields || {}, keys = Object.keys(fl).filter(function (k) { return fl[k] != null && fl[k] !== ""; });
-    if (keys.length) h += "<h3>" + tr("read") + "</h3><p>" + keys.map(function (k) { return esc(k) + ": <b>" + esc(fl[k]) + "</b>"; }).join(" · ") + "</p>";
-    if (d.extract_error) h += '<p class="note">' + esc(d.extract_error) + "</p>";
-    h += '<p class="note"><b>' + tr("close") + ":</b> " + esc(d["reminder_" + lang] || d.reminder_en || "") + "</p></div>";
-    $("#pOut").innerHTML = h;
+  /* ------------------------------------------------------------ payment proof */
+  var pFile = null;
+  function setFile(f) {
+    if (!f) return;
+    if (["image/png", "image/jpeg", "image/webp"].indexOf(f.type) < 0) { toast(tr("badType")); return; }
+    if (f.size > 4 * 1024 * 1024) { toast(tr("tooBig")); return; }
+    pFile = f;
+    $("#pPreview").src = URL.createObjectURL(f);
+    $("#pName").textContent = (f.name || "screenshot") + " (" + Math.round(f.size / 1024) + " KB)";
+    $(".drop-empty").hidden = true; $(".drop-full").hidden = false;
   }
-  $("#pGo").addEventListener("click", function () {
-    var btn = $("#pGo"), fd = new FormData(), f = $("#pImage").files[0];
-    if (f) fd.append("image", f);
+  function clearFile() {
+    pFile = null; $("#pImage").value = ""; $(".drop-empty").hidden = false; $(".drop-full").hidden = true;
+  }
+  var drop = $("#drop");
+  drop.addEventListener("click", function (e) { if (!e.target.closest("#pRemove")) $("#pImage").click(); });
+  drop.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("#pImage").click(); } });
+  $("#pImage").addEventListener("change", function (e) { setFile(e.target.files[0]); });
+  $("#pRemove").addEventListener("click", function (e) { e.stopPropagation(); clearFile(); });
+  ["dragenter", "dragover"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); }); });
+  drop.addEventListener("drop", function (e) { setFile(e.dataTransfer.files[0]); });
+  document.addEventListener("paste", function (e) {
+    if ($("#proof").hidden) return;
+    var items = (e.clipboardData || {}).items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image/") === 0) { setFile(items[i].getAsFile()); e.preventDefault(); return; }
+    }
+  });
+
+  var ICON = { ok: "✓", warn: "!", fail: "✕", info: "i" };
+  function showProof(d, fromHistory) {
+    var render = function (animate) {
+      var el = $("#pOut");
+      if (d.needs_manual) {
+        el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + '<p class="err">' + esc(d.error || tr("needInput")) + "</p>" +
+          (d.image && d.image.editor ? "<p>" + esc(tr("i_editor")) + ": <b>" + esc(d.image.editor) + "</b></p>" : "") + "</div></div>";
+        return;
+      }
+      var h = head(d.verdict, d.score || 0, null, animate);
+      h += '<div class="sec"><h3>' + esc(tr("checksH")) + "</h3>" + (d.checks || []).map(function (c) {
+        return '<div class="check ' + esc(c.status) + '"><span class="ic" aria-hidden="true">' + (ICON[c.status] || "•") +
+          "</span><span>" + esc(c[lang] || c.en) + "</span></div>";
+      }).join("") + "</div>";
+      var fl = d.fields || {}, keys = ["amount", "trx_id", "recipient", "sender", "datetime", "provider"].filter(function (k) { return fl[k] != null && fl[k] !== ""; });
+      if (keys.length) {
+        h += '<div class="sec"><h3>' + esc(tr("readH")) + '</h3><dl class="fields">' + keys.map(function (k) {
+          return "<dt>" + esc(tr("f_" + k)) + "</dt><dd>" + esc(k === "amount" ? fmtNum(fl[k]) : fl[k]) + "</dd>";
+        }).join("") + "</dl></div>";
+      }
+      if (d.image) {
+        h += '<div class="sec"><h3>' + esc(tr("imgH")) + '</h3><dl class="fields"><dt>' + esc(tr("i_format")) + "</dt><dd>" + esc(d.image.format) +
+          "</dd><dt>" + esc(tr("i_size")) + "</dt><dd>" + esc(d.image.width + " × " + d.image.height) + "</dd>" +
+          (d.image.editor ? "<dt>" + esc(tr("i_editor")) + "</dt><dd>" + esc(d.image.editor) + "</dd>" : "") + "</dl></div>";
+      }
+      if (d.extract_error) h += '<p class="fine sec">' + esc(d.extract_error) + "</p>";
+      h += '<p class="reminder">' + esc(d["reminder_" + lang] || d.reminder_en || "") + "</p>" + actionsHtml();
+      el.innerHTML = h;
+      wireActions(el, function () {
+        var bad = (d.checks || []).filter(function (c) { return c.status === "fail"; }).map(function (c) { return c[lang] || c.en; }).join(" ");
+        return tr("shareTpl").replace("{v}", tr("s_" + d.verdict)).replace("{why}", bad).replace("{url}", location.origin);
+      });
+    };
+    rerender.proof = render; render(!fromHistory);
+    if (!fromHistory && window.matchMedia("(max-width: 840px)").matches) $("#pOut").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("#proofForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var manual = { amount: $("#mAmount").value, trx_id: $("#mTrx").value, recipient: $("#mRecipient").value, datetime: $("#mTime").value };
+    var hasManual = Object.keys(manual).some(function (k) { return manual[k]; });
+    if (!pFile && !hasManual) { toast(tr("needInput")); return; }
+    var fd = new FormData();
+    if (pFile) fd.append("image", pFile, pFile.name || "screenshot.png");
     fd.append("expected_amount", $("#pAmount").value);
     fd.append("expected_recipient", $("#pRecipient").value);
     fd.append("chat_time", $("#pChat").value);
     fd.append("order_ref", $("#pOrder").value);
-    fd.append("manual", JSON.stringify({
-      amount: $("#mAmount").value, trx_id: $("#mTrx").value, recipient: $("#mRecipient").value, datetime: $("#mTime").value
-    }));
-    btn.disabled = true; $("#pOut").innerHTML = '<p class="spin">' + tr("checking") + "</p>";
+    fd.append("manual", JSON.stringify(manual));
+    var btn = $("#pGo"); busy(btn, true);
     api("/api/proof", { method: "POST", body: fd })
-      .then(function (d) { lastRender.proof = function () { renderProof(d); }; renderProof(d); })
-      .catch(function (e) { $("#pOut").innerHTML = '<p class="err">' + esc(e.message) + "</p>"; })
-      .then(function () { btn.disabled = false; });
+      .then(function (d) {
+        showProof(d);
+        if (!d.needs_manual) {
+          var label = ($("#pOrder").value || "") + " " + (d.fields && d.fields.amount != null ? "Tk " + d.fields.amount : "");
+          addHistory("proof", { ts: Date.now(), label: label.trim() || (d.fields && d.fields.trx_id) || "Payment", res: d });
+        }
+      })
+      .catch(function (err) { $("#pOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
+      .then(function () { busy(btn, false); });
   });
 
-  // ----- Trainer
+  /* ------------------------------------------------------------ trainer */
   function renderTrainerHome() {
     var home = $("#trHome");
     if (!scenarios.length) { home.innerHTML = ""; return; }
-    var h = '<p class="hint">' + tr("trHome") + '</p><div class="sc">' + scenarios.map(function (s, i) {
-      return '<div class="card" data-i="' + i + '"><h3>' + esc(pick(s, "title")) + "</h3><p>" + esc(pick(s, "intro")) +
-        '</p><button class="primary">' + tr("start") + "</button></div>";
+    var h = '<div class="scenarios">' + scenarios.map(function (s, i) {
+      return '<div class="scen"><div><h3>' + esc(pick(s, "title")) + "</h3><p>" + esc(pick(s, "intro")) +
+        '</p></div><button type="button" class="primary" data-i="' + i + '">' + esc(tr("start")) + "</button></div>";
     }).join("") + "</div>";
     if (aiMode !== "rules") {
-      h += '<p><button class="linkbtn" id="freeBtn">' + tr("freeChat") + "</button></p>";
+      h += '<div class="free play"><h3>' + esc(tr("freeH")) + '</h3><p class="fine" style="margin-top:4px">' + esc(tr("freeP")) +
+        '</p><button type="button" class="ghost" id="freeBtn" style="margin-top:12px">' + esc(tr("freeStart")) + "</button></div>";
     }
     home.innerHTML = h;
-    $$(".sc .card", home).forEach(function (c) { c.addEventListener("click", function () { startScript(scenarios[+c.dataset.i]); }); });
-    var fb = $("#freeBtn"); if (fb) fb.addEventListener("click", function () { startFree(scenarios); });
+    $$("button[data-i]", home).forEach(function (b) { b.addEventListener("click", function () { startScript(scenarios[+b.dataset.i]); }); });
+    var fb = $("#freeBtn"); if (fb) fb.addEventListener("click", startFree);
   }
-  function showPlay(html) { $("#trHome").hidden = true; var p = $("#trPlay"); p.hidden = false; p.innerHTML = html; return p; }
-  function backHome() { $("#trPlay").hidden = true; $("#trHome").hidden = false; delete lastRender.trainer; }
+  function showPlay(html) { $("#trHome").hidden = true; var p = $("#trPlay"); p.hidden = false; p.innerHTML = html; p.scrollIntoView({ block: "start" }); return p; }
+  function backHome() { $("#trPlay").hidden = true; $("#trHome").hidden = false; delete rerender.trainer; }
+  function progress(i, n) { var s = ""; for (var k = 0; k < n; k++) s += "<i" + (k < i ? ' class="done"' : "") + "></i>"; return '<div class="progress">' + s + "</div>"; }
 
   function startScript(sc) {
     var i = 0, total = 0, max = sc.steps.length * 2;
     function step() {
       var s = sc.steps[i];
-      var render = function () {
-        var h = '<div class="card"><p class="progress">' + esc(pick(sc, "title")) + " · " + tr("step") + " " + (i + 1) + " " + tr("of") + " " + sc.steps.length + "</p>";
-        h += '<div class="bubble">' + esc(pick(s, "scammer")) + "</div>";
-        h += s.choices.map(function (c, k) { return '<button class="choice" data-k="' + k + '">' + esc(pick(c, "")) + "</button>"; }).join("") + "</div>";
+      rerender.trainer = function () {
+        var h = '<div class="play"><h3>' + esc(pick(sc, "title")) + "</h3>" + progress(i, sc.steps.length) +
+          '<p class="fine">' + esc(tr("step")) + " " + fmtNum(i + 1) + " " + esc(tr("of")) + " " + fmtNum(sc.steps.length) + "</p>" +
+          '<div class="bubble"><small>' + esc(tr("scammer")) + "</small>" + esc(pick(s, "scammer")) + "</div>" +
+          s.choices.map(function (c, k) { return '<button type="button" class="choice" data-k="' + k + '">' + esc(c[lang] || c.en) + "</button>"; }).join("") + "</div>";
         var p = showPlay(h);
         $$(".choice", p).forEach(function (b) { b.addEventListener("click", function () { answer(s.choices[+b.dataset.k]); }); });
       };
-      lastRender.trainer = render; render();
+      rerender.trainer();
     }
     function answer(c) {
       total += c.score;
-      var render = function () {
+      rerender.trainer = function () {
         var last = i === sc.steps.length - 1;
-        var h = '<div class="card"><div class="bubble me">' + esc(c[lang] || c.en) + "</div>" +
-          '<div class="fb s' + c.score + '"><b>' + tr("feedback") + ":</b> " + esc(c["fb_" + lang] || c.fb_en) + "</div>" +
-          '<button class="primary" id="nx">' + (last ? tr("seeResult") : tr("nextStep")) + "</button></div>";
+        var h = '<div class="play"><h3>' + esc(pick(sc, "title")) + "</h3>" + progress(i + 1, sc.steps.length) +
+          '<div class="bubble"><small>' + esc(tr("scammer")) + "</small>" + esc(pick(sc.steps[i], "scammer")) + "</div>" +
+          '<div class="bubble me"><small>' + esc(tr("you")) + "</small>" + esc(c[lang] || c.en) + "</div>" +
+          '<div class="fb s' + c.score + '">' + esc(c["fb_" + lang] || c.fb_en) + "</div>" +
+          '<button type="button" class="primary" id="nx">' + esc(last ? tr("seeResult") : tr("nextStep")) + "</button></div>";
         var p = showPlay(h);
         $("#nx", p).addEventListener("click", function () { if (last) finish(); else { i++; step(); } });
+        $("#nx", p).focus();
       };
-      lastRender.trainer = render; render();
+      rerender.trainer();
     }
     function finish() {
-      var render = function () {
-        var pct = Math.round(100 * total / max), msg = pct >= 80 ? tr("excellent") : pct >= 50 ? tr("okay") : tr("weak");
-        var h = '<div class="card"><h3>' + tr("scoreH") + ": " + total + " / " + max + "</h3>" +
-          '<div class="bar2"><i style="width:' + pct + '%"></i></div><p>' + esc(msg) + "</p>" +
-          "<h3>" + tr("flagsH") + "</h3><ul>" + (sc["red_flags_" + lang] || sc.red_flags_en).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
-          "<h3>" + tr("safeH") + "</h3><p>" + esc(pick(sc, "safe")) + '</p><button class="primary" id="bk">' + tr("again") + "</button></div>";
+      rerender.trainer = function () {
+        var pct = Math.round(100 * total / max), kind = pct >= 80 ? "low" : pct >= 50 ? "medium" : "high";
+        var msg = pct >= 80 ? tr("excellent") : pct >= 50 ? tr("okay") : tr("weak");
+        var h = '<div class="play"><div class="slip-head"><div><h2 style="margin:0">' + esc(tr("scoreH")) + ": " + fmtNum(total) + " / " + fmtNum(max) +
+          '</h2><p class="fine">' + esc(msg) + '</p></div><span class="stamp land t-' + kind + '">' + fmtNum(pct) + "%</span></div>" +
+          '<div class="sec"><h3>' + esc(tr("flagsH")) + '</h3><ul class="plain">' + (sc["red_flags_" + lang] || sc.red_flags_en).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></div>" +
+          '<div class="sec"><h3>' + esc(tr("safeH")) + '</h3><div class="advice">' + esc(pick(sc, "safe")) + "</div></div>" +
+          '<button type="button" class="primary" id="bk">' + esc(tr("again")) + "</button></div>";
         var p = showPlay(h); $("#bk", p).addEventListener("click", backHome);
       };
-      lastRender.trainer = render; render();
+      rerender.trainer();
     }
     step();
   }
 
-  function startFree(list) {
-    var sc = list[0], history = [];
-    var pickHtml = list.map(function (s, k) { return '<option value="' + esc(s.id) + '">' + esc(pick(s, "title")) + "</option>"; }).join("");
-    var p = showPlay('<div class="card"><select id="fsel" style="width:100%;padding:8px;margin-bottom:8px">' + pickHtml + '</select><div id="log"></div>' +
-      '<textarea id="fin" rows="2" placeholder="' + esc(tr("typeReply")) + '"></textarea>' +
-      '<div class="btns"><button class="primary" id="fsend">' + tr("send") + '</button><button class="ghost" id="fend">' + tr("end") + '</button><button class="ghost" id="fbk">' + tr("again") + '</button></div><div id="fres"></div></div>');
+  function startFree() {
+    var history = [];
+    var opts = scenarios.map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(pick(s, "title")) + "</option>"; }).join("");
+    var p = showPlay('<div class="play"><h3>' + esc(tr("freeH")) + '</h3><label style="margin-top:10px"><select id="fsel">' + opts + "</select></label>" +
+      '<div id="log" class="chatlog" aria-live="polite"></div><form id="fform"><label><textarea id="fin" rows="2" style="min-height:70px" placeholder="' + esc(tr("typeReply")) + '"></textarea></label>' +
+      '<div class="actions"><button class="primary" style="width:auto;margin:0" type="submit">' + esc(tr("send")) + '</button><button type="button" class="ghost" id="fend">' + esc(tr("end")) +
+      '</button><button type="button" class="ghost" id="fbk">' + esc(tr("again")) + '</button></div></form><div id="fres"></div></div>');
     function log() {
       $("#log", p).innerHTML = history.map(function (m) {
-        return '<div class="bubble' + (m.role === "player" ? " me" : "") + '"><b>' + (m.role === "player" ? tr("you") : tr("scammer")) + ":</b> " + esc(m.text) + "</div>";
+        return '<div class="bubble' + (m.role === "player" ? " me" : "") + '"><small>' + esc(m.role === "player" ? tr("you") : tr("scammer")) + "</small>" + esc(m.text) + "</div>";
       }).join("");
+      var lg = $("#log", p); lg.scrollTop = lg.scrollHeight;
     }
     function turn() {
       return api("/api/trainer/chat", { method: "POST", headers: { "Content-Type": "application/json" },
@@ -268,18 +541,21 @@
         .catch(function (e) { $("#fres", p).innerHTML = '<p class="err">' + esc(e.message) + "</p>"; });
     }
     $("#fsel", p).addEventListener("change", function () { history = []; log(); $("#fres", p).innerHTML = ""; turn(); });
-    $("#fsend", p).addEventListener("click", function () {
+    $("#fform", p).addEventListener("submit", function (e) {
+      e.preventDefault();
       var v = $("#fin", p).value.trim(); if (!v) return;
       history.push({ role: "player", text: v }); $("#fin", p).value = ""; log(); turn();
     });
+    $("#fin", p).addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#fform", p).requestSubmit(); } });
     $("#fend", p).addEventListener("click", function () {
-      $("#fres", p).innerHTML = '<p class="spin">' + tr("grading") + "</p>";
+      $("#fres", p).innerHTML = '<p class="fine">' + esc(tr("grading")) + "…</p>";
       api("/api/trainer/grade", { method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scenario: $("#fsel", p).value, history: history, lang: lang }) })
         .then(function (g) {
           var li = function (a) { return (a || []).map(function (x) { return "<li>" + esc(x) + "</li>"; }).join(""); };
-          $("#fres", p).innerHTML = '<div class="res"><h3>' + tr("scoreH") + ": " + esc(g.score) + "/100</h3><h3>" + tr("caught") + "</h3><ul>" + li(g.caught) +
-            "</ul><h3>" + tr("missed") + "</h3><ul>" + li(g.missed) + "</ul><h3>" + tr("tip") + "</h3><p>" + esc(g["tip_" + lang] || g.tip_en) + "</p></div>";
+          $("#fres", p).innerHTML = '<div class="sec"><h3>' + esc(tr("scoreH")) + ": " + esc(g.score) + "/100</h3><h3>" + esc(tr("caught")) +
+            '</h3><ul class="plain">' + li(g.caught) + "</ul><h3>" + esc(tr("missed")) + '</h3><ul class="plain">' + li(g.missed) +
+            "</ul><h3>" + esc(tr("tip")) + '</h3><div class="advice">' + esc(g["tip_" + lang] || g.tip_en) + "</div></div>";
         })
         .catch(function (e) { $("#fres", p).innerHTML = '<p class="err">' + esc(e.message) + "</p>"; });
     });
@@ -287,10 +563,37 @@
     turn();
   }
 
-  // ----- boot
+  /* ------------------------------------------------------------ how it works */
+  function pct(x) { return x == null ? "–" : fmtNum(Math.round(x * 100)) + "%"; }
+  function renderHow() {
+    if (metrics && metrics.dev) {
+      var row = function (k) {
+        var m = metrics[k];
+        return "<tr><td>" + esc(tr("m_" + k)) + '</td><td class="n">' + fmtNum(m.tp) + " / " + fmtNum(m.scam) + " (" + pct(m.recall) + ')</td><td class="n">' +
+          fmtNum(m.fp) + " / " + fmtNum(m.genuine) + " (" + pct(m.false_alarm_rate) + ")</td></tr>";
+      };
+      $("#metrics").innerHTML = "<table><thead><tr><th>" + esc(tr("m_set")) + "</th><th>" + esc(tr("m_caught")) + "</th><th>" + esc(tr("m_false")) +
+        "</th></tr></thead><tbody>" + row("dev") + row("holdout") + '</tbody></table><p class="fine" style="margin-top:8px">' + esc(tr("m_note")) + "</p>";
+    }
+    if (meta && meta.patterns) {
+      $("#library").innerHTML = "<table><thead><tr><th>" + esc(tr("libName")) + "</th><th>" + esc(tr("libWhy")) + "</th><th>" + esc(tr("libWeight")) +
+        "</th></tr></thead><tbody>" + meta.patterns.slice().sort(function (a, b) { return b.weight - a.weight; }).map(function (p) {
+          return "<tr><td>" + esc(pick(p, "name")) + "</td><td>" + esc(pick(p, "why")) + '</td><td class="w">' + fmtNum(p.weight) + "</td></tr>";
+        }).join("") + '</tbody></table><p class="fine" style="padding:10px 8px">' + esc(tr("linkChecks")) + "</p>";
+    }
+  }
+
+  /* ------------------------------------------------------------ boot */
+  showTab(location.hash.slice(1) || "proof");
+  empty($("#tOut"), "emptyT"); empty($("#pOut"), "emptyP");
+  rerender.emptyT = function () { if (!rerender.pretx) empty($("#tOut"), "emptyT"); };
+  rerender.emptyP = function () { if (!rerender.proof) empty($("#pOut"), "emptyP"); };
+  countChars();
+  applyLang();
   Promise.all([
     api("/api/status").then(function (s) { aiMode = s.ai; }).catch(function () {}),
-    api("/api/trainer/scenarios").then(function (s) { scenarios = s; }).catch(function () {})
+    api("/api/trainer/scenarios").then(function (s) { scenarios = s; }).catch(function () {}),
+    api("/api/meta").then(function (m) { meta = m; }).catch(function () {}),
+    api("/api/metrics").then(function (m) { metrics = m; }).catch(function () {})
   ]).then(applyLang);
-  applyLang();
 })();
