@@ -219,6 +219,7 @@ async def proof_check(
     expected_amount: str = Form(""),
     expected_recipient: str = Form(""),
     expected_sender: str = Form(""),
+    expected_trx: str = Form(""),
     chat_time: str = Form(""),
     order_ref: str = Form(""),
     manual: str = Form(""),
@@ -270,7 +271,7 @@ async def proof_check(
     res = proof.check(
         extracted,
         {"amount": to_number(expected_amount), "recipient": expected_recipient, "sender": expected_sender,
-         "chat_time": chat_time, "order_ref": order_ref},
+         "trx_id": expected_trx, "chat_time": chat_time, "order_ref": order_ref},
         dhaka_now(), SEEN_TRX, meta=meta, seen_img=SEEN_IMG,
     )
     if meta:
