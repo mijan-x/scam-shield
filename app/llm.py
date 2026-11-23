@@ -7,11 +7,18 @@ and the scripted Scam Trainer. Set MOCK_LLM=1 to develop without any key.
 """
 import json
 import os
+import time
 import re
 from typing import Optional, Tuple
 
 MODEL = os.getenv("SHIELD_MODEL", "claude-sonnet-5-5")
 GEMINI_MODEL_DEFAULT = "gemini-3.5-flash-lite"
+GEMINI_FALLBACK_DEFAULT = "gemini-3.8-flash"  # tried when the main model is overloaded
+TRANSIENT = {429, 500, 502, 503, 504}
+
+
+class AIBusy(RuntimeError):
+    """The AI provider is overloaded or rate-limited; worth trying again later."""
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 JSON_TASKS = {"pretx", "extract", "trainer_grade"}
 
@@ -136,15 +143,40 @@ def _gemini(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": config,
     }
-    r = httpx.post(GEMINI_URL.format(model=model_name()), json=body, timeout=45.0,
-                   headers={"x-goog-api-key": os.environ["GEMINI_API_KEY"]})
-    if r.status_code != 200:
-        try:
-            msg = r.json().get("error", {}).get("message", "")
-        except ValueError:
-            msg = r.text
-        raise RuntimeError(f"Gemini error {r.status_code}: {msg[:150]}")
-    cands = r.json().get("candidates") or []
+    models = [model_name()]
+    fallback = os.getenv("GEMINI_FALLBACK_MODEL", GEMINI_FALLBACK_DEFAULT).strip()
+    if fallback and fallback not in models:
+        models.append(fallback)
+    headers = {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}
+    last: Exception = AIBusy("Gemini is unavailable")
+    for n, model in enumerate(models):
+        for attempt in range(2):  # one quick retry per model on a busy answer
+            try:
+                r = httpx.post(GEMINI_URL.format(model=model), json=body, timeout=30.0, headers=headers)
+            except httpx.TimeoutException:
+                last = AIBusy("Gemini timed out")
+                break
+            if r.status_code == 200:
+                return _gemini_text(r.json())
+            try:
+                msg = r.json().get("error", {}).get("message", "")
+            except ValueError:
+                msg = r.text
+            if r.status_code in TRANSIENT:
+                last = AIBusy(f"Gemini error {r.status_code}: {msg[:150]}")
+                if attempt == 0:
+                    time.sleep(1.0)
+                    continue
+                break  # still busy: move on to the fallback model
+            if r.status_code == 404 and n + 1 < len(models):
+                last = RuntimeError(f"Gemini error 404: {msg[:150]}")
+                break  # model not available on this key: try the fallback
+            raise RuntimeError(f"Gemini error {r.status_code}: {msg[:150]}")
+    raise last
+
+
+def _gemini_text(data: dict) -> str:
+    cands = data.get("candidates") or []
     if not cands:
         raise RuntimeError("Gemini returned no answer (possibly blocked by safety filters)")
     return "".join(pt.get("text", "") for pt in cands[0].get("content", {}).get("parts", []) if not pt.get("thought"))

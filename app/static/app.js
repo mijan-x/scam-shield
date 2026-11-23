@@ -588,8 +588,9 @@
     var render = function (animate) {
       var el = $("#pOut");
       if (d.needs_manual) {
-        el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + '<p class="err">' + esc(d.error || tr("needInput")) + "</p>" +
-          (d.image && d.image.editor ? "<p>" + esc(tr("i_editor")) + ": <b>" + esc(d.image.editor) + "</b></p>" : "") + "</div></div>";
+        el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + '<p class="err">' + esc(d["error_" + lang] || d.error || tr("needInput")) + "</p>" +
+          (d.image && d.image.editor ? '<p style="margin-top:8px">' + esc(tr("i_editor")) + ": <b>" + esc(d.image.editor) + "</b></p>" : "") + "</div></div>";
+        if (!fromHistory && d.image) { var man = $(".manual"); man.open = true; setTimeout(function () { $("#mAmount").focus(); }, 50); }
         return;
       }
       var h = head(d.verdict, d.score || 0, null, animate);
@@ -608,7 +609,7 @@
           "</dd><dt>" + esc(tr("i_size")) + "</dt><dd>" + esc(d.image.width + " × " + d.image.height) + "</dd>" +
           (d.image.editor ? "<dt>" + esc(tr("i_editor")) + "</dt><dd>" + esc(d.image.editor) + "</dd>" : "") + "</dl></div>";
       }
-      if (d.extract_error) h += '<p class="fine sec">' + esc(d.extract_error) + "</p>";
+      if (d.extract_error) h += '<p class="fine sec">' + esc(d["extract_error_" + lang] || d.extract_error) + "</p>";
       h += '<p class="reminder">' + esc(d["reminder_" + lang] || d.reminder_en || "") + "</p>" + actionsHtml();
       el.innerHTML = h;
       wireActions(el, function () {
