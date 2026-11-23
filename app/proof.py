@@ -87,6 +87,12 @@ def image_checks(meta: Optional[dict], order: str, seen_img: Optional[list]) -> 
     return out
 
 
+def _ampm_slip(delta: timedelta) -> bool:
+    """True when two times are 12 hours apart (within 40 min): a likely AM/PM misread."""
+    m = abs(delta.total_seconds()) / 60
+    return abs(m - 720) <= 40
+
+
 def _clock(s: Optional[str]):
     m = re.match(r"^\s*(\d{1,2})[:.](\d{2})", s or "")
     if not m or int(m.group(1)) > 23 or int(m.group(2)) > 59:
@@ -114,57 +120,107 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
             f"স্ক্রিনশটে {xa:,.0f} টাকা দেখা যাচ্ছে। প্রত্যাশিত টাকা দেওয়া হয়নি, তাই মেলানো হয়নি।")
     elif abs(float(xa) - float(ea)) < 0.5:
         add("amount", "ok", f"Amount matches ({xa:,.0f}).", f"টাকার পরিমাণ মিলেছে ({xa:,.0f})।")
+    elif float(xa) > float(ea):
+        more = float(xa) - float(ea)
+        add("amount", "warn",
+            f"The screenshot shows {xa:,.0f}, which is {more:,.0f} more than you expected ({ea:,.0f}). "
+            "Buyers sometimes add the fee, but check the amount that actually arrived.",
+            f"স্ক্রিনশটে {xa:,.0f} টাকা, যা প্রত্যাশার ({ea:,.0f}) চেয়ে {more:,.0f} টাকা বেশি। "
+            "ক্রেতা অনেক সময় ফি যোগ করেন, তবে আসলে কত টাকা এসেছে দেখে নিন।")
     else:
-        diff = float(ea) - float(xa)
-        word_en = "lower" if diff > 0 else "higher"
-        word_bn = "কম" if diff > 0 else "বেশি"
+        less = float(ea) - float(xa)
         add("amount", "fail",
-            f"Amount in the image is {xa:,.0f} but you expected {ea:,.0f} ({abs(diff):,.0f} {word_en}).",
-            f"ছবিতে {xa:,.0f} টাকা, কিন্তু আপনি আশা করেছিলেন {ea:,.0f} টাকা ({abs(diff):,.0f} টাকা {word_bn})।")
+            f"Amount in the image is {xa:,.0f} but you expected {ea:,.0f} ({less:,.0f} lower).",
+            f"ছবিতে {xa:,.0f} টাকা, কিন্তু আপনি আশা করেছিলেন {ea:,.0f} টাকা ({less:,.0f} টাকা কম)।")
 
-    # 2. recipient
-    er, xr = _digits(expected.get("recipient")), _digits(extracted.get("recipient"))
-    if er and xr:
-        n = min(len(er), len(xr), 4)
-        if er[-n:] == xr[-n:]:
-            add("recipient", "ok", "Recipient number matches.", "প্রাপকের নম্বর মিলেছে।")
+    # 2. recipient (receipts often mask the middle digits, e.g. 017XXXXX678)
+    er = _digits(expected.get("recipient"))
+    raw_r = (extracted.get("recipient") or "").strip()
+    xr = _digits(raw_r)
+    if er and raw_r:
+        tail = re.search(r"(\d+)\D*$", raw_r)
+        head = re.match(r"^\D*(\d+)", raw_r)
+        tail = tail.group(1) if tail else ""
+        head = head.group(1) if head else ""
+        masked = bool(re.search(r"[xX*•●.\-]{2,}|\*", raw_r)) and len(xr) < 11
+        if not xr:
+            add("recipient", "info", f"The receipt shows the recipient as '{raw_r[:40]}', not a number. Check it is you.",
+                f"রসিদে প্রাপক হিসেবে '{raw_r[:40]}' লেখা, নম্বর নয়। এটি আপনি কি না দেখে নিন।")
+        elif masked and len(tail) < 3:
+            add("recipient", "info", "The recipient number is mostly hidden on the receipt, so it could not be compared.",
+                "রসিদে প্রাপকের নম্বরের বেশিরভাগ লুকানো, তাই মেলানো যায়নি।")
+        elif masked:
+            ok = er.endswith(tail) and (not head or len(head) < 3 or er.startswith(head) or ("880" + er[1:]).startswith(head))
+            if ok:
+                add("recipient", "ok", f"The visible digits of the recipient number match yours (…{tail}).",
+                    f"প্রাপকের নম্বরের দেখা যাওয়া অংশ আপনার নম্বরের সঙ্গে মিলেছে (…{tail})।")
+            else:
+                add("recipient", "fail", "The recipient in the image is not your number.", "ছবির প্রাপকের নম্বর আপনার নম্বর নয়।")
         else:
-            add("recipient", "fail", "The recipient in the image is not your number.", "ছবির প্রাপকের নম্বর আপনার নম্বর নয়।")
-    elif er and not xr:
+            n = min(len(er), len(xr), 4)
+            if er[-n:] == xr[-n:]:
+                add("recipient", "ok", "Recipient number matches.", "প্রাপকের নম্বর মিলেছে।")
+            else:
+                add("recipient", "fail", "The recipient in the image is not your number.", "ছবির প্রাপকের নম্বর আপনার নম্বর নয়।")
+    elif er and not raw_r:
         add("recipient", "warn", "The recipient could not be read from the image.", "ছবি থেকে প্রাপকের নম্বর পড়া যায়নি।")
 
-    # 3. time
+    # 3. time. People pay a few minutes after saying "sent", sellers type the time roughly,
+    # and 12-hour clocks get misread, so only clear contradictions count against the payment.
     px = parse_dt(extracted.get("datetime"))
     chat = parse_dt(expected.get("chat_time"))
     if px is None:
-        add("time", "warn", "The payment time could not be read.", "পেমেন্টের সময় পড়া যায়নি।")
-    else:
-        if px > now + timedelta(minutes=5):
-            add("time", "fail", "The payment time is in the future.", "পেমেন্টের সময় ভবিষ্যতের।")
-        elif chat is not None and px > chat + timedelta(minutes=10):
-            add("time", "fail", "The payment time in the image is after the moment the buyer said they had paid.",
-                "ছবির পেমেন্টের সময় ক্রেতার 'পেমেন্ট করেছি' বলার পরের।")
-        elif chat is not None and px < chat - timedelta(hours=6):
-            hours = (chat - px).total_seconds() / 3600
-            add("time", "warn", f"The payment is about {hours:.0f} hours older than the chat message. It may be an old payment.",
-                f"পেমেন্টটি চ্যাটের চেয়ে প্রায় {hours:.0f} ঘণ্টা পুরোনো। এটি আগের কোনো পেমেন্ট হতে পারে।")
-        elif chat is None and px < now - timedelta(hours=24):
-            days = max(1, round((now - px).total_seconds() / 86400))
-            add("time", "warn", f"This payment is from about {days} day(s) ago. Old screenshots are often re-sent as proof for a new order.",
-                f"এই পেমেন্ট প্রায় {days} দিন আগের। পুরোনো স্ক্রিনশট প্রায়ই নতুন অর্ডারের প্রমাণ হিসেবে আবার পাঠানো হয়।")
-        elif chat is None:
-            add("time", "ok", "The payment time is recent.", "পেমেন্টের সময় সাম্প্রতিক।")
+        add("time", "info", "No payment time could be read from the receipt, so the time was not checked.",
+            "রসিদ থেকে পেমেন্টের সময় পড়া যায়নি, তাই সময় যাচাই করা হয়নি।")
+    elif px > now + timedelta(minutes=10) and not _ampm_slip(px - now):
+        add("time", "fail", f"The payment time ({px:%d %b %H:%M}) is in the future.", f"পেমেন্টের সময় ({px:%d %b %H:%M}) ভবিষ্যতের।")
+    elif chat is not None:
+        gap = (px - chat).total_seconds() / 60  # minutes; positive = paid after the time entered
+        if abs(gap) <= 60:
+            add("time", "ok", f"Payment time ({px:%H:%M}) is close to the time you entered.",
+                f"পেমেন্টের সময় ({px:%H:%M}) আপনার দেওয়া সময়ের কাছাকাছি।")
+        elif _ampm_slip(px - chat):
+            add("time", "info", f"The payment time ({px:%H:%M}) is 12 hours from the time you entered; probably an AM/PM slip.",
+                f"পেমেন্টের সময় ({px:%H:%M}) আপনার দেওয়া সময় থেকে ১২ ঘণ্টা দূরে; সম্ভবত AM/PM-এর ভুল।")
+        elif 60 < gap <= 360:
+            add("time", "warn",
+                f"The receipt says {px:%H:%M}, about {gap / 60:.0f} hour(s) after the time you entered. Check the time you entered, "
+                "or whether the buyer paid later than they said.",
+                f"রসিদে {px:%H:%M}, আপনার দেওয়া সময়ের প্রায় {gap / 60:.0f} ঘণ্টা পরে। আপনার দেওয়া সময় ঠিক আছে কি না, "
+                "অথবা ক্রেতা পরে পাঠিয়েছেন কি না দেখুন।")
+        elif gap > 360:
+            add("time", "fail",
+                f"The receipt says {px:%d %b %H:%M}, many hours after the buyer said they had paid. A real receipt cannot be from after the claim.",
+                f"রসিদে {px:%d %b %H:%M}, ক্রেতার 'পাঠিয়েছি' বলার অনেক ঘণ্টা পরে। আসল রসিদ দাবির পরের হতে পারে না।")
+        elif -gap <= 24 * 60:
+            add("time", "info", f"The payment ({px:%H:%M}) was made earlier than the time you entered. Fine if the buyer paid earlier.",
+                f"পেমেন্ট ({px:%H:%M}) আপনার দেওয়া সময়ের আগে হয়েছে। ক্রেতা আগে পাঠিয়ে থাকলে ঠিক আছে।")
         else:
-            add("time", "ok", "Payment time is consistent with the chat.", "পেমেন্টের সময় চ্যাটের সঙ্গে সঙ্গতিপূর্ণ।")
-        sb = _clock(extracted.get("status_bar_time"))
-        if sb is not None and px.date() == now.date() and sb < px.hour * 60 + px.minute - 2:
+            days = max(1, round(-gap / 1440))
+            add("time", "warn", f"The payment is about {days} day(s) older than the time you entered. It may be an old receipt re-sent.",
+                f"পেমেন্টটি আপনার দেওয়া সময়ের প্রায় {days} দিন আগের। পুরোনো রসিদ আবার পাঠানো হতে পারে।")
+    elif px < now - timedelta(hours=24):
+        days = max(1, round((now - px).total_seconds() / 86400))
+        add("time", "warn", f"This payment is from about {days} day(s) ago. Old screenshots are often re-sent as proof for a new order.",
+            f"এই পেমেন্ট প্রায় {days} দিন আগের। পুরোনো স্ক্রিনশট প্রায়ই নতুন অর্ডারের প্রমাণ হিসেবে আবার পাঠানো হয়।")
+    else:
+        add("time", "ok", f"The payment time ({px:%H:%M}) is recent.", f"পেমেন্টের সময় ({px:%H:%M}) সাম্প্রতিক।")
+
+    # phone status-bar clock: a real screenshot cannot be taken before the payment
+    sb = _clock(extracted.get("status_bar_time"))
+    if px is not None and sb is not None and px.date() == now.date():
+        pay = px.hour * 60 + px.minute
+        cur = now.hour * 60 + now.minute
+        # a 12-hour clock may hide PM, but the screenshot cannot be from later than now
+        readings = [r for r in ([sb] + ([sb + 720] if sb < 720 else [])) if r <= cur + 5] or [sb]
+        if any(r >= pay - 3 for r in readings):
+            add("clock", "ok", "The phone clock in the screenshot fits the payment time.", "স্ক্রিনশটের ফোন-ঘড়ি পেমেন্টের সময়ের সঙ্গে মেলে।")
+        else:
             add("clock", "fail",
                 f"The phone clock in the screenshot shows {extracted.get('status_bar_time')}, which is before the payment time "
                 f"{px:%H:%M}. A real screenshot cannot be taken before the payment happened.",
                 f"স্ক্রিনশটের ফোন-ঘড়িতে {extracted.get('status_bar_time')}, যা পেমেন্টের সময় {px:%H:%M}-এর আগে। "
                 "আসল স্ক্রিনশট পেমেন্টের আগে তোলা সম্ভব নয়।")
-        elif sb is not None and px.date() == now.date():
-            add("clock", "ok", "The phone clock in the screenshot fits the payment time.", "স্ক্রিনশটের ফোন-ঘড়ি পেমেন্টের সময়ের সঙ্গে মেলে।")
 
     # 4. transaction ID format and reuse
     trx = (extracted.get("trx_id") or "").strip().upper()
