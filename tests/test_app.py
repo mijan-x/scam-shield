@@ -561,3 +561,26 @@ def test_fully_swapped_numbers_give_one_clear_warning():
     r, ids = _r3({"recipient": "01911111111", "sender": "01712345678"}, {"sender": "01911111111"})
     assert ids["recipient"] == "warn" and "sender" not in ids
     assert "wrong way round" in next(c["en"] for c in r["checks"] if c["id"] == "recipient")
+
+
+# ------------------------------------------------------- new patterns (authority, tasks, betting, advance, codes)
+@pytest.mark.parametrize("text,pid", [
+    ("Robi theke bolchi, apnar SIM bondho hoye jabe, mobile e asha code ta bolen", "otp_pin_request"),
+    ("থানা থেকে বলছি, আপনার নামে মামলা হয়েছে। এখনই টাকা বিকাশ করুন।", "authority_threat"),
+    ("Earn Tk 2,000 daily by liking YouTube videos. Registration fee Tk 300.", "task_scam"),
+    ("Aviator game e 200 taka dile 5000 taka jitben", "betting_gambling"),
+    ("Flat er advance 10,000 taka bKash korun", "advance_payment"),
+])
+def test_new_patterns_fire(text, pid):
+    assert pid in [p["id"] for p in rules.analyze(text)["patterns"]]
+
+
+@pytest.mark.parametrize("text", [
+    "Grab a coffee and decide later, it is a simple case of fine tuning.",
+    "The alphabet song video is on YouTube.",
+    "Book a time slot for your account opening at the branch.",
+    "Your SIM will be replaced free at any Grameenphone Centre. Never share your PIN with anyone.",
+    "Enter the school code at the counter to pay fees.",
+])
+def test_new_patterns_no_false_alarm(text):
+    assert rules.analyze(text)["risk"] == "low", rules.analyze(text)["patterns"]

@@ -6,29 +6,36 @@ Tick the box in this file in the same commit.
 
 ## Roles (done)
 - [x] Roles are in the **Team** table in `README.md`: Md. Mijanur Rahman (team leader), Antu Dev Nath
-      (detection data and patterns), Md. Hasan ahmed (testing and trainer). Edit your own line if you want
+      (detection quality), Md. Hasan ahmed (testing and trainer). Edit your own line if you want
       to reword it.
 
-## Maverick-145 (Antu Dev Nath): detection data and patterns
-- [ ] **New unseen test messages.** Add 10 scam and 10 genuine messages you have really seen or heard of
+## Maverick-145 (Antu Dev Nath): detection quality
+Done on 23 Nov by mijan-x with Claude (see the commit): 20 messages in `holdout2`, four new patterns
+(authority threat, task scam, betting, advance payment) and broader "tell me the code" wording.
+**Antu: before the final, read the new patterns in `app/library.py` and the Accuracy section of the
+README so you can explain them to the judges.**
+- [x] **New unseen test messages.** (Written by Claude from common scam reports, not collected from real victims.) Add 10 scam and 10 genuine messages you have really seen or heard of
       (Bangla, Banglish, English) to `app/data/messages.csv` with split `holdout2`, one per line in the same
       quoted format: `"holdout2","scam","message text"`. Replace any real phone number or name with a made-up one.
       Do not change any pattern first. Then run `python eval/run_eval.py` and put the `holdout2` result in your
       commit message. It appears on the live "How it works" page automatically.
-- [ ] **One new scam pattern** that the new messages miss (for example SIM-replacement or fake agent
+- [x] **One new scam pattern** that the new messages miss (for example SIM-replacement or fake agent
       cash-out reversal). Add it to `app/library.py` with English and Bangla texts, plus a test in
       `tests/test_app.py`. `tests/test_offline_parity.py` must still pass.
 
 ## HasanAl-17 (Md. Hasan ahmed): real receipts and the trainer
+The fourth trainer scenario was done on 23 Nov by mijan-x with Claude ("like videos and earn" task job).
+**Hasan: play all four scenarios before the final so you can present them. The receipt log below is
+still open and needs real receipts from team phones.**
 - [ ] **Real receipt test log.** Run 5 genuine bKash/Nagad receipts from team phones (and 2 copies you edit
       yourself) through Payment proof on the live site. Record each result in `docs/receipt-tests.md`
       (stamp, any wrong warnings). Do not commit the screenshots or anyone's full phone number.
-- [ ] **A fourth trainer scenario** (for example "fake job registration fee" or "parcel stuck at customs")
+- [x] **A fourth trainer scenario** (for example "fake job registration fee" or "parcel stuck at customs")
       in `app/scenarios.py`: copy an existing scenario, keep the same keys, 3 steps with 3 choices each
       (scores 2, 1 and 0, with feedback), English and Bangla. Also add a line for it in `PERSONA` so free chat
       works. `python -m pytest -q tests` tells you if anything is missing.
 
 ## mijan-x (team leader): demo and submission
 - [ ] Rehearse the demo from the demo doc three times; fix anything that feels slow.
-- [ ] Make the repository public before 9:00 AM on 24 Nov.
+- [x] Make the repository public before 9:00 AM on 24 Nov. (done)
 - [ ] On the day: create `challenges/<name>/` folders for the assigned challenges, each with a README.

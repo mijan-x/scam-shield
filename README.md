@@ -11,7 +11,7 @@ Bangladesh runs on bKash, Nagad and Rocket. So do its scammers: fake "payment do
 |---|---|---|
 | **Payment proof** | Online sellers | Upload the buyer's screenshot, alone or with what you expected. **Screenshot alone:** editing-app traces in the file, the same screenshot or TrxID reused for another order, the phone's status-bar clock earlier than the payment time (impossible), a pending or failed screen, a payment days old, and the AI's look for tampered digits. **With your details:** amount (paying less fails, a little more is a warning), your number as the receiver and, optionally, the buyer's as the sender (swapped numbers are explained, masked numbers like 017XXXXX678 are compared on their visible digits), and the payment time (within an hour passes; AM/PM slips are recognised). Verdict: *matches / no red flags / suspicious / likely fake*, never "safe". |
 | **Message check** | Everyone | Paste an SMS or describe a call (Bangla, English, Banglish), or record it: Record, Pause/Resume, then Check voice turns the recording into text (Gemini speech-to-text, falling back to the browser's own recognition) and checks it. The exact risky words are highlighted, links and phone numbers are judged (look-alike domains, hidden short links, personal numbers posing as customer care), and you get plain advice plus official hotlines. |
-| **Scam trainer** | Everyone | Three scripted scams with instant feedback, working offline. With an AI key, a free-chat mode where the AI plays the scammer and grades you. |
+| **Scam trainer** | Everyone | Four scripted scams (wrong-number refund, fake customer care, fake payment proof, "like videos and earn" task job) with instant feedback, working offline. With an AI key, a free-chat mode where the AI plays the scammer and grades you. |
 | **How it works** | Judges, users | Pipeline, live accuracy numbers, and the full pattern library, in the app itself. |
 | **Offline mode** | Rural users, bad networks | Open the site once online and it is saved on the device. With no internet, message checks run in the browser with the same rules, and the trainer still works. |
 
@@ -19,7 +19,7 @@ Bangladesh runs on bKash, Nagad and Rocket. So do its scammers: fake "payment do
 
 ```mermaid
 flowchart LR
-  A[Message or screenshot] --> B[Rules engine<br/>14 Bangla/English/Banglish patterns]
+  A[Message or screenshot] --> B[Rules engine<br/>18 Bangla/English/Banglish patterns]
   A --> C[Link and number checks]
   A --> D[Image file checks<br/>editor traces, reuse fingerprint]
   A -. optional .-> E[AI: Gemini or Claude<br/>reads screenshot, adds reasons]
@@ -34,14 +34,18 @@ flowchart LR
 
 ## Accuracy (be honest)
 
-Rules only, on our own labelled set (`app/data/messages.csv`, 74 messages in Bangla, English and Banglish):
+Rules only, on our own labelled set (`app/data/messages.csv`, 108 messages in Bangla, English and Banglish):
 
 | Set | Scams flagged | Real messages wrongly flagged |
 |---|---|---|
-| Tuning (`dev`, 46) | 25 / 25 | 0 / 21 |
+| Tuning (`dev`, 60) | 33 / 33 | 0 / 27 |
 | Unseen (`holdout`, 28) | 13 / 13 | 0 / 15 |
+| Second unseen set (`holdout2`, 20), **before** new patterns | 4 / 10 | 0 / 10 |
+| Second unseen set (`holdout2`, 20), after adding 4 patterns | 10 / 10 | 0 / 10 |
 
-The set is small and written by us; patterns were tuned on `dev` only. Treat it as a sanity check, not a benchmark. Reproduce with `python eval/run_eval.py` (add `--ai` to include the AI). New rows with a new split name (for example `holdout2`) are picked up automatically by the script, `/api/metrics` and the "How it works" page.
+`holdout2` was written with newer scam types (SIM replacement, fake agents, task jobs, betting, rental advances, fake regulators). The rules first caught only 4 of 10, which is the honest picture for scam types with no pattern yet. Four patterns were then added from separate tuning examples; because `holdout2` showed which types were missing, it is no longer truly unseen. The sets are small and written by us: treat them as a sanity check, not a benchmark. The AI layer is meant to catch new wording the rules miss.
+
+Reproduce with `python eval/run_eval.py` (add `--ai` to include the AI). New rows with a new split name are picked up automatically by the script, `/api/metrics` and the "How it works" page.
 
 ## Run it
 
@@ -105,8 +109,8 @@ challenges/        on-site assigned challenges
 | Member | GitHub | Role and contribution |
 |---|---|---|
 | Md. Mijanur Rahman | [@mijan-x](https://github.com/mijan-x) | **Team leader.** Product direction, AI-assisted development of the app, deployment, and the final demo. |
-| Antu Dev Nath | [@Maverick-145](https://github.com/Maverick-145) | **Detection data and patterns.** Scam message collection, the labelled test sets and the pattern library. |
-| Md. Hasan ahmed | [@HasanAl-17](https://github.com/HasanAl-17) | **Testing and trainer.** Real-receipt testing of Payment proof, and the Scam trainer scenarios. |
+| Antu Dev Nath | [@Maverick-145](https://github.com/Maverick-145) | **Detection quality.** Reviews the pattern library and test sets, and answers judges' questions on accuracy. |
+| Md. Hasan ahmed | [@HasanAl-17](https://github.com/HasanAl-17) | **Testing and trainer.** Tests Payment proof with real receipts, and presents the Scam trainer. |
 
 Open work for the team is listed in [TEAM_TASKS.md](TEAM_TASKS.md).
 

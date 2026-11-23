@@ -11,12 +11,15 @@ pattern you add improves the Pre-transaction Check and the Scam Trainer together
 
 SECRET = (
     r"(?<![a-z])(otp|pin|cvv|password|passcode)(?![a-z])|পিন|ওটিপি|পাসওয়ার্ড|"
-    r"verification code|secret code|ভেরিফিকেশন কোড|গোপন কোড|confirmation code"
+    r"verification code|secret code|ভেরিফিকেশন কোড|গোপন কোড|confirmation code|"
+    r"(?:sms|message|mobile|phone|মেসেজ|মোবাইলে|ফোনে)\s*(?:e|এ)?\s*(?:asha|asa|আসা|আসবে)\s*(?:code|কোড)|"
+    r"code\s*(?:ta|ti|টা|টি)?\s*(?:ashbe|asbe|ashle|ashlo|eseche|jabe|pathano hobe)|কোডটি|কোডটা|কোড টি|কোড টা|"
+    r"code (?:we|i) (?:just )?sent|the code (?:you )?(?:got|received)"
 )
 ASK = (
     r"(?<![a-z])(tell|give|share|send|provide|enter|say|read|bolun|bolo|bolen|den|dien|dao|dile|dite|"
-    r"janan|janaan|pathan|pathao|pathiye|likhun|dinn)(?![a-z])|"
-    r"বলুন|বলেন|বলো|বলুন|দিন|দেন|দিয়ে|দাও|জানান|শেয়ার|পাঠান|পাঠাও|পাঠিয়ে|লিখুন|পড়ে শোনান"
+    r"janan|janaan|pathan|pathao|pathiye|likhun|dinn|bolben|boliyen|janaben|diben|verify)(?![a-z])|"
+    r"বলুন|বলেন|বলো|বলবেন|দিন|দেন|দিয়ে|দাও|দেবেন|জানান|জানাবেন|শেয়ার|পাঠান|পাঠাও|পাঠিয়ে|লিখুন|পড়ে শোনান"
 )
 # phrases that turn the message into a warning rather than a request
 WARNING = (
@@ -202,6 +205,75 @@ PATTERNS = [
         "why_bn": "ফ্রি টাকা বা ক্যাশব্যাকের অফারে লিংকে ক্লিক বা কোড দিতে বলা হচ্ছে।",
         "advice_en": "Real offers appear inside the official app. Do not click links or share codes.",
         "advice_bn": "সত্যিকারের অফার অফিসিয়াল অ্যাপের ভেতরেই দেখা যায়। লিংকে ক্লিক বা কোড শেয়ার করবেন না।",
+    },
+    {
+        "id": "authority_threat",
+        "name_en": "Fake authority or operator threat",
+        "name_bn": "ভুয়া কর্তৃপক্ষ বা অপারেটরের হুমকি",
+        "weight": 65,
+        "groups": [
+            [r"btrc|বিটিআরসি|police|পুলিশ|থানা|(?<![a-z])(?:rab|cid|sim|robi)(?![a-z])|র‍্যাব|সিআইডি|court|আদালত|দুদক|"
+             r"tax office|কর অফিস|grameenphone|banglalink|teletalk|গ্রামীণফোন|রবি|বাংলালিংক|টেলিটক|operator|অপারেটর|সিম"],
+            [r"bondho|বন্ধ|block|ব্লক|deactivat|replace|রিপ্লেস|(?<![a-z])(?:case|fine|spam|jail)(?![a-z])|মামলা|জেল|"
+             r"জরিমানা|warrant|ওয়ারেন্ট|স্প্যাম|illegal|অবৈধ"],
+            [r"call|কল|code|কোড|taka|টাকা|pathan|পাঠান|link|লিংক|" + SECRET],
+        ],
+        "unless": [WARNING],
+        "why_en": "Someone claims to be from BTRC, the police, a court or your mobile operator and threatens to block your SIM or file a case unless you call, pay or share a code.",
+        "why_bn": "কেউ বিটিআরসি, পুলিশ, আদালত বা মোবাইল অপারেটর পরিচয় দিয়ে কল, টাকা বা কোড না দিলে সিম বন্ধ বা মামলার হুমকি দিচ্ছে।",
+        "advice_en": "Officials do not threaten you by phone or ask for money or codes. Hang up and contact the office yourself through its official number.",
+        "advice_bn": "সরকারি কর্মকর্তারা ফোনে হুমকি দিয়ে টাকা বা কোড চান না। কল কেটে নিজে অফিসের অফিসিয়াল নম্বরে যোগাযোগ করুন।",
+    },
+    {
+        "id": "task_scam",
+        "name_en": "Paid tasks or online earning group",
+        "name_bn": "টাস্ক বা অনলাইন আয়ের গ্রুপ",
+        "weight": 65,
+        "groups": [
+            [r"earn|earning|income|ইনকাম|আয়|ay korun|commission|কমিশন|profit|লাভ"],
+            [r"task|টাস্ক|like|লাইক|subscribe|সাবস্ক্রাইব|review|রিভিউ|rating|রেটিং|telegram|টেলিগ্রাম|whatsapp group|"
+             r"youtube|ইউটিউব|video|ভিডিও|tiktok|টিকটক"],
+            [r"deposit|ডিপোজিট|fee|ফি|joma|জমা|invest|ইনভেস্ট|recharge|রিচার্জ|registration|রেজিস্ট্রেশন|"
+             r"tk|taka|টাকা|bkash|nagad|বিকাশ|নগদ"],
+        ],
+        "unless": [WARNING],
+        "why_en": "Easy money for liking videos, writing reviews or doing tasks, but you must deposit or pay first. The first small payouts are bait.",
+        "why_bn": "ভিডিও লাইক, রিভিউ বা টাস্কের বিনিময়ে সহজ আয়ের প্রস্তাব, কিন্তু আগে টাকা জমা দিতে হবে। প্রথমে অল্প টাকা দেওয়া হয় ফাঁদ হিসেবে।",
+        "advice_en": "Real jobs never ask you to pay to start. Do not deposit anything, and leave the group.",
+        "advice_bn": "সত্যিকারের কাজে শুরু করতে টাকা দিতে হয় না। কোনো টাকা জমা দেবেন না, গ্রুপ থেকে বের হয়ে যান।",
+    },
+    {
+        "id": "betting_gambling",
+        "name_en": "Online betting or gambling bait",
+        "name_bn": "অনলাইন বেটিং বা জুয়ার প্রলোভন",
+        "weight": 65,
+        "groups": [
+            [r"(?<![a-z])(?:bet|betting|jua)(?![a-z])|বেটিং|casino|ক্যাসিনো|জুয়া|aviator|crash game|slot game|"
+             r"স্লট গেম|1xbet|ludo khela"],
+            [r"taka|টাকা|tk|deposit|ডিপোজিট|win|jit|জিত|জেত|bkash|nagad|বিকাশ|নগদ|account|একাউন্ট|অ্যাকাউন্ট"],
+        ],
+        "unless": [WARNING],
+        "why_en": "An invitation to online betting or gambling with promised big wins. Online gambling is illegal in Bangladesh and the money is usually lost.",
+        "why_bn": "বড় জেতার লোভ দেখিয়ে অনলাইন বেটিং বা জুয়ায় আমন্ত্রণ। বাংলাদেশে অনলাইন জুয়া অবৈধ এবং টাকা সাধারণত হারিয়ে যায়।",
+        "advice_en": "Do not send money or open an account. Block the sender.",
+        "advice_bn": "টাকা পাঠাবেন না বা একাউন্ট খুলবেন না। প্রেরককে ব্লক করুন।",
+    },
+    {
+        "id": "advance_payment",
+        "name_en": "Advance payment to a stranger",
+        "name_bn": "অচেনা কাউকে অগ্রিম টাকা",
+        "weight": 45,
+        "groups": [
+            [r"advance|অ্যাডভান্স|এডভান্স|ogrim|অগ্রিম|booking money|বুকিং মানি|token money|টোকেন"],
+            [r"rent|ভাড়া|bhara|flat|ফ্ল্যাট|basa|বাসা|room|রুম|chabi|চাবি|seat|সিট|visa|ভিসা|ticket|টিকিট|"
+             r"product|পণ্য|order|অর্ডার|delivery|ডেলিভারি|courier|কুরিয়ার"],
+            [r"bkash|nagad|rocket|বিকাশ|নগদ|রকেট|pathan|পাঠান|korun|করুন|taka|টাকা|tk"],
+        ],
+        "unless": [WARNING],
+        "why_en": "You are asked to pay in advance by mobile money for a flat, ticket, visa or product before you have seen it.",
+        "why_bn": "দেখার আগেই ফ্ল্যাট, টিকিট, ভিসা বা পণ্যের জন্য মোবাইল ব্যাংকিংয়ে অগ্রিম টাকা চাওয়া হচ্ছে।",
+        "advice_en": "Pay only after you have seen the flat or product, or use cash on delivery. Check the person through someone you know.",
+        "advice_bn": "ফ্ল্যাট বা পণ্য নিজে দেখে তবেই টাকা দিন, অথবা ক্যাশ অন ডেলিভারি নিন। পরিচিত কারও মাধ্যমে মানুষটিকে যাচাই করুন।",
     },
     {
         "id": "urgency_pressure",
