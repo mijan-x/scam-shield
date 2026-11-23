@@ -1,3 +1,4 @@
+import pytest
 import json
 import os
 import sys
@@ -201,6 +202,8 @@ def test_gemini_error_falls_back_to_rules(monkeypatch):
 
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
     monkeypatch.setattr(httpx, "post", lambda *a, **k: R())
+    import app.llm as _l
+    monkeypatch.setattr(_l.time, "sleep", lambda s: None)
     d = client.post("/api/pretx", json={"text": "Apnar PIN ta bolun", "lang": "en"}).json()
     assert d["risk"] == "high" and d["source"] == "rules" and "429" in d["ai_error"]
 
@@ -341,3 +344,60 @@ def test_voice_sends_audio_to_gemini(monkeypatch):
     assert r["transcript"] == "আপনার পিন বলুন"
     part = sent["body"]["contents"][0]["parts"][0]["inline_data"]
     assert part["mime_type"] == "audio/wav" and "responseMimeType" not in sent["body"]["generationConfig"]
+
+
+# ------------------------------------------------------- AI busy: retry, fallback model, friendly message
+class _Resp:
+    def __init__(self, code, text='{"risk": "high"}'):
+        self.status_code, self._text = code, text
+    def json(self):
+        if self.status_code == 200:
+            return {"candidates": [{"content": {"parts": [{"text": self._text}]}}]}
+        return {"error": {"message": "This model is currently experiencing high demand."}}
+
+
+def _gemini_env(monkeypatch, codes):
+    import httpx
+    from app import llm
+    calls = []
+
+    def fake_post(url, json, timeout, headers):
+        calls.append(url.split("/models/")[1].split(":")[0])
+        return _Resp(codes[len(calls) - 1] if len(calls) <= len(codes) else codes[-1])
+
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.delenv("MOCK_LLM", raising=False)
+    monkeypatch.delenv("GEMINI_FALLBACK_MODEL", raising=False)
+    monkeypatch.setattr(httpx, "post", fake_post)
+    monkeypatch.setattr(llm.time, "sleep", lambda s: None)
+    return calls
+
+
+def test_busy_then_ok_retries_same_model(monkeypatch):
+    from app import llm
+    calls = _gemini_env(monkeypatch, [503, 200])
+    assert llm.complete("pretx", "s", "u") == '{"risk": "high"}'
+    assert calls == ["gemini-3.5-flash-lite", "gemini-3.5-flash-lite"]
+
+
+def test_busy_twice_uses_fallback_model(monkeypatch):
+    from app import llm
+    calls = _gemini_env(monkeypatch, [503, 503, 200])
+    assert llm.complete("pretx", "s", "u") == '{"risk": "high"}'
+    assert calls == ["gemini-3.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]
+
+
+def test_all_busy_gives_friendly_proof_message(monkeypatch):
+    calls = _gemini_env(monkeypatch, [503])
+    r = client.post("/api/proof", data={"expected_amount": "1000"},
+                    files={"image": ("s.png", _png("PicsArt"), "image/png")}).json()
+    assert r["needs_manual"] is True and "busy" in r["error"] and r["error_bn"]
+    assert r["image"]["editor"] == "PicsArt" and len(calls) == 4
+
+
+def test_bad_request_is_not_retried(monkeypatch):
+    from app import llm
+    calls = _gemini_env(monkeypatch, [400])
+    with pytest.raises(RuntimeError):
+        llm.complete("pretx", "s", "u")
+    assert len(calls) == 1

@@ -57,6 +57,7 @@ Open http://localhost:8000. Without a key it runs in rules mode, fully offline. 
 |---|---|
 | `GEMINI_API_KEY` | Enables AI via Google Gemini (used first if set) |
 | `GEMINI_MODEL` | Default `gemini-3.5-flash-lite` |
+| `GEMINI_FALLBACK_MODEL` | Tried when the main model is overloaded (default `gemini-3.8-flash`; empty to disable) |
 | `ANTHROPIC_API_KEY`, `SHIELD_MODEL` | Alternative AI provider (Claude) |
 | `RATE_LIMIT` | AI-backed requests per IP per minute (default 20) |
 

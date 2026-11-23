@@ -93,6 +93,18 @@ GRADE_SYSTEM = (
 DHAKA = timezone(timedelta(hours=6))  # Bangladesh has no daylight saving; avoids needing tzdata
 
 
+BUSY_EN = "The AI is busy right now (Google's servers are overloaded). Try again in a minute, or type the details by hand below."
+BUSY_BN = "এআই এখন ব্যস্ত (গুগলের সার্ভারে চাপ বেশি)। এক মিনিট পর আবার চেষ্টা করুন, অথবা নিচে তথ্য নিজে লিখুন।"
+
+
+def ai_error(e: Exception):
+    """A short message for people, in English and Bangla."""
+    if isinstance(e, llm.AIBusy):
+        return BUSY_EN, BUSY_BN
+    return (f"The AI could not read the screenshot ({str(e)[:90]}). Type the details by hand below.",
+            "এআই স্ক্রিনশট পড়তে পারেনি। নিচে তথ্য নিজে লিখুন।")
+
+
 def dhaka_now() -> datetime:
     return datetime.now(DHAKA).replace(tzinfo=None)
 
@@ -192,6 +204,8 @@ async def voice(audio: UploadFile = File(...), lang: str = Form("en")):
     try:
         text = llm.complete("transcribe", TRANSCRIBE_SYSTEM, f"Transcribe this voice note. {hint}",
                             image=(data, media), max_tokens=1000)
+    except llm.AIBusy:
+        raise HTTPException(503, BUSY_EN.split(" Try")[0] + " Try again in a minute.")
     except Exception as e:  # noqa: BLE001
         raise HTTPException(502, f"Voice-to-text failed: {str(e)[:120]}")
     text = re.sub(r"\s+", " ", (text or "").strip().strip('"').strip())[:4000]
@@ -213,7 +227,7 @@ async def proof_check(
     except json.JSONDecodeError:
         manual_fields = {}
     extracted: dict = {}
-    extract_error = None
+    extract_error = extract_error_bn = None
     meta = None
 
     if image is not None and image.filename:
@@ -232,10 +246,11 @@ async def proof_check(
                 extracted = llm.extract_json(llm.complete(
                     "extract", proof.EXTRACT_SYSTEM,
                     "Read this payment screenshot and return the JSON described.", image=(data, media)))
-            except Exception as e:
-                extract_error = str(e)[:160]
+            except Exception as e:  # noqa: BLE001
+                extract_error, extract_error_bn = ai_error(e)
         else:
             extract_error = "AI reading is off (no API key). Enter the fields by hand."
+            extract_error_bn = "এআই চালু নেই। তথ্য নিজে লিখুন।"
 
     # fields typed by the seller win over what the image reading produced
     for k in ("amount", "trx_id", "sender", "recipient", "datetime"):
@@ -244,7 +259,8 @@ async def proof_check(
             extracted[k] = to_number(str(v)) if k == "amount" else v
 
     if not extracted:
-        out = {"needs_manual": True, "error": extract_error or "Upload a screenshot or enter the fields by hand."}
+        out = {"needs_manual": True, "error": extract_error or "Upload a screenshot or enter the fields by hand.",
+               "error_bn": extract_error_bn or "স্ক্রিনশট দিন অথবা তথ্য নিজে লিখুন।"}
         if meta:
             out["image"] = {k: meta[k] for k in ("format", "width", "height", "editor")}
         return out
@@ -258,6 +274,7 @@ async def proof_check(
     if meta:
         res["image"] = {k: meta[k] for k in ("format", "width", "height", "editor")}
     res["extract_error"] = extract_error
+    res["extract_error_bn"] = extract_error_bn
     res["needs_manual"] = False
     res["read_by_ai"] = bool(image is not None and image.filename and not extract_error)
     return res
@@ -361,6 +378,8 @@ def trainer_chat(body: ChatIn):
     user = (_transcript(body.history) or "(the conversation has not started: write your opening message)") + "\nSCAMMER:"
     try:
         text = llm.complete("trainer_chat", system, user, max_tokens=200).strip()
+    except llm.AIBusy:
+        raise HTTPException(503, "The AI is busy right now. Try again in a minute, or play a scripted scenario.")
     except Exception as e:
         raise HTTPException(502, f"AI call failed: {str(e)[:120]}")
     return {"text": re.sub(r"^SCAMMER:\s*", "", text)}
