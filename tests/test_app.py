@@ -434,6 +434,7 @@ def _gemini_env(monkeypatch, codes):
     monkeypatch.delenv("GEMINI_FALLBACK_MODEL", raising=False)
     monkeypatch.setattr(httpx, "post", fake_post)
     monkeypatch.setattr(llm.time, "sleep", lambda s: None)
+    llm._CACHE.clear()
     return calls
 
 
@@ -444,11 +445,11 @@ def test_busy_then_ok_retries_same_model(monkeypatch):
     assert calls == ["gemini-3.5-flash-lite", "gemini-3.5-flash-lite"]
 
 
-def test_busy_twice_uses_fallback_model(monkeypatch):
+def test_busy_three_times_uses_fallback_model(monkeypatch):
     from app import llm
-    calls = _gemini_env(monkeypatch, [503, 503, 200])
+    calls = _gemini_env(monkeypatch, [503, 503, 503, 200])
     assert llm.complete("pretx", "s", "u") == '{"risk": "high"}'
-    assert calls == ["gemini-3.5-flash-lite", "gemini-3.5-flash-lite", "gemini-3.8-flash"]
+    assert calls == ["gemini-3.5-flash-lite"] * 3 + ["gemini-3.8-flash"]
 
 
 def test_all_busy_gives_friendly_proof_message(monkeypatch):
@@ -456,7 +457,7 @@ def test_all_busy_gives_friendly_proof_message(monkeypatch):
     r = client.post("/api/proof", data={"expected_amount": "1000"},
                     files={"image": ("s.png", _png("PicsArt"), "image/png")}).json()
     assert r["needs_manual"] is True and "busy" in r["error"] and r["error_bn"]
-    assert r["image"]["editor"] == "PicsArt" and len(calls) == 4
+    assert r["image"]["editor"] == "PicsArt" and len(calls) == 6  # 3 tries on each of 2 models
 
 
 def test_bad_request_is_not_retried(monkeypatch):

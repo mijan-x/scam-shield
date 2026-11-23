@@ -5,10 +5,12 @@ enable AI features. If both are set, Gemini is used. Without either the app stil
 "rules mode": rules-based message check, manual fields for the Payment Proof Check
 and the scripted Scam Trainer. Set MOCK_LLM=1 to develop without any key.
 """
+import hashlib
 import json
 import os
 import time
 import re
+from collections import OrderedDict
 from typing import Optional, Tuple
 
 MODEL = os.getenv("SHIELD_MODEL", "claude-sonnet-5-5")
@@ -96,16 +98,55 @@ def _mock(task: str, user: str) -> str:
     return "{}"
 
 
+_CACHE: "OrderedDict[str, Tuple[float, str]]" = OrderedDict()
+CACHE_SIZE, CACHE_TTL = 256, 6 * 3600
+
+
+def _cache_key(task, system, user, image) -> str:
+    h = hashlib.sha256()
+    for part in (task, system, user):
+        h.update(part.encode("utf-8", "replace") + b"\0")
+    if image:
+        h.update(image[0])
+    return h.hexdigest()
+
+
 def complete(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]] = None,
              max_tokens: int = 1200) -> str:
-    """Return the model's text reply. `image` is (bytes, media_type): an image, or audio for Gemini."""
+    """Return the model's text reply. `image` is (bytes, media_type): an image, or audio for Gemini.
+
+    The same request (same screenshot, same message) is answered from a short memory instead of
+    calling the AI again, which saves the free-tier quota when a demo repeats an example."""
     if os.getenv("MOCK_LLM") == "1":
         return _mock(task, user)
-    p = provider()
-    if p is None:
+    if provider() is None:
         raise RuntimeError("No GEMINI_API_KEY or ANTHROPIC_API_KEY set")
-    if p == "gemini":
-        return _gemini(task, system, user, image, max_tokens)
+    key = _cache_key(task, system, user, image)
+    hit = _CACHE.get(key)
+    if hit and time.time() - hit[0] < CACHE_TTL:
+        _CACHE.move_to_end(key)
+        return hit[1]
+    text = _complete(task, system, user, image, max_tokens)
+    if text and text.strip():
+        _CACHE[key] = (time.time(), text)
+        while len(_CACHE) > CACHE_SIZE:
+            _CACHE.popitem(last=False)
+    return text
+
+
+def _complete(task, system, user, image, max_tokens) -> str:
+    if provider() == "gemini":
+        try:
+            return _gemini(task, system, user, image, max_tokens)
+        except AIBusy:
+            # Claude as a backup when both keys are set (it cannot take audio)
+            if os.getenv("ANTHROPIC_API_KEY") and task != "transcribe":
+                return _claude(system, user, image, max_tokens)
+            raise
+    return _claude(system, user, image, max_tokens)
+
+
+def _claude(system, user, image, max_tokens) -> str:
     import base64
     import anthropic
 
@@ -118,16 +159,50 @@ def complete(task: str, system: str, user: str, image: Optional[Tuple[bytes, str
             "source": {"type": "base64", "media_type": media_type, "data": base64.b64encode(data).decode()},
         })
     content.append({"type": "text", "text": user})
-    msg = client.messages.create(
-        model=MODEL, max_tokens=max_tokens, system=system,
-        messages=[{"role": "user", "content": content}],
-    )
+    try:
+        msg = client.messages.create(
+            model=MODEL, max_tokens=max_tokens, system=system,
+            messages=[{"role": "user", "content": content}],
+        )
+    except anthropic.APIStatusError as e:
+        if e.status_code in TRANSIENT or e.status_code == 529:
+            raise AIBusy(f"Claude error {e.status_code}") from e
+        raise
+    except anthropic.APIConnectionError as e:
+        raise AIBusy("Claude connection problem") from e
     return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
 
 
+def _fallbacks() -> list:
+    """Gemini models to try, in order: the main model, then GEMINI_FALLBACK_MODEL (comma-separated)."""
+    models = [model_name()]
+    for m in os.getenv("GEMINI_FALLBACK_MODEL", GEMINI_FALLBACK_DEFAULT).split(","):
+        m = m.strip()
+        if m and m not in models:
+            models.append(m)
+    return models
+
+
+def _retry_delay(r) -> Optional[float]:
+    """Seconds Google asks us to wait (Retry-After header or RetryInfo), if it says."""
+    try:
+        if r.headers.get("retry-after"):
+            return float(r.headers["retry-after"])
+        for d in r.json().get("error", {}).get("details", []):
+            if str(d.get("retryDelay", "")).endswith("s"):
+                return float(d["retryDelay"][:-1])
+    except (ValueError, TypeError, AttributeError):
+        pass
+    return None
+
+
 def _gemini(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]], max_tokens: int) -> str:
-    """Call the Gemini REST API directly (no extra SDK needed)."""
+    """Call the Gemini REST API directly (no extra SDK needed).
+
+    Busy answers (429/5xx) are retried with growing waits, then the next model is tried, all
+    inside a time budget (AI_TIME_BUDGET seconds, default 30) so the page never hangs."""
     import base64
+    import random
     import httpx
 
     parts = []
@@ -144,19 +219,22 @@ def _gemini(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]
         "contents": [{"role": "user", "parts": parts}],
         "generationConfig": config,
     }
-    models = [model_name()]
-    fallback = os.getenv("GEMINI_FALLBACK_MODEL", GEMINI_FALLBACK_DEFAULT).strip()
-    if fallback and fallback not in models:
-        models.append(fallback)
     headers = {"x-goog-api-key": os.environ["GEMINI_API_KEY"]}
+    deadline = time.monotonic() + float(os.getenv("AI_TIME_BUDGET", "30"))
+    waits = (1.0, 2.5)  # waits before the 2nd and 3rd try of the same model
     last: Exception = AIBusy("Gemini is unavailable")
+    was_busy = False
+    models = _fallbacks()
     for n, model in enumerate(models):
-        for attempt in range(2):  # one quick retry per model on a busy answer
+        for attempt in range(len(waits) + 1):
+            left = deadline - time.monotonic()
+            if left < 3:
+                raise last if was_busy else AIBusy("Gemini took too long")
             try:
-                r = httpx.post(GEMINI_URL.format(model=model), json=body, timeout=30.0, headers=headers)
-            except httpx.TimeoutException:
-                last = AIBusy("Gemini timed out")
-                break
+                r = httpx.post(GEMINI_URL.format(model=model), json=body, timeout=min(30.0, left), headers=headers)
+            except (httpx.TimeoutException, httpx.TransportError) as e:
+                last, was_busy = AIBusy(f"Gemini connection problem: {type(e).__name__}"), True
+                break  # a slow model: try the next one
             if r.status_code == 200:
                 return _gemini_text(r.json())
             try:
@@ -164,14 +242,19 @@ def _gemini(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]
             except ValueError:
                 msg = r.text
             if r.status_code in TRANSIENT:
-                last = AIBusy(f"Gemini error {r.status_code}: {msg[:150]}")
-                if attempt == 0:
-                    time.sleep(1.0)
-                    continue
-                break  # still busy: move on to the fallback model
-            if r.status_code == 404 and n + 1 < len(models):
-                last = RuntimeError(f"Gemini error 404: {msg[:150]}")
-                break  # model not available on this key: try the fallback
+                last, was_busy = AIBusy(f"Gemini error {r.status_code} on {model}: {msg[:150]}"), True
+                if "per day" in msg.lower() or attempt == len(waits):
+                    break  # daily quota used up, or still busy: move on to the next model
+                wait = _retry_delay(r) or waits[attempt] * (1 + random.random() * 0.3)
+                if wait > 8 or wait > deadline - time.monotonic() - 3:
+                    break  # asked to wait too long: the next model is quicker
+                time.sleep(wait)
+                continue
+            if r.status_code == 404:
+                if n + 1 < len(models):
+                    break  # model not available on this key: try the next one
+                if was_busy:
+                    raise last  # an earlier model was only busy
             raise RuntimeError(f"Gemini error {r.status_code}: {msg[:150]}")
     raise last
 
