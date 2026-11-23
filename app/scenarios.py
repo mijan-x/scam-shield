@@ -158,6 +158,66 @@ SCENARIOS = [
             },
         ],
     },
+    {
+        "id": "task",
+        "title_en": "The 'like videos and earn' job",
+        "title_bn": "'ভিডিও লাইক দিয়ে আয়' চাকরির ফাঁদ",
+        "intro_en": "A stranger messages you on WhatsApp offering part-time work: like YouTube videos and get paid. It sounds easy.",
+        "intro_bn": "হোয়াটসঅ্যাপে অচেনা কেউ পার্ট-টাইম কাজের প্রস্তাব দিল: ইউটিউব ভিডিও লাইক দিলেই টাকা। শুনতে খুব সহজ।",
+        "red_flags_en": ["Easy money for simple tasks", "A small first payout to win your trust",
+                         "You must deposit money to 'unlock' bigger tasks", "Pressure to pay more to get your money back"],
+        "red_flags_bn": ["সহজ কাজে সহজ আয়", "বিশ্বাস জেতাতে প্রথমে অল্প টাকা দেওয়া",
+                         "বড় টাস্ক 'আনলক' করতে টাকা জমা দিতে বলা", "আগের টাকা ফেরত পেতে আরও টাকা দেওয়ার চাপ"],
+        "safe_en": "Real jobs never ask you to pay to start or to unlock tasks. Stop at the first deposit request, do not send more to 'recover' money, and report the number.",
+        "safe_bn": "সত্যিকারের কাজে শুরু করতে বা টাস্ক আনলক করতে টাকা দিতে হয় না। প্রথমবার টাকা চাইলেই থামুন, হারানো টাকা ফেরত পেতে আর টাকা পাঠাবেন না, নম্বরটি রিপোর্ট করুন।",
+        "steps": [
+            {
+                "scammer_en": "Hi! Our company pays Tk 50 for every YouTube video you like. Like these 3 videos, send screenshots, and I'll pay you Tk 150 right now on bKash.",
+                "scammer_bn": "হাই! আমাদের কোম্পানি প্রতিটি ইউটিউব ভিডিও লাইকের জন্য ৫০ টাকা দেয়। এই ৩টি ভিডিও লাইক দিয়ে স্ক্রিনশট পাঠান, এখনই বিকাশে ১৫০ টাকা দিচ্ছি।",
+                "choices": [
+                    _c("a", "Do it. Free money, what could go wrong?", "করে ফেলি। ফ্রি টাকা, সমস্যা কী?", 0,
+                       "Risky. The free money is bait to make you trust them before they ask for a deposit.",
+                       "ঝুঁকিপূর্ণ। ফ্রি টাকাটা টোপ, যাতে পরে টাকা চাইলে আপনি বিশ্বাস করেন।"),
+                    _c("b", "Ask which company this is and look it up first.", "কোন কোম্পানি জিজ্ঞেস করে আগে খোঁজ নিই।", 1,
+                       "Good instinct, but scammers have ready-made fake company names and pages.",
+                       "ভালো চিন্তা, তবে প্রতারকদের কাছে বানানো কোম্পানির নাম ও পেজ তৈরি থাকে।"),
+                    _c("c", "Ignore it. Real employers don't pay strangers for likes on WhatsApp.", "উত্তর দিই না। আসল কোম্পানি হোয়াটসঅ্যাপে লাইকের জন্য টাকা দেয় না।", 2,
+                       "Correct. An unsolicited offer of easy money is the first warning sign.",
+                       "ঠিক। নিজে থেকে আসা সহজ আয়ের প্রস্তাবই প্রথম সতর্কসংকেত।"),
+                ],
+            },
+            {
+                "scammer_en": "See, you got Tk 150! Now join our Telegram VIP group for bigger tasks. To unlock them, deposit Tk 1,000. You'll earn Tk 3,000 back today.",
+                "scammer_bn": "দেখলেন তো, ১৫০ টাকা পেয়েছেন! এবার বড় টাস্কের জন্য আমাদের টেলিগ্রাম ভিআইপি গ্রুপে আসুন। আনলক করতে ১,০০০ টাকা জমা দিন, আজই ৩,০০০ টাকা ফেরত পাবেন।",
+                "choices": [
+                    _c("a", "Deposit Tk 1,000. They already paid me, so it must be real.", "১,০০০ টাকা জমা দিই। ওরা তো আগে টাকা দিয়েছে, তাই আসল।", 0,
+                       "This is the trap. The small payout was made to get this much bigger deposit.",
+                       "এটাই ফাঁদ। এই বড় জমার জন্যই আগে অল্প টাকা দেওয়া হয়েছিল।"),
+                    _c("b", "Refuse: a job that needs a deposit is not a job. Stop here.", "না বলি: যে কাজে টাকা জমা দিতে হয় তা চাকরি নয়। এখানেই থামি।", 2,
+                       "Correct. Paying to unlock work is the core of a task scam.",
+                       "ঠিক। কাজ আনলক করতে টাকা দেওয়াই টাস্ক স্ক্যামের মূল কৌশল।"),
+                    _c("c", "Deposit a smaller amount, like Tk 200, to test it.", "পরীক্ষা করতে অল্প, ধরুন ২০০ টাকা দিই।", 1,
+                       "Less loss, but any deposit tells them you will pay more next time.",
+                       "ক্ষতি কম, তবে যেকোনো জমা তাদের জানিয়ে দেয় যে আপনি আবার টাকা দেবেন।"),
+                ],
+            },
+            {
+                "scammer_en": "Your account is frozen because the task was not finished. Deposit Tk 5,000 more to release your Tk 4,000 balance, or you lose everything!",
+                "scammer_bn": "টাস্ক শেষ না হওয়ায় আপনার একাউন্ট ফ্রিজ হয়েছে। আপনার ৪,০০০ টাকা ছাড়াতে আরও ৫,০০০ টাকা জমা দিন, নইলে সব হারাবেন!",
+                "choices": [
+                    _c("a", "Pay Tk 5,000 to get my money back.", "টাকা ফেরত পেতে ৫,০০০ টাকা দিই।", 0,
+                       "This never ends: each payment brings a new 'fee'. The balance on the screen is not real money.",
+                       "এর শেষ নেই: প্রতিবার টাকা দিলে নতুন 'ফি' আসে। স্ক্রিনের ব্যালেন্স আসল টাকা নয়।"),
+                    _c("b", "Argue and ask them to release it for free.", "তর্ক করে বিনা টাকায় ছাড়তে বলি।", 1,
+                       "They will not. Stop talking to them and report it instead.",
+                       "তারা ছাড়বে না। কথা বন্ধ করে বরং রিপোর্ট করুন।"),
+                    _c("c", "Stop paying, keep the chat as evidence, and report the number and group.", "আর টাকা দিই না, চ্যাট প্রমাণ হিসেবে রাখি, নম্বর ও গ্রুপ রিপোর্ট করি।", 2,
+                       "Correct. Accept the loss so far, and do not send more to 'recover' it.",
+                       "ঠিক। এ পর্যন্ত ক্ষতি মেনে নিন, 'ফেরত পেতে' আর টাকা পাঠাবেন না।"),
+                ],
+            },
+        ],
+    },
 ]
 
 BY_ID = {s["id"]: s for s in SCENARIOS}
@@ -166,4 +226,5 @@ PERSONA = {
     "refund": "someone who claims to have sent money to the player's mobile-money account by mistake and wants it back",
     "care": "a fake mobile-money customer-care agent who threatens to block the player's account",
     "proof": "a buyer who claims to have paid for goods and shows a screenshot, pressing the player to ship quickly",
+    "task": "a recruiter offering easy online money for liking videos, who later demands deposits to 'unlock' tasks or release a frozen balance",
 }
