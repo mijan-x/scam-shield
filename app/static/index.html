@@ -65,9 +65,10 @@
         <p class="fine" style="margin-top:12px" data-t="optHint">Only have the screenshot? That works. Filling these in makes the check stronger.</p>
         <div class="grid2" style="margin-top:8px">
           <label><span data-t="expAmount">Amount you expected (Tk)</span><input id="pAmount" inputmode="decimal" autocomplete="off" placeholder="3500"></label>
-          <label><span data-t="expRecipient">Your bKash/Nagad number</span><input id="pRecipient" inputmode="tel" autocomplete="off" placeholder="01XXXXXXXXX"></label>
-          <label><span data-t="chatTime">About when the buyer paid (rough is fine)</span><input id="pChat" type="datetime-local"></label>
           <label><span data-t="orderRef">Order name or number</span><input id="pOrder" autocomplete="off" placeholder="Order 101"></label>
+          <label><span data-t="expRecipient">Your number (receives the money)</span><input id="pRecipient" inputmode="tel" autocomplete="off" placeholder="01XXXXXXXXX"></label>
+          <label><span data-t="expSender">Buyer's number (pays the money)</span><input id="pBuyer" inputmode="tel" autocomplete="off" data-tp="optional" placeholder="Optional"></label>
+          <label class="span2"><span data-t="chatTime">About when the buyer paid (rough is fine)</span><input id="pChat" type="datetime-local"></label>
         </div>
 
         <details class="manual">
@@ -76,8 +77,9 @@
           <div class="grid2">
             <label><span data-t="mAmount">Amount shown</span><input id="mAmount" inputmode="decimal" autocomplete="off"></label>
             <label><span data-t="mTrx">Transaction ID (TrxID)</span><input id="mTrx" autocomplete="off" class="mono"></label>
-            <label><span data-t="mRecipient">Number it was sent to</span><input id="mRecipient" inputmode="tel" autocomplete="off"></label>
-            <label><span data-t="mTime">Time shown</span><input id="mTime" type="datetime-local"></label>
+            <label><span data-t="mRecipient">Receiver on screenshot</span><input id="mRecipient" inputmode="tel" autocomplete="off"></label>
+            <label><span data-t="mSender">Sender on screenshot</span><input id="mSender" inputmode="tel" autocomplete="off"></label>
+            <label class="span2"><span data-t="mTime">Time shown</span><input id="mTime" type="datetime-local"></label>
           </div>
         </details>
 

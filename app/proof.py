@@ -17,6 +17,10 @@ EXTRACT_SYSTEM = (
     '"datetime": "YYYY-MM-DD HH:MM" (24h)|null, "screen_status": "success|pending|failed|unknown", '
     '"status_bar_visible": bool, "status_bar_time": "HH:MM" (24h)|null, "visual_flags": [short strings], '
     '"edit_suspicion": "low|medium|high", "notes": string}. '
+    "sender is the number or name the money LEFT; recipient is the number or name that RECEIVED it. On a "
+    "'Send Money' or 'Payment' success screen (the payer's phone) the number shown is the recipient. On a "
+    "'Received money' or 'Cash In' screen (the receiver's phone) the number shown is the sender. Copy numbers "
+    "exactly as shown, including masking like 017XXXXX678. "
     "datetime is the transaction time printed on the receipt. screen_status says whether the screen shows a "
     "completed payment. status_bar_visible says whether the phone's own status bar (clock, battery, signal) is "
     "visible at the very top; status_bar_time is the clock shown there, converted to 24h (use the receipt's "
@@ -87,6 +91,26 @@ def image_checks(meta: Optional[dict], order: str, seen_img: Optional[list]) -> 
     return out
 
 
+def num_match(expected_digits: str, raw: Optional[str]):
+    """Does a number shown on a receipt (possibly masked, e.g. 017XXXXX678 or +880...) belong to
+    the expected number? True / False, or None when it cannot be compared."""
+    raw = (raw or "").strip()
+    xr = _digits(raw)
+    if not expected_digits or not xr:
+        return None
+    if re.search(r"[xX*•●]|\.{2,}|-{2,}", raw) and len(xr) < 11:  # masked
+        tail = re.search(r"(\d+)\D*$", raw)
+        head = re.match(r"^\D*(\d+)", raw)
+        tail = tail.group(1) if tail else ""
+        head = head.group(1) if head else ""
+        if len(tail) < 3:
+            return None
+        head_ok = not head or len(head) < 3 or expected_digits.startswith(head) or ("880" + expected_digits[1:]).startswith(head)
+        return expected_digits.endswith(tail) and head_ok
+    n = min(len(expected_digits), len(xr), 4)
+    return expected_digits[-n:] == xr[-n:]
+
+
 def _ampm_slip(delta: timedelta) -> bool:
     """True when two times are 12 hours apart (within 40 min): a likely AM/PM misread."""
     m = abs(delta.total_seconds()) / 60
@@ -133,37 +157,56 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
             f"Amount in the image is {xa:,.0f} but you expected {ea:,.0f} ({less:,.0f} lower).",
             f"ছবিতে {xa:,.0f} টাকা, কিন্তু আপনি আশা করেছিলেন {ea:,.0f} টাকা ({less:,.0f} টাকা কম)।")
 
-    # 2. recipient (receipts often mask the middle digits, e.g. 017XXXXX678)
-    er = _digits(expected.get("recipient"))
-    raw_r = (extracted.get("recipient") or "").strip()
-    xr = _digits(raw_r)
-    if er and raw_r:
-        tail = re.search(r"(\d+)\D*$", raw_r)
-        head = re.match(r"^\D*(\d+)", raw_r)
-        tail = tail.group(1) if tail else ""
-        head = head.group(1) if head else ""
-        masked = bool(re.search(r"[xX*•●.\-]{2,}|\*", raw_r)) and len(xr) < 11
-        if not xr:
-            add("recipient", "info", f"The receipt shows the recipient as '{raw_r[:40]}', not a number. Check it is you.",
-                f"রসিদে প্রাপক হিসেবে '{raw_r[:40]}' লেখা, নম্বর নয়। এটি আপনি কি না দেখে নিন।")
-        elif masked and len(tail) < 3:
-            add("recipient", "info", "The recipient number is mostly hidden on the receipt, so it could not be compared.",
+    # 2. numbers: the seller's number should be the RECEIVER; the buyer's (optional) the SENDER.
+    # Both numbers on the receipt are looked at, so a swapped reading is explained, not mis-judged.
+    seller = _digits(expected.get("recipient"))
+    buyer = _digits(expected.get("sender"))
+    rec_raw = (extracted.get("recipient") or "").strip()
+    snd_raw = (extracted.get("sender") or "").strip()
+    swapped = bool(seller and buyer and num_match(seller, snd_raw) and num_match(buyer, rec_raw))
+    if swapped:
+        add("recipient", "warn",
+            f"The two numbers are the wrong way round: your number is shown as the sender ({snd_raw}) and the buyer's as "
+            f"the receiver ({rec_raw}). Either this screen shows money going from you to the buyer, or the receipt was read "
+            "the wrong way round. Check in your own app before shipping.",
+            f"নম্বর দুটো উল্টো: আপনার নম্বর প্রেরক ({snd_raw}) আর ক্রেতার নম্বর প্রাপক ({rec_raw}) হিসেবে দেখাচ্ছে। "
+            "হয় এই স্ক্রিনে আপনার কাছ থেকে ক্রেতার কাছে টাকা যাচ্ছে, নয়তো রসিদ উল্টো পড়া হয়েছে। পাঠানোর আগে নিজের অ্যাপে দেখুন।")
+    if seller and not swapped:
+        as_rec, as_snd = num_match(seller, rec_raw), num_match(seller, snd_raw)
+        if as_rec:
+            add("recipient", "ok", f"Your number is the receiver ({rec_raw}).", f"আপনার নম্বরই প্রাপক ({rec_raw})।")
+        elif as_snd:
+            add("recipient", "warn",
+                f"Your number appears as the SENDER ({snd_raw}), not the receiver. Either this screen shows money leaving "
+                "your account, or the numbers were read the wrong way round. Check in your own app.",
+                f"আপনার নম্বর প্রেরক হিসেবে দেখাচ্ছে ({snd_raw}), প্রাপক হিসেবে নয়। হয় এই স্ক্রিনে আপনার অ্যাকাউন্ট থেকে টাকা যাচ্ছে, "
+                "নয়তো নম্বর দুটো উল্টো পড়া হয়েছে। নিজের অ্যাপে দেখে নিন।")
+        elif as_rec is False:
+            add("recipient", "fail",
+                f"The money went to {rec_raw}, which is not your number.",
+                f"টাকা গেছে {rec_raw} নম্বরে, যা আপনার নম্বর নয়।")
+        elif rec_raw and not _digits(rec_raw):
+            add("recipient", "info", f"The receiver is shown as '{rec_raw[:40]}', not a number. Check it is you.",
+                f"প্রাপক হিসেবে '{rec_raw[:40]}' লেখা, নম্বর নয়। এটি আপনি কি না দেখে নিন।")
+        elif rec_raw:
+            add("recipient", "info", "The receiver number is mostly hidden on the receipt, so it could not be compared.",
                 "রসিদে প্রাপকের নম্বরের বেশিরভাগ লুকানো, তাই মেলানো যায়নি।")
-        elif masked:
-            ok = er.endswith(tail) and (not head or len(head) < 3 or er.startswith(head) or ("880" + er[1:]).startswith(head))
-            if ok:
-                add("recipient", "ok", f"The visible digits of the recipient number match yours (…{tail}).",
-                    f"প্রাপকের নম্বরের দেখা যাওয়া অংশ আপনার নম্বরের সঙ্গে মিলেছে (…{tail})।")
-            else:
-                add("recipient", "fail", "The recipient in the image is not your number.", "ছবির প্রাপকের নম্বর আপনার নম্বর নয়।")
         else:
-            n = min(len(er), len(xr), 4)
-            if er[-n:] == xr[-n:]:
-                add("recipient", "ok", "Recipient number matches.", "প্রাপকের নম্বর মিলেছে।")
-            else:
-                add("recipient", "fail", "The recipient in the image is not your number.", "ছবির প্রাপকের নম্বর আপনার নম্বর নয়।")
-    elif er and not raw_r:
-        add("recipient", "warn", "The recipient could not be read from the image.", "ছবি থেকে প্রাপকের নম্বর পড়া যায়নি।")
+            add("recipient", "warn", "The receiver number could not be read from the image.", "ছবি থেকে প্রাপকের নম্বর পড়া যায়নি।")
+    if buyer and not swapped:
+        b_snd, b_rec = num_match(buyer, snd_raw), num_match(buyer, rec_raw)
+        if b_snd:
+            add("sender", "ok", f"Paid from the buyer's number ({snd_raw}).", f"ক্রেতার নম্বর থেকেই পাঠানো হয়েছে ({snd_raw})।")
+        elif b_rec and not seller:
+            add("sender", "warn", "The buyer's number appears as the receiver, not the sender. The numbers may have been read the wrong way round.",
+                "ক্রেতার নম্বর প্রাপক হিসেবে দেখাচ্ছে, প্রেরক হিসেবে নয়। নম্বর দুটো উল্টো পড়া হয়ে থাকতে পারে।")
+        elif b_snd is False:
+            add("sender", "warn",
+                f"Paid from {snd_raw}, not the buyer's number. That can be fine (a family member's account), but ask the buyer.",
+                f"পাঠানো হয়েছে {snd_raw} থেকে, ক্রেতার নম্বর থেকে নয়। পরিবারের কারও অ্যাকাউন্ট হলে ঠিক আছে, তবে ক্রেতাকে জিজ্ঞেস করুন।")
+        else:
+            add("sender", "info", "The sender's number is not shown on this receipt, so the buyer's number was not compared.",
+                "এই রসিদে প্রেরকের নম্বর নেই, তাই ক্রেতার নম্বর মেলানো যায়নি।")
 
     # 3. time. People pay a few minutes after saying "sent", sellers type the time roughly,
     # and 12-hour clocks get misread, so only clear contradictions count against the payment.
@@ -272,7 +315,7 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
     fails = [c for c in checks if c["status"] == "fail"]
     warns = [c for c in checks if c["status"] == "warn" and c["id"] != "visual"]
     ai_warn = any(c["id"] == "visual" and c["status"] == "warn" for c in checks)
-    compared = any(expected.get(k) for k in ("amount", "recipient", "chat_time"))
+    compared = any(expected.get(k) for k in ("amount", "recipient", "sender", "chat_time"))
     status_of = {c["id"]: c["status"] for c in checks}
     # the hard facts the seller gave us all line up
     strong_match = status_of.get("amount") == "ok" and status_of.get("recipient", "ok") == "ok" and not fails

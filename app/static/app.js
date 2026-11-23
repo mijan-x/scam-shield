@@ -24,11 +24,11 @@
       dropTitle: "Add the payment screenshot", dropHelp: "Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.",
       optHint: "Only have the screenshot? That works. Filling these in makes the check stronger.",
       clearForm: "Clear", cleared: "Cleared",
-      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your bKash/Nagad number",
+      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your number (receives the money)", expSender: "Buyer's number (pays the money)", optional: "Optional",
       chatTime: "About when the buyer paid (rough is fine)", orderRef: "Order name or number",
       manual: "Type the screenshot details yourself",
       manualHint: "Use this if you have no screenshot, or to correct what was read. Anything you type here is used instead.",
-      mAmount: "Amount shown", mTrx: "Transaction ID (TrxID)", mRecipient: "Number it was sent to", mTime: "Time shown",
+      mAmount: "Amount shown", mTrx: "Transaction ID (TrxID)", mRecipient: "Receiver on screenshot", mSender: "Sender on screenshot", mTime: "Time shown",
       checkPayment: "Check payment",
       pretxH: "Got a strange call or message?",
       pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
@@ -80,7 +80,7 @@
       freeStart: "Start free chat", send: "Send", end: "End and grade", you: "You", scammer: "Caller",
       typeReply: "Type your reply", grading: "Grading your chat", caught: "You handled well", missed: "You missed", tip: "Tip",
       excellent: "Strong. You spotted the traps.", okay: "Mixed. Replay and try the safer choices.", weak: "Risky. Read the warning signs and try again.",
-      f_amount: "Amount", f_trx_id: "TrxID", f_sender: "Sender", f_recipient: "Sent to", f_datetime: "Time", f_provider: "Provider",
+      f_amount: "Amount", f_trx_id: "TrxID", f_sender: "From (payer)", f_recipient: "To (receiver)", f_datetime: "Time", f_provider: "Provider",
       i_format: "Format", i_size: "Size", i_editor: "Editing app",
       m_set: "Set", m_dev: "Tuning set", m_holdout: "Unseen set", m_caught: "Scams flagged", m_false: "Real messages wrongly flagged",
       m_note: "These are our own small test sets (Bangla, English, Banglish). We tuned the patterns on the tuning set only. Treat this as a sanity check, not a benchmark.",
@@ -100,11 +100,11 @@
       dropTitle: "পেমেন্টের স্ক্রিনশট দিন", dropHelp: "এখানে টেনে আনুন, পেস্ট করুন (Ctrl+V), বা ট্যাপ করে বেছে নিন। PNG, JPEG বা WebP, ৪ MB পর্যন্ত।",
       optHint: "শুধু স্ক্রিনশট আছে? তাতেই চলবে। নিচের তথ্যগুলো দিলে যাচাই আরও শক্তিশালী হয়।",
       clearForm: "মুছুন", cleared: "মুছে ফেলা হয়েছে",
-      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার বিকাশ/নগদ নম্বর",
+      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর (যেখানে টাকা আসবে)", expSender: "ক্রেতার নম্বর (যেখান থেকে টাকা যাবে)", optional: "ঐচ্ছিক",
       chatTime: "ক্রেতা আনুমানিক কখন পাঠিয়েছেন", orderRef: "অর্ডারের নাম বা নম্বর",
       manual: "স্ক্রিনশটের তথ্য নিজে লিখুন",
       manualHint: "স্ক্রিনশট না থাকলে, বা পড়া তথ্য ঠিক করতে এটি ব্যবহার করুন। এখানে যা লিখবেন সেটাই ধরা হবে।",
-      mAmount: "স্ক্রিনশটে টাকার পরিমাণ", mTrx: "লেনদেন আইডি (TrxID)", mRecipient: "যে নম্বরে পাঠানো হয়েছে", mTime: "স্ক্রিনশটে সময়",
+      mAmount: "স্ক্রিনশটে টাকার পরিমাণ", mTrx: "লেনদেন আইডি (TrxID)", mRecipient: "স্ক্রিনশটে প্রাপক", mSender: "স্ক্রিনশটে প্রেরক", mTime: "স্ক্রিনশটে সময়",
       checkPayment: "পেমেন্ট যাচাই করুন",
       pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
       pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
@@ -156,7 +156,7 @@
       freeStart: "ফ্রি চ্যাট শুরু", send: "পাঠান", end: "শেষ করে মূল্যায়ন", you: "আপনি", scammer: "কলকারী",
       typeReply: "উত্তর লিখুন", grading: "মূল্যায়ন হচ্ছে", caught: "যা ভালো করেছেন", missed: "যা মিস করেছেন", tip: "পরামর্শ",
       excellent: "চমৎকার। ফাঁদগুলো ধরতে পেরেছেন।", okay: "মিশ্র ফল। আবার খেলে নিরাপদ বিকল্প বেছে দেখুন।", weak: "ঝুঁকিপূর্ণ। বিপদ সংকেতগুলো পড়ে আবার চেষ্টা করুন।",
-      f_amount: "টাকা", f_trx_id: "TrxID", f_sender: "প্রেরক", f_recipient: "প্রাপক", f_datetime: "সময়", f_provider: "প্রতিষ্ঠান",
+      f_amount: "টাকা", f_trx_id: "TrxID", f_sender: "যেখান থেকে (প্রেরক)", f_recipient: "যেখানে (প্রাপক)", f_datetime: "সময়", f_provider: "প্রতিষ্ঠান",
       i_format: "ধরন", i_size: "মাপ", i_editor: "এডিটিং অ্যাপ",
       m_set: "সেট", m_dev: "টিউনিং সেট", m_holdout: "অদেখা সেট", m_caught: "প্রতারণা ধরা পড়েছে", m_false: "আসল মেসেজ ভুল করে সতর্কিত",
       m_note: "এগুলো আমাদের নিজেদের লেখা ছোট পরীক্ষার সেট (বাংলা, ইংরেজি, বাংলিশ)। নিয়মগুলো শুধু টিউনিং সেটে ঠিক করা হয়েছে। এটিকে প্রাথমিক যাচাই হিসেবে দেখুন, মানদণ্ড হিসেবে নয়।",
@@ -634,13 +634,14 @@
   }
   $("#proofForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    var manual = { amount: $("#mAmount").value, trx_id: $("#mTrx").value, recipient: $("#mRecipient").value, datetime: $("#mTime").value };
+    var manual = { amount: $("#mAmount").value, trx_id: $("#mTrx").value, recipient: $("#mRecipient").value, sender: $("#mSender").value, datetime: $("#mTime").value };
     var hasManual = Object.keys(manual).some(function (k) { return manual[k]; });
     if (!pFile && !hasManual) { toast(tr("needInput")); return; }
     var fd = new FormData();
     if (pFile) fd.append("image", pFile, pFile.name || "screenshot.png");
     fd.append("expected_amount", $("#pAmount").value);
     fd.append("expected_recipient", $("#pRecipient").value);
+    fd.append("expected_sender", $("#pBuyer").value);
     fd.append("chat_time", $("#pChat").value);
     fd.append("order_ref", $("#pOrder").value);
     fd.append("manual", JSON.stringify(manual));
@@ -661,7 +662,7 @@
   /* ------------------------------------------------------------ clear buttons */
   $("#pClear").addEventListener("click", function () {
     clearFile();
-    ["#pAmount", "#pRecipient", "#pChat", "#pOrder", "#mAmount", "#mTrx", "#mRecipient", "#mTime"].forEach(function (id) { $(id).value = ""; });
+    ["#pAmount", "#pRecipient", "#pBuyer", "#pChat", "#pOrder", "#mAmount", "#mTrx", "#mRecipient", "#mSender", "#mTime"].forEach(function (id) { $(id).value = ""; });
     $(".manual").open = false;
     delete rerender.proof; empty($("#pOut"), "emptyP");
     toast(tr("cleared")); $("#drop").focus();
