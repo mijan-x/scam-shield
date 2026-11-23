@@ -62,12 +62,12 @@
           </div>
         </div>
 
-        <p class="fine" style="margin-top:12px" data-t="optHint">Only have the screenshot? That works. Filling these in makes the check stronger.</p>
+        <p class="fine" style="margin-top:12px" data-t="optHint">* The buyer's number is required. Everything else is optional, but each detail makes the check stronger.</p>
         <div class="grid2" style="margin-top:8px">
           <label><span data-t="expAmount">Amount you expected (Tk)</span><input id="pAmount" inputmode="decimal" autocomplete="off" placeholder="3500"></label>
           <label><span data-t="orderRef">Order name or number</span><input id="pOrder" autocomplete="off" placeholder="Order 101"></label>
-          <label><span data-t="expRecipient">Your number (receives the money)</span><input id="pRecipient" inputmode="tel" autocomplete="off" placeholder="01XXXXXXXXX"></label>
-          <label><span data-t="expSender">Buyer's number (pays the money)</span><input id="pBuyer" inputmode="tel" autocomplete="off" data-tp="optional" placeholder="Optional"></label>
+          <label><span data-t="expSender">Buyer's number (payer) *</span><input id="pBuyer" inputmode="tel" autocomplete="off" placeholder="01XXXXXXXXX" required aria-required="true" aria-describedby="pBuyerErr"><small id="pBuyerErr" class="field-err" role="alert" hidden></small></label>
+          <label><span data-t="expRecipient">Your number (receiver)</span><input id="pRecipient" inputmode="tel" autocomplete="off" data-tp="optional" placeholder="Optional"></label>
           <label class="span2"><span data-t="chatTime">About when the buyer paid (rough is fine)</span><input id="pChat" type="datetime-local"></label>
         </div>
 

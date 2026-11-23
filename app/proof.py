@@ -39,8 +39,9 @@ EXTRACT_SYSTEM = (
 TRX_RE = re.compile(r"^[A-Z0-9]{8,12}$")
 
 
-def _digits(s: Optional[str]) -> str:
-    return re.sub(r"\D", "", s or "")
+def _digits(s) -> str:
+    """Only the digits of a phone number; Bangla digits become 0-9."""
+    return re.sub(r"\D", "", str(s or "").translate(str.maketrans("০১২৩৪৫৬৭৮৯", "0123456789")))
 
 
 def parse_dt(s: Optional[str]) -> Optional[datetime]:

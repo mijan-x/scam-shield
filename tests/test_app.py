@@ -584,3 +584,9 @@ def test_new_patterns_fire(text, pid):
 ])
 def test_new_patterns_no_false_alarm(text):
     assert rules.analyze(text)["risk"] == "low", rules.analyze(text)["patterns"]
+
+
+def test_bangla_digit_numbers_are_compared_correctly():
+    r, ids = _r3({"recipient": "01712345678", "sender": "01911111111"},
+                 {"recipient": "০১৭১২৩৪৫৬৭৮", "sender": "০১৯১১১১১১১১"})
+    assert ids["recipient"] == "ok" and ids["sender"] == "ok"
