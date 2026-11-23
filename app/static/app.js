@@ -23,6 +23,7 @@
       proofHint: "Upload the buyer's payment screenshot and say what you expected. We compare them and look for signs of editing. Your own bKash or Nagad app is always the final word.",
       dropTitle: "Add the payment screenshot", dropHelp: "Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.",
       optHint: "Only have the screenshot? That works. Filling these in makes the check stronger.",
+      clearForm: "Clear", cleared: "Cleared",
       remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your bKash/Nagad number",
       chatTime: "When the buyer said they paid", orderRef: "Order name or number",
       manual: "Type the screenshot details yourself",
@@ -98,6 +99,7 @@
       proofHint: "ক্রেতার পেমেন্ট স্ক্রিনশট দিন এবং কী আশা করেছিলেন লিখুন। আমরা দুটো মিলিয়ে দেখব এবং এডিটের চিহ্ন খুঁজব। চূড়ান্ত প্রমাণ সবসময় আপনার নিজের বিকাশ বা নগদ অ্যাপ।",
       dropTitle: "পেমেন্টের স্ক্রিনশট দিন", dropHelp: "এখানে টেনে আনুন, পেস্ট করুন (Ctrl+V), বা ট্যাপ করে বেছে নিন। PNG, JPEG বা WebP, ৪ MB পর্যন্ত।",
       optHint: "শুধু স্ক্রিনশট আছে? তাতেই চলবে। নিচের তথ্যগুলো দিলে যাচাই আরও শক্তিশালী হয়।",
+      clearForm: "মুছুন", cleared: "মুছে ফেলা হয়েছে",
       remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার বিকাশ/নগদ নম্বর",
       chatTime: "ক্রেতা কখন পাঠিয়েছেন বলেছেন", orderRef: "অর্ডারের নাম বা নম্বর",
       manual: "স্ক্রিনশটের তথ্য নিজে লিখুন",
@@ -654,6 +656,21 @@
       })
       .catch(function (err) { $("#pOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
       .then(function () { busy(btn, false); });
+  });
+
+  /* ------------------------------------------------------------ clear buttons */
+  $("#pClear").addEventListener("click", function () {
+    clearFile();
+    ["#pAmount", "#pRecipient", "#pChat", "#pOrder", "#mAmount", "#mTrx", "#mRecipient", "#mTime"].forEach(function (id) { $(id).value = ""; });
+    $(".manual").open = false;
+    delete rerender.proof; empty($("#pOut"), "emptyP");
+    toast(tr("cleared")); $("#drop").focus();
+  });
+  $("#tClear").addEventListener("click", function () {
+    if (V.state !== "idle") resetVoice();
+    $("#tText").value = ""; countChars();
+    delete rerender.pretx; empty($("#tOut"), "emptyT");
+    toast(tr("cleared")); $("#tText").focus();
   });
 
   /* ------------------------------------------------------------ trainer */
