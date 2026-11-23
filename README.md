@@ -104,9 +104,9 @@ challenges/        on-site assigned challenges
 
 | Member | GitHub | Role and contribution |
 |---|---|---|
-| Md. Mijanur Rahman | [@mijan-x](https://github.com/mijan-x) | _written by the member_ |
-| Antu Dev Nath | [@Maverick-145](https://github.com/Maverick-145) | _written by the member_ |
-| Md. Hasan ahmed | [@HasanAl-17](https://github.com/HasanAl-17) | _written by the member_ |
+| Md. Mijanur Rahman | [@mijan-x](https://github.com/mijan-x) | **Team leader.** Product direction, AI-assisted development of the app, deployment, and the final demo. |
+| Antu Dev Nath | [@Maverick-145](https://github.com/Maverick-145) | **Detection data and patterns.** Scam message collection, the labelled test sets and the pattern library. |
+| Md. Hasan ahmed | [@HasanAl-17](https://github.com/HasanAl-17) | **Testing and trainer.** Real-receipt testing of Payment proof, and the Scam trainer scenarios. |
 
 Open work for the team is listed in [TEAM_TASKS.md](TEAM_TASKS.md).
 

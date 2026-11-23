@@ -4,10 +4,10 @@ Each task is real work that improves Scam Shield. Do it from **your own GitHub a
 contribution is yours: `git pull --rebase`, make the change, run `python -m pytest -q tests`, commit, push.
 Tick the box in this file in the same commit.
 
-## Everyone (5 minutes)
-- [ ] mijan-x: write your role in the **Team** table in `README.md` (name is done; replace "_written by the member_").
-- [ ] Maverick-145: write your own line in the **Team** table in `README.md`.
-- [ ] HasanAl-17: write your own line in the **Team** table in `README.md`.
+## Roles (done)
+- [x] Roles are in the **Team** table in `README.md`: Md. Mijanur Rahman (team leader), Antu Dev Nath
+      (detection data and patterns), Md. Hasan ahmed (testing and trainer). Edit your own line if you want
+      to reword it.
 
 ## Maverick-145 (Antu Dev Nath): detection data and patterns
 - [ ] **New unseen test messages.** Add 10 scam and 10 genuine messages you have really seen or heard of
@@ -28,7 +28,7 @@ Tick the box in this file in the same commit.
       (scores 2, 1 and 0, with feedback), English and Bangla. Also add a line for it in `PERSONA` so free chat
       works. `python -m pytest -q tests` tells you if anything is missing.
 
-## mijan-x: demo and submission
+## mijan-x (team leader): demo and submission
 - [ ] Rehearse the demo from the demo doc three times; fix anything that feels slow.
 - [ ] Make the repository public before 9:00 AM on 24 Nov.
 - [ ] On the day: create `challenges/<name>/` folders for the assigned challenges, each with a README.
