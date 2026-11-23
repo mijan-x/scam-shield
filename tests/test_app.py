@@ -514,3 +514,39 @@ def _r3(x=None, e=None):
 def test_real_world_cases(x, e, verdict, check, status):
     r, ids = _r3(x, e)
     assert ids[check] == status and r["verdict"] == verdict
+
+
+# ------------------------------------------------------- sender / receiver directions
+@pytest.mark.parametrize("x,e,check,status", [
+    ({"recipient": "01712345678", "sender": "01911111111"}, {"sender": "01911111111"}, "sender", "ok"),
+    ({"recipient": "01712345678", "sender": "01922222222"}, {"sender": "01911111111"}, "sender", "warn"),   # family account
+    ({"recipient": "01712345678", "sender": None}, {"sender": "01911111111"}, "sender", "info"),          # not shown
+    ({"recipient": "01911111111", "sender": "01712345678"}, {}, "recipient", "warn"),                     # seller shown as sender
+    ({"recipient": "01899999999", "sender": None}, {}, "recipient", "fail"),                              # went elsewhere
+    ({"recipient": "019XXXXX111", "sender": "017XXXXX678"}, {}, "recipient", "warn"),                     # masked, swapped
+])
+def test_sender_receiver_directions(x, e, check, status):
+    r, ids = _r3(x, e)
+    assert ids[check] == status
+
+
+def test_wrong_receiver_message_names_the_number():
+    r, _ = _r3({"recipient": "01899999999"})
+    c = next(c for c in r["checks"] if c["id"] == "recipient")
+    assert "01899999999" in c["en"] and "not your number" in c["en"]
+
+
+def test_api_accepts_buyer_number():
+    SEEN_TRX.clear()
+    manual = json.dumps({"amount": "1000", "trx_id": "7Q2W4E6R8T", "recipient": "01712345678",
+                         "sender": "01911111111", "datetime": "2026-11-01T10:00"})
+    r = client.post("/api/proof", data={"expected_amount": "1000", "expected_recipient": "01712345678",
+                                        "expected_sender": "01911111111", "manual": manual}).json()
+    ids = {c["id"]: c["status"] for c in r["checks"]}
+    assert ids["recipient"] == "ok" and ids["sender"] == "ok"
+
+
+def test_fully_swapped_numbers_give_one_clear_warning():
+    r, ids = _r3({"recipient": "01911111111", "sender": "01712345678"}, {"sender": "01911111111"})
+    assert ids["recipient"] == "warn" and "sender" not in ids
+    assert "wrong way round" in next(c["en"] for c in r["checks"] if c["id"] == "recipient")

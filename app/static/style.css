@@ -107,6 +107,7 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus { border-color: var(--blue); outline: none; box-shadow: var(--focus); }
 textarea { resize: vertical; min-height: 150px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.grid2 .span2 { grid-column: 1 / -1; }
 @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
 .manual { margin-top: 16px; border-top: 1px dashed var(--line); padding-top: 12px; }
 .manual summary { cursor: pointer; color: var(--blue); font-weight: 550; }
