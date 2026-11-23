@@ -77,7 +77,10 @@
       libName: "Pattern", libWhy: "What it looks for", libWeight: "Weight",
       linkChecks: "Plus link and number checks: look-alike links, hidden short links, risky domains, and personal numbers posing as customer care.",
       shareTpl: "Scam Shield check: {v}. {why} Check yours at {url}",
-      rate: "Too many checks in a minute. Wait a little and try again."
+      rate: "Too many checks in a minute. Wait a little and try again.",
+      offMode: "Offline: checks on this device", viaOffline: "Checked on this device with our rules (no internet needed)",
+      proofOffline: "Payment checks need internet because the screenshot is read online. Message checks and the trainer work offline.",
+      offH: "Works without internet", offP: "Open Scam Shield once while online and it is saved on your device. After that, message checks and the trainer work with no internet, using the same rules as the server."
     },
     bn: {
       skip: "টুলে যান", title: "স্ক্যাম শিল্ড", subtitle: "পাঠানো, ডেলিভারি বা শেয়ার করার আগে যাচাই করুন",
@@ -140,14 +143,19 @@
       libName: "ধরন", libWhy: "যা খোঁজে", libWeight: "ওজন",
       linkChecks: "সঙ্গে লিংক ও নম্বর যাচাই: নকল লিংক, লুকানো ছোট লিংক, ঝুঁকিপূর্ণ ডোমেইন, এবং কাস্টমার কেয়ার সাজা ব্যক্তিগত নম্বর।",
       shareTpl: "স্ক্যাম শিল্ড যাচাই: {v}। {why} আপনিও যাচাই করুন: {url}",
-      rate: "এক মিনিটে অনেক বেশি যাচাই। একটু অপেক্ষা করে আবার চেষ্টা করুন।"
+      rate: "এক মিনিটে অনেক বেশি যাচাই। একটু অপেক্ষা করে আবার চেষ্টা করুন।",
+      offMode: "অফলাইন: এই ডিভাইসেই যাচাই", viaOffline: "ইন্টারনেট ছাড়াই এই ডিভাইসে আমাদের নিয়ম দিয়ে যাচাই",
+      proofOffline: "পেমেন্ট যাচাইয়ে ইন্টারনেট লাগে, কারণ স্ক্রিনশট অনলাইনে পড়া হয়। মেসেজ যাচাই ও ট্রেনার ইন্টারনেট ছাড়াই চলে।",
+      offH: "ইন্টারনেট ছাড়াও চলে", offP: "অনলাইনে একবার স্ক্যাম শিল্ড খুললেই এটি আপনার ডিভাইসে থেকে যায়। এরপর ইন্টারনেট ছাড়াই মেসেজ যাচাই ও ট্রেনার চলবে, সার্ভারের একই নিয়মে।"
     }
   };
 
   var lang = store.get("lang", "en");
   if (lang !== "en" && lang !== "bn") lang = "en";
   var aiMode = "rules";
-  var scenarios = [], meta = null, metrics = null;
+  var scenarios = store.get("scenarios", []), meta = null, metrics = null;
+  var rulesData = store.get("rules", null);
+  var isOffline = navigator.onLine === false;
   var rerender = {};
   var tr = function (k) { return (T[lang] && T[lang][k]) || T.en[k] || k; };
   var pick = function (o, base) { return o[base + "_" + lang] || o[base + "_en"] || ""; };
@@ -170,8 +178,9 @@
     $$("[data-tp]").forEach(function (el) { el.placeholder = tr(el.getAttribute("data-tp")); });
     var micSpan = $("#tMic span"); if (micSpan) micSpan.textContent = rec ? tr("micStop") : tr("mic");
     var b = $("#aiBadge");
-    b.textContent = aiMode === "live" ? tr("aiOn") : aiMode === "mock" ? tr("aiDemo") : tr("aiOff");
-    b.classList.toggle("on", aiMode === "live");
+    b.textContent = isOffline ? tr("offMode") : aiMode === "live" ? tr("aiOn") : aiMode === "mock" ? tr("aiDemo") : tr("aiOff");
+    b.classList.toggle("on", !isOffline && aiMode === "live");
+    b.classList.toggle("off", isOffline);
     Object.keys(rerender).forEach(function (k) { rerender[k](false); });
     renderHistory("pretx"); renderHistory("proof");
     renderTrainerHome(); renderHow();
@@ -215,7 +224,7 @@
         if (!r.ok) throw new Error(j.detail || ("HTTP " + r.status));
         return j;
       });
-    }, function () { throw new Error(tr("offline")); });
+    }, function () { var e = new Error(tr("offline")); e.offline = true; throw e; });
   }
   function busy(btn, on) { btn.setAttribute("aria-busy", on ? "true" : "false"); btn.disabled = on; }
 
@@ -315,7 +324,7 @@
       h += '<div class="sec"><h3>' + esc(tr("doH")) + '</h3><div class="advice">' + esc(d["advice_" + lang] || d.advice_en) + "</div>";
       if (d.risk !== "low") h += '<p class="fine" style="margin-top:10px">' + esc(tr("hotH")) + "</p>" + hotlinesHtml(d.hotlines);
       h += "</div>" + actionsHtml();
-      h += '<p class="via">' + esc(d.source === "ai+rules" ? tr("viaAI") : tr("viaRules")) +
+      h += '<p class="via">' + esc(d.source === "ai+rules" ? tr("viaAI") : d.source === "offline" ? tr("viaOffline") : tr("viaRules")) +
         (d.ai_error ? " " + esc(tr("aiFail")) : "") + "</p>";
       el.innerHTML = h;
       wireActions(el, function () {
@@ -337,11 +346,24 @@
     var btn = $("#tGo"), text = $("#tText").value.trim();
     if (text.length < 3) { toast(tr("needText")); $("#tText").focus(); return; }
     busy(btn, true);
-    api("/api/pretx", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, lang: lang }) })
-      .then(function (d) {
-        showPretx(d, text);
-        addHistory("pretx", { ts: Date.now(), label: text.slice(0, 60), input: text, res: d });
-      })
+    var done = function (d) {
+      showPretx(d, text);
+      addHistory("pretx", { ts: Date.now(), label: text.slice(0, 60), input: text, res: d });
+    };
+    var local = function () {
+      var d = window.ScamEngine.analyze(text, rulesData);
+      d.source = "offline";
+      d.reasons = d.patterns.map(function (p) { return { en: p.why_en, bn: p.why_bn }; });
+      return d;
+    };
+    var canLocal = !!(rulesData && window.ScamEngine);
+    var run = isOffline && canLocal ? Promise.resolve(local()) :
+      api("/api/pretx", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, lang: lang }) })
+        .catch(function (err) {
+          if (err.offline && canLocal) { setOffline(true); return local(); }
+          throw err;
+        });
+    run.then(done)
       .catch(function (err) { $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
       .then(function () { busy(btn, false); });
   });
@@ -443,6 +465,7 @@
     fd.append("chat_time", $("#pChat").value);
     fd.append("order_ref", $("#pOrder").value);
     fd.append("manual", JSON.stringify(manual));
+    if (isOffline) { $("#pOut").innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + "<p>" + esc(tr("proofOffline")) + "</p></div></div>"; return; }
     var btn = $("#pGo"); busy(btn, true);
     api("/api/proof", { method: "POST", body: fd })
       .then(function (d) {
@@ -590,9 +613,16 @@
   rerender.emptyP = function () { if (!rerender.proof) empty($("#pOut"), "emptyP"); };
   countChars();
   applyLang();
+  function setOffline(v) { if (isOffline !== v) { isOffline = v; applyLang(); } }
+  window.addEventListener("online", function () { setOffline(false); });
+  window.addEventListener("offline", function () { setOffline(true); });
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); });
+  }
   Promise.all([
-    api("/api/status").then(function (s) { aiMode = s.ai; }).catch(function () {}),
-    api("/api/trainer/scenarios").then(function (s) { scenarios = s; }).catch(function () {}),
+    api("/api/status").then(function (s) { aiMode = s.ai; setOffline(false); }).catch(function (e) { if (e.offline) isOffline = true; }),
+    api("/api/rules").then(function (r) { rulesData = r; store.set("rules", r); }).catch(function () {}),
+    api("/api/trainer/scenarios").then(function (s) { scenarios = s; store.set("scenarios", s); }).catch(function () {}),
     api("/api/meta").then(function (m) { meta = m; }).catch(function () {}),
     api("/api/metrics").then(function (m) { metrics = m; }).catch(function () {})
   ]).then(applyLang);

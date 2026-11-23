@@ -246,6 +246,28 @@ def meta_info():
     }
 
 
+_RULES: dict = {}
+
+
+@app.api_route("/api/rules", methods=["GET", "HEAD"])
+def rules_export():
+    """The whole rules engine as data, so the browser can check messages with no internet."""
+    if not _RULES:
+        import hashlib
+        from . import entities
+        from .library import HOTLINES, SAFE_NOTE_BN, SAFE_NOTE_EN
+        data = {
+            "high_at": rules.HIGH_AT, "medium_at": rules.MEDIUM_AT, "max_spans_per_group": rules.MAX_SPANS_PER_GROUP,
+            "patterns": [{k: p[k] for k in ("id", "name_en", "name_bn", "weight", "groups", "unless",
+                                             "why_en", "why_bn", "advice_en", "advice_bn")} for p in PATTERNS],
+            "safe_note_en": SAFE_NOTE_EN, "safe_note_bn": SAFE_NOTE_BN, "hotlines": HOTLINES,
+            "entities": entities.export(),
+        }
+        data["version"] = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:12]
+        _RULES.update(data)
+    return _RULES
+
+
 _METRICS: dict = {}
 
 
