@@ -124,6 +124,20 @@ textarea { resize: vertical; min-height: 150px; }
 .ghost { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--line); border-radius: var(--radius-s); padding: 7px 12px; cursor: pointer; }
 .ghost svg { width: 17px; height: 17px; }
 .ghost.rec { border-color: var(--red); color: var(--red); }
+/* voice recorder */
+.voice { margin-top: 12px; border: 1px solid var(--red); background: var(--red-wash); border-radius: var(--radius-m); padding: 12px 14px; }
+.voice.paused { border-color: var(--amber); background: var(--amber-wash); }
+.voice.busy { border-color: var(--line); background: var(--paper); }
+.voice-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.voice-head .mono { font-size: 1.05rem; }
+.rec-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--red); animation: pulse 1.2s ease-in-out infinite; }
+.voice.paused .rec-dot { background: var(--amber); animation: none; }
+.voice.busy .rec-dot { background: var(--mute); animation: none; }
+.voice-text { margin-top: 6px; min-height: 1.4em; color: var(--ink); }
+.voice-text:empty { display: none; }
+.voice-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+.voice-btns .primary { width: auto; margin: 0; padding: 9px 18px; }
+@keyframes pulse { 50% { opacity: .35; transform: scale(.85); } }
 .examples { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chip { border: 1px solid var(--line); background: var(--paper); border-radius: 99px; padding: 4px 11px; font-size: .84rem; cursor: pointer; }
 .chip:hover { border-color: var(--blue); }

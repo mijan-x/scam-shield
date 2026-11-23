@@ -187,7 +187,7 @@ def test_gemini_request_shape(monkeypatch):
     assert sent["headers"]["x-goog-api-key"] == "test-key"
     assert sent["body"]["contents"][0]["parts"][0]["inline_data"]["mime_type"] == "image/png"
     assert sent["body"]["generationConfig"]["responseMimeType"] == "application/json"
-    assert client.get("/api/status").json() == {"ai": "live", "provider": "gemini", "model": "gemini-3.5-flash-lite"}
+    assert client.get("/api/status").json() == {"ai": "live", "provider": "gemini", "model": "gemini-3.5-flash-lite", "voice": True}
 
 
 def test_gemini_error_falls_back_to_rules(monkeypatch):
@@ -289,3 +289,55 @@ def test_meta_and_metrics():
     mt = client.get("/api/metrics").json()
     assert mt["holdout"]["scam"] > 0 and 0 <= mt["holdout"]["recall"] <= 1
     assert client.get("/api/health").json() == {"ok": True}
+
+
+# ------------------------------------------------------- voice
+def _wav(seconds=0.5):
+    import io, struct, wave
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+        w.writeframes(struct.pack("<h", 0) * int(16000 * seconds))
+    return buf.getvalue()
+
+
+def test_voice_needs_gemini_in_rules_mode():
+    r = client.post("/api/voice", files={"audio": ("v.wav", _wav(), "audio/wav")})
+    assert r.status_code == 503
+    assert client.get("/api/status").json()["voice"] is False
+
+
+def test_voice_mock_transcribes(monkeypatch):
+    monkeypatch.setenv("MOCK_LLM", "1")
+    r = client.post("/api/voice", files={"audio": ("v.wav", _wav(), "audio/wav")}, data={"lang": "bn"})
+    assert r.status_code == 200 and "PIN" in r.json()["transcript"]
+
+
+def test_voice_rejects_bad_input(monkeypatch):
+    monkeypatch.setenv("MOCK_LLM", "1")
+    assert client.post("/api/voice", files={"audio": ("v.txt", b"hello", "text/plain")}).status_code == 415
+    assert client.post("/api/voice", files={"audio": ("v.wav", b"", "audio/wav")}).status_code == 400
+    big = ("v.wav", b"0" * (4 * 1024 * 1024 + 1), "audio/wav")
+    assert client.post("/api/voice", files={"audio": big}).status_code == 413
+
+
+def test_voice_sends_audio_to_gemini(monkeypatch):
+    import httpx
+    sent = {}
+
+    class R:
+        status_code = 200
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": "  আপনার পিন বলুন \n"}]}}]}
+
+    def fake_post(url, json, timeout, headers):
+        sent["body"] = json
+        return R()
+
+    monkeypatch.setenv("GEMINI_API_KEY", "k")
+    monkeypatch.delenv("MOCK_LLM", raising=False)
+    monkeypatch.setattr(httpx, "post", fake_post)
+    r = client.post("/api/voice", files={"audio": ("v.wav", _wav(), "audio/wav")}).json()
+    assert r["transcript"] == "আপনার পিন বলুন"
+    part = sent["body"]["contents"][0]["parts"][0]["inline_data"]
+    assert part["mime_type"] == "audio/wav" and "responseMimeType" not in sent["body"]["generationConfig"]

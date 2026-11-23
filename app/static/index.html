@@ -101,7 +101,21 @@
         </label>
         <div class="row-between">
           <span class="fine" id="tCount">0 / 4000</span>
-          <button type="button" id="tMic" class="ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span data-t="mic">Speak</span></button>
+          <button type="button" id="vStart" class="ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span data-t="recVoice">Record voice</span></button>
+        </div>
+        <div id="vPanel" class="voice" hidden aria-live="polite">
+          <div class="voice-head">
+            <span class="rec-dot" aria-hidden="true"></span>
+            <b id="vState"></b>
+            <span id="vTime" class="mono">0:00</span>
+            <span class="fine" id="vMax"></span>
+          </div>
+          <p id="vText" class="voice-text fine"></p>
+          <div class="voice-btns">
+            <button type="button" id="vPause" class="ghost"></button>
+            <button type="button" id="vSubmit" class="primary"><span data-t="checkVoice">Check voice</span></button>
+            <button type="button" id="vCancel" class="link" data-t="cancel">Cancel</button>
+          </div>
         </div>
         <div class="examples">
           <span class="fine" data-t="tryEx">Try one:</span>
