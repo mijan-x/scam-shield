@@ -81,7 +81,10 @@
           </div>
         </details>
 
-        <button id="pGo" class="primary" type="submit"><span data-t="checkPayment">Check payment</span></button>
+        <div class="form-actions">
+          <button id="pGo" class="primary" type="submit"><span data-t="checkPayment">Check payment</span></button>
+          <button id="pClear" class="ghost" type="button" data-t="clearForm">Clear</button>
+        </div>
         <div class="history" id="pHist"></div>
       </form>
 
@@ -125,7 +128,10 @@
           <button type="button" class="chip" data-ex="Dear customer, your Nagad account will be suspended today. Update KYC now: http://nagad-kyc-update.xyz">Fake KYC link</button>
           <button type="button" class="chip" data-ex="You have received Tk 500.00 from 01712345678. Fee Tk 0.00. Balance Tk 1,250.00. TrxID 8N7A6D5EF3 at 21/11/2026 10:30">Real bKash SMS</button>
         </div>
-        <button id="tGo" class="primary" type="submit"><span data-t="checkMsg">Check message</span></button>
+        <div class="form-actions">
+          <button id="tGo" class="primary" type="submit"><span data-t="checkMsg">Check message</span></button>
+          <button id="tClear" class="ghost" type="button" data-t="clearForm">Clear</button>
+        </div>
         <p class="fine kbd-hint" data-t="kbd">Tip: Ctrl+Enter checks too.</p>
         <div class="history" id="tHist"></div>
       </form>

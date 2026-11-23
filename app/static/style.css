@@ -121,6 +121,9 @@ textarea { resize: vertical; min-height: 150px; }
 .primary:hover { background: var(--blue-press); }
 .primary[aria-busy="true"] { opacity: .75; cursor: progress; }
 .primary[aria-busy="true"]::after { content: ""; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+.form-actions .primary { margin-top: 0; flex: 1; }
+.form-actions .ghost { padding: 0 20px; justify-content: center; font-weight: 600; }
 .ghost { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--line); border-radius: var(--radius-s); padding: 7px 12px; cursor: pointer; }
 .ghost svg { width: 17px; height: 17px; }
 .ghost.rec { border-color: var(--red); color: var(--red); }
