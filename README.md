@@ -13,6 +13,7 @@ Bangladesh runs on bKash, Nagad and Rocket. So do its scammers: fake "payment do
 | **Message check** | Everyone | Paste an SMS or describe a call (Bangla, English, Banglish, or speak it). The exact risky words are highlighted, links and phone numbers are judged (look-alike domains, hidden short links, personal numbers posing as customer care), and you get plain advice plus official hotlines. |
 | **Scam trainer** | Everyone | Three scripted scams with instant feedback, working offline. With an AI key, a free-chat mode where the AI plays the scammer and grades you. |
 | **How it works** | Judges, users | Pipeline, live accuracy numbers, and the full pattern library, in the app itself. |
+| **Offline mode** | Rural users, bad networks | Open the site once online and it is saved on the device. With no internet, message checks run in the browser with the same rules, and the trainer still works. |
 
 ## How it decides
 
@@ -28,6 +29,7 @@ flowchart LR
 
 - **Rules first.** Every warning traces back to a readable pattern (see `app/library.py` or the "How it works" tab). The app works fully without AI.
 - **AI is conservative.** It reads screenshots and adds reasoning, but the merge never lowers a risk the rules found. Inputs are treated as untrusted (prompt-injection guarded).
+- **Works offline.** `/api/rules` publishes the whole rule library as data; `app/static/engine.js` runs it in the browser, and a service worker keeps the app on the device. `tests/test_offline_parity.py` checks that the browser engine and the server engine give identical results on every evaluation message.
 - **Never "safe".** The best payment verdict is "matches what you expected", with a reminder to confirm in your own app.
 
 ## Accuracy (be honest)
@@ -62,7 +64,7 @@ Tests: `python -m pytest -q tests` (also run by GitHub Actions on every push).
 
 ## API
 
-`GET /api/status`, `/api/health`, `/api/meta`, `/api/metrics`, `/api/trainer/scenarios`  
+`GET /api/status`, `/api/health`, `/api/meta`, `/api/metrics`, `/api/rules`, `/api/trainer/scenarios`  
 `POST /api/pretx` `{text, lang}`, `POST /api/proof` (multipart: `image`, `expected_amount`, `expected_recipient`, `chat_time`, `order_ref`, `manual`), `POST /api/trainer/chat`, `POST /api/trainer/grade`.  
 Interactive docs at `/docs`.
 
@@ -78,6 +80,8 @@ app/forensics.py   image file checks (editor traces, perceptual fingerprint)
 app/llm.py         Gemini / Claude client with mock mode
 app/scenarios.py   trainer scenarios
 app/static/        frontend (vanilla HTML/CSS/JS, no build step)
+app/static/engine.js  offline copy of the rules engine (runs /api/rules data)
+app/static/sw.js      service worker: keeps the app usable offline
 app/data/          labelled evaluation messages
 challenges/        on-site assigned challenges
 ```

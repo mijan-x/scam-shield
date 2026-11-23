@@ -74,6 +74,7 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .controls { display: flex; align-items: center; gap: 8px; }
 .ai-badge { font-size: .76rem; padding: 4px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--mute); white-space: nowrap; }
 .ai-badge.on { border-color: var(--green); color: var(--green); }
+.ai-badge.off { border-color: var(--amber); color: var(--amber); }
 .ai-badge.on::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 6px; vertical-align: 1px; }
 .icon-btn, .lang-btn { height: 36px; border: 1px solid var(--line); background: var(--slip); border-radius: var(--radius-s); cursor: pointer; }
 .icon-btn { width: 36px; display: grid; place-items: center; }
