@@ -61,7 +61,8 @@ Open http://localhost:8000. Without a key it runs in rules mode, fully offline. 
 |---|---|
 | `GEMINI_API_KEY` | Enables AI via Google Gemini (used first if set) |
 | `GEMINI_MODEL` | Default `gemini-3.5-flash-lite` |
-| `GEMINI_FALLBACK_MODEL` | Tried when the main model is overloaded (default `gemini-3.8-flash`; empty to disable) |
+| `GEMINI_FALLBACK_MODEL` | Models tried in order when the main one is busy, comma-separated (default `gemini-3.8-flash`; empty to disable) |
+| `AI_TIME_BUDGET` | Seconds to keep retrying a busy AI before showing "busy" (default 30) |
 | `ANTHROPIC_API_KEY`, `SHIELD_MODEL` | Alternative AI provider (Claude) |
 | `RATE_LIMIT` | AI-backed requests per IP per minute (default 20) |
 | `MOCK_LLM` | `1` = canned AI replies, for testing without a key |
