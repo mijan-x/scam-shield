@@ -22,6 +22,7 @@
       proofH: "Did the buyer really pay?",
       proofHint: "Upload the buyer's payment screenshot and say what you expected. We compare them and look for signs of editing. Your own bKash or Nagad app is always the final word.",
       dropTitle: "Add the payment screenshot", dropHelp: "Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.",
+      optHint: "Only have the screenshot? That works. Filling these in makes the check stronger.",
       remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your bKash/Nagad number",
       chatTime: "When the buyer said they paid", orderRef: "Order name or number",
       manual: "Type the screenshot details yourself",
@@ -55,7 +56,8 @@
       built: "Built by team JU_Segfault for CoU AI Hackathon 2026.",
       aiOn: "AI on", aiDemo: "AI demo mode", aiOff: "Rules only",
       s_high: "High risk", s_medium: "Be careful", s_low: "No known pattern",
-      s_likely_fake: "Likely fake", s_suspicious: "Suspicious", s_consistent: "Matches",
+      s_likely_fake: "Likely fake", s_suspicious: "Suspicious", s_consistent: "Matches", s_clean: "No red flags",
+      h_clean: "Nothing suspicious in the screenshot itself.",
       h_high: "Stop. This looks like a scam.", h_medium: "Slow down and check first.", h_low: "We found no known scam pattern.",
       h_likely_fake: "Do not ship this order yet.", h_suspicious: "Some details do not add up.", h_consistent: "The details match what you expected.",
       riskScore: "Risk score", yourMsg: "Your message, warning signs marked", lgStrong: "Strong warning sign", lgWeak: "Warning sign",
@@ -95,6 +97,7 @@
       proofH: "ক্রেতা কি সত্যিই টাকা পাঠিয়েছেন?",
       proofHint: "ক্রেতার পেমেন্ট স্ক্রিনশট দিন এবং কী আশা করেছিলেন লিখুন। আমরা দুটো মিলিয়ে দেখব এবং এডিটের চিহ্ন খুঁজব। চূড়ান্ত প্রমাণ সবসময় আপনার নিজের বিকাশ বা নগদ অ্যাপ।",
       dropTitle: "পেমেন্টের স্ক্রিনশট দিন", dropHelp: "এখানে টেনে আনুন, পেস্ট করুন (Ctrl+V), বা ট্যাপ করে বেছে নিন। PNG, JPEG বা WebP, ৪ MB পর্যন্ত।",
+      optHint: "শুধু স্ক্রিনশট আছে? তাতেই চলবে। নিচের তথ্যগুলো দিলে যাচাই আরও শক্তিশালী হয়।",
       remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার বিকাশ/নগদ নম্বর",
       chatTime: "ক্রেতা কখন পাঠিয়েছেন বলেছেন", orderRef: "অর্ডারের নাম বা নম্বর",
       manual: "স্ক্রিনশটের তথ্য নিজে লিখুন",
@@ -128,7 +131,8 @@
       built: "তৈরি করেছে টিম JU_Segfault, সিওইউ এআই হ্যাকাথন ২০২৬-এর জন্য।",
       aiOn: "এআই চালু", aiDemo: "এআই ডেমো", aiOff: "শুধু নিয়ম",
       s_high: "উচ্চ ঝুঁকি", s_medium: "সতর্ক থাকুন", s_low: "পরিচিত ধরন নেই",
-      s_likely_fake: "সম্ভবত ভুয়া", s_suspicious: "সন্দেহজনক", s_consistent: "মিলেছে",
+      s_likely_fake: "সম্ভবত ভুয়া", s_suspicious: "সন্দেহজনক", s_consistent: "মিলেছে", s_clean: "সন্দেহ পাওয়া যায়নি",
+      h_clean: "স্ক্রিনশটে নিজে থেকে সন্দেহজনক কিছু পাওয়া যায়নি।",
       h_high: "থামুন। এটি প্রতারণা বলে মনে হচ্ছে।", h_medium: "তাড়াহুড়ো নয়, আগে যাচাই করুন।", h_low: "পরিচিত কোনো প্রতারণার ধরন পাওয়া যায়নি।",
       h_likely_fake: "এই অর্ডার এখনই পাঠাবেন না।", h_suspicious: "কিছু তথ্য মিলছে না।", h_consistent: "তথ্য আপনার প্রত্যাশার সঙ্গে মিলেছে।",
       riskScore: "ঝুঁকির স্কোর", yourMsg: "আপনার মেসেজ, বিপদের সংকেত চিহ্নিত", lgStrong: "বড় বিপদের সংকেত", lgWeak: "সতর্কতার সংকেত",
@@ -245,12 +249,13 @@
   /* ------------------------------------------------------------ shared slip parts */
   var EMPTY_ICON = '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 4h28v40l-4-3-4 3-4-3-4 3-4-3-4 3-4-3V4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 14h16M16 21h16M16 28h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   function empty(el, key) { el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + "<p>" + esc(tr(key)) + "</p></div></div>"; }
-  function head(kind, score, sub, animate) {
-    return '<div class="slip-head"><div><h2 style="margin:0">' + esc(tr("h_" + kind)) + "</h2>" +
+  function head(kind, score, sub, animate, label) {
+    label = label || kind;
+    return '<div class="slip-head"><div><h2 style="margin:0">' + esc(tr("h_" + label)) + "</h2>" +
       (sub ? '<p class="fine">' + esc(sub) + "</p>" : "") +
       '<div class="score"><span class="fine">' + esc(tr("riskScore")) + ": <b>" + fmtNum(score) + "</b>/100</span>" +
       '<div class="score-bar" role="img" aria-label="' + esc(tr("riskScore")) + " " + score + '/100"><i class="b-' + kind + '" style="width:' + Math.max(4, score) + '%"></i></div></div></div>' +
-      '<span class="stamp t-' + kind + (animate ? " land" : "") + '">' + esc(tr("s_" + kind)) + "</span></div>";
+      '<span class="stamp t-' + kind + (animate ? " land" : "") + '">' + esc(tr("s_" + label)) + "</span></div>";
   }
   function hotlinesHtml(list) {
     if (!list || !list.length) return "";
@@ -588,12 +593,16 @@
     var render = function (animate) {
       var el = $("#pOut");
       if (d.needs_manual) {
-        el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + '<p class="err">' + esc(d["error_" + lang] || d.error || tr("needInput")) + "</p>" +
-          (d.image && d.image.editor ? '<p style="margin-top:8px">' + esc(tr("i_editor")) + ": <b>" + esc(d.image.editor) + "</b></p>" : "") + "</div></div>";
+        var ic = (d.checks || []).filter(function (c) { return c.status !== "info"; });
+        el.innerHTML = '<div class="slip-empty"><div>' + EMPTY_ICON + '<p class="err">' + esc(d["error_" + lang] || d.error || tr("needInput")) + "</p></div></div>" +
+          (ic.length ? '<div class="sec"><h3>' + esc(tr("checksH")) + "</h3>" + ic.map(function (c) {
+            return '<div class="check ' + esc(c.status) + '"><span class="ic" aria-hidden="true">' + (ICON[c.status] || "•") +
+              "</span><span>" + esc(c[lang] || c.en) + "</span></div>";
+          }).join("") + "</div>" : "");
         if (!fromHistory && d.image) { var man = $(".manual"); man.open = true; setTimeout(function () { $("#mAmount").focus(); }, 50); }
         return;
       }
-      var h = head(d.verdict, d.score || 0, null, animate);
+      var h = head(d.verdict, d.score || 0, null, animate, d.verdict === "consistent" && d.compared === false ? "clean" : null);
       h += '<div class="sec"><h3>' + esc(tr("checksH")) + "</h3>" + (d.checks || []).map(function (c) {
         return '<div class="check ' + esc(c.status) + '"><span class="ic" aria-hidden="true">' + (ICON[c.status] || "•") +
           "</span><span>" + esc(c[lang] || c.en) + "</span></div>";
@@ -614,7 +623,8 @@
       el.innerHTML = h;
       wireActions(el, function () {
         var bad = (d.checks || []).filter(function (c) { return c.status === "fail"; }).map(function (c) { return c[lang] || c.en; }).join(" ");
-        return tr("shareTpl").replace("{v}", tr("s_" + d.verdict)).replace("{why}", bad).replace("{url}", location.origin);
+        var lab = d.verdict === "consistent" && d.compared === false ? "clean" : d.verdict;
+        return tr("shareTpl").replace("{v}", tr("s_" + lab)).replace("{why}", bad).replace("{url}", location.origin);
       });
     };
     rerender.proof = render; render(!fromHistory);
