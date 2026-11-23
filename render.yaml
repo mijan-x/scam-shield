@@ -1,0 +1,21 @@
+# Backup host on Render (onrender.com), for networks that cannot reach vercel.app.
+# Render dashboard -> New -> Blueprint -> pick this repo. Paste the Gemini key when asked.
+services:
+  - type: web
+    name: scam-shield
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_FALLBACK_MODEL
+        value: gemini-3.8-flash
