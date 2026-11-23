@@ -98,7 +98,7 @@ challenges/        on-site assigned challenges
 
 | Member | GitHub | Role and contribution |
 |---|---|---|
-| (your name) | [@mijan-x](https://github.com/mijan-x) | _written by the member_ |
+| Md. Mijanur Rahman | [@mijan-x](https://github.com/mijan-x) | _written by the member_ |
 | Antu Dev Nath | [@Maverick-145](https://github.com/Maverick-145) | _written by the member_ |
 | Md. Hasan ahmed | [@HasanAl-17](https://github.com/HasanAl-17) | _written by the member_ |
 
