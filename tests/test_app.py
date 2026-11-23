@@ -427,9 +427,10 @@ def test_screenshot_only_clock_before_payment():
 
 def test_screenshot_only_pending_cropped_old():
     assert _ss(screen_status="failed")["verdict"] == "suspicious"
-    assert _ss(status_bar_visible=False, status_bar_time=None)["verdict"] == "suspicious"
     assert _ss(datetime="2026-11-18 10:15", status_bar_time=None)["verdict"] == "suspicious"
-    assert _ss(meta={**_TALL, "height": 800}, status_bar_time=None)["verdict"] == "suspicious"
+    # no status bar / not tall = normal for receipts shared from the app: noted, not flagged
+    assert _ss(status_bar_visible=False, status_bar_time=None)["verdict"] == "consistent"
+    assert _ss(meta={**_TALL, "height": 800}, status_bar_time=None)["verdict"] == "consistent"
 
 
 def test_missing_expectation_is_info_not_warning_when_compared_elsewhere():
@@ -443,7 +444,7 @@ def test_screenshot_only_without_ai_still_reports_image_checks():
     m.SEEN_IMG.clear()
     r = client.post("/api/proof", files={"image": ("s.png", _png("PicsArt", size=(800, 700)), "image/png")}).json()
     ids = {c["id"]: c["status"] for c in r["checks"]}
-    assert r["needs_manual"] is True and ids["meta_editor"] == "fail" and ids["meta_crop"] == "warn"
+    assert r["needs_manual"] is True and ids["meta_editor"] == "fail" and ids["meta_crop"] == "info"
 
 
 def test_screenshot_only_api_with_mock_ai(monkeypatch):
@@ -453,3 +454,26 @@ def test_screenshot_only_api_with_mock_ai(monkeypatch):
     r = client.post("/api/proof", files={"image": ("s.png", _png(), "image/png")}).json()
     assert r["needs_manual"] is False and r["compared"] is False
     assert any(c["id"] == "no_expected" for c in r["checks"])
+
+
+def test_genuine_receipt_with_ai_doubts_is_not_fake():
+    """Regression: all facts matched, AI disliked the logo/profile picture, no status bar -> must not be fake."""
+    x = {**_SS, "amount": 2050, "recipient": "01712345678", "status_bar_visible": False, "status_bar_time": None,
+         "edit_suspicion": "high",
+         "visual_flags": ["unusual profile picture and name format for bKash", "bKash logo looks slightly altered"]}
+    exp = {"amount": 2050, "recipient": "01712345678", "chat_time": "2026-11-23T10:20", "order_ref": "o"}
+    r = proof.check(x, exp, NOW, {}, meta=_TALL, seen_img=[])
+    assert r["verdict"] == "consistent" and r["score"] < 30
+    visual = next(c for c in r["checks"] if c["id"] == "visual")
+    assert visual["status"] == "warn" and "not proof" in visual["en"]
+
+
+def test_ai_doubt_plus_hard_fact_failure_still_caught():
+    x = {**_SS, "amount": 2000, "recipient": "01712345678", "edit_suspicion": "high", "visual_flags": ["amount digits in a different font"]}
+    exp = {"amount": 2050, "recipient": "01712345678", "chat_time": "2026-11-23T10:20", "order_ref": "o"}
+    assert proof.check(x, exp, NOW, {}, meta=_TALL, seen_img=[])["verdict"] == "likely_fake"
+
+
+def test_ai_doubt_alone_without_details_is_suspicious_not_fake():
+    r = _ss(edit_suspicion="high", visual_flags=["amount digits misaligned"])
+    assert r["verdict"] == "suspicious"
