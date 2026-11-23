@@ -477,3 +477,40 @@ def test_ai_doubt_plus_hard_fact_failure_still_caught():
 def test_ai_doubt_alone_without_details_is_suspicious_not_fake():
     r = _ss(edit_suspicion="high", visual_flags=["amount digits misaligned"])
     assert r["verdict"] == "suspicious"
+
+
+# ------------------------------------------------------- real-world timing, masked numbers, amounts
+_NOW3 = datetime(2026, 11, 23, 15, 0)
+_B3 = {"amount": 1000, "trx_id": "8N7A6D5EF3", "recipient": "01712345678", "datetime": "2026-11-23 14:10",
+       "screen_status": "success", "status_bar_visible": True, "status_bar_time": None, "edit_suspicion": "low",
+       "is_payment_screenshot": True}
+_E3 = {"amount": 1000, "recipient": "01712345678", "chat_time": "2026-11-23T14:00", "order_ref": "o"}
+
+
+def _r3(x=None, e=None):
+    r = proof.check({**_B3, **(x or {})}, {**_E3, **(e or {})}, _NOW3, {},
+                    meta={"format": "PNG", "width": 720, "height": 1600, "editor": None, "hash": 3}, seen_img=[])
+    return r, {c["id"]: c["status"] for c in r["checks"]}
+
+
+@pytest.mark.parametrize("x,e,verdict,check,status", [
+    ({}, {}, "consistent", "time", "ok"),                                                       # paid 10 min after
+    ({"datetime": "2026-11-23 14:55"}, {}, "consistent", "time", "ok"),                         # 55 min after
+    ({"datetime": "2026-11-23 13:05"}, {}, "consistent", "time", "ok"),                         # 55 min before
+    ({"datetime": "2026-11-23 14:00"}, {"chat_time": "2026-11-23T11:00"}, "consistent", "time", "warn"),  # 3 h after
+    ({}, {"chat_time": "2026-11-23T04:00"}, "suspicious", "time", "fail"),                      # 10 h after claim
+    ({"datetime": "2026-11-23 02:10"}, {}, "consistent", "time", "info"),                       # AM/PM slip
+    ({"datetime": "2026-11-23 08:00"}, {}, "consistent", "time", "info"),                       # paid this morning
+    ({"datetime": None}, {}, "consistent", "time", "info"),                                     # no time on receipt
+    ({"status_bar_time": "2:15"}, {}, "consistent", "clock", "ok"),                             # 12-hour clock
+    ({"status_bar_time": "13:50"}, {}, "suspicious", "clock", "fail"),                          # clock before payment
+    ({"recipient": "017XXXXX678"}, {}, "consistent", "recipient", "ok"),                        # masked, matches
+    ({"recipient": "017XXXXX999"}, {}, "suspicious", "recipient", "fail"),                      # masked, wrong
+    ({"recipient": "Rahim Store"}, {}, "consistent", "recipient", "info"),                      # merchant name
+    ({"recipient": "+8801712345678"}, {}, "consistent", "recipient", "ok"),
+    ({"amount": 1020}, {}, "consistent", "amount", "warn"),                                     # paid a bit more
+    ({"amount": 900}, {}, "suspicious", "amount", "fail"),                                      # paid less
+])
+def test_real_world_cases(x, e, verdict, check, status):
+    r, ids = _r3(x, e)
+    assert ids[check] == status and r["verdict"] == verdict
