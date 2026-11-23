@@ -41,7 +41,8 @@ def main():
     for r in rows:
         r["pred"] = risk_of(r["text"], use_ai)
     print(f"mode: {'rules + AI' if use_ai else 'rules only'}   rows: {len(rows)}")
-    for split in ("dev", "holdout"):
+    splits = list(dict.fromkeys(r["split"] for r in rows))  # every split in the file, in order
+    for split in splits:
         part = [r for r in rows if r["split"] == split]
         n_s = sum(1 for r in part if r["label"] == "scam")
         print(f"\n== {split}: {n_s} scam, {len(part) - n_s} genuine ==")

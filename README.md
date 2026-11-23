@@ -9,7 +9,7 @@ Bangladesh runs on bKash, Nagad and Rocket. So do its scammers: fake "payment do
 
 | Tool | For | What happens |
 |---|---|---|
-| **Payment proof** | Online sellers | Upload the buyer's screenshot, alone or with what you expected. On its own, the screenshot is checked against itself: the phone clock in the status bar must not be earlier than the payment time, the screen must show a completed (not pending or failed) payment, old payments are flagged, and a pending or failed screen is caught. Real-world slack is built in: payments within an hour of the time you enter pass, 12-hour AM/PM slips are recognised, masked numbers (017XXXXX678) are compared on their visible digits, and a buyer paying a little more is a warning, not a failure. With your details added, we also compare amount, your number, payment time and TrxID; look for editing-app traces in the file; and catch the same screenshot or TrxID being reused for another order. Verdict: *matches / suspicious / likely fake*, never "safe". |
+| **Payment proof** | Online sellers | Upload the buyer's screenshot, alone or with what you expected. **Screenshot alone:** editing-app traces in the file, the same screenshot or TrxID reused for another order, the phone's status-bar clock earlier than the payment time (impossible), a pending or failed screen, a payment days old, and the AI's look for tampered digits. **With your details:** amount (paying less fails, a little more is a warning), your number as the receiver and, optionally, the buyer's as the sender (swapped numbers are explained, masked numbers like 017XXXXX678 are compared on their visible digits), and the payment time (within an hour passes; AM/PM slips are recognised). Verdict: *matches / no red flags / suspicious / likely fake*, never "safe". |
 | **Message check** | Everyone | Paste an SMS or describe a call (Bangla, English, Banglish), or record it: Record, Pause/Resume, then Check voice turns the recording into text (Gemini speech-to-text, falling back to the browser's own recognition) and checks it. The exact risky words are highlighted, links and phone numbers are judged (look-alike domains, hidden short links, personal numbers posing as customer care), and you get plain advice plus official hotlines. |
 | **Scam trainer** | Everyone | Three scripted scams with instant feedback, working offline. With an AI key, a free-chat mode where the AI plays the scammer and grades you. |
 | **How it works** | Judges, users | Pipeline, live accuracy numbers, and the full pattern library, in the app itself. |
@@ -28,9 +28,9 @@ flowchart LR
 ```
 
 - **Rules first.** Every warning traces back to a readable pattern (see `app/library.py` or the "How it works" tab). The app works fully without AI.
-- **AI is conservative.** It reads screenshots and adds reasoning, but the merge never lowers a risk the rules found. Inputs are treated as untrusted (prompt-injection guarded).
+- **AI is conservative.** It reads screenshots, turns voice into text and adds reasoning, but the merge never lowers a risk the rules found, and its visual opinion of a screenshot is only a warning: "likely fake" needs hard evidence (wrong amount or number, impossible time, editing-app trace, reused screenshot or TrxID). Inputs are treated as untrusted (prompt-injection guarded). If Gemini is overloaded the app retries, switches to a fallback model, and otherwise asks for the details by hand.
 - **Works offline.** `/api/rules` publishes the whole rule library as data; `app/static/engine.js` runs it in the browser, and a service worker keeps the app on the device. `tests/test_offline_parity.py` checks that the browser engine and the server engine give identical results on every evaluation message.
-- **Never "safe".** The best payment verdict is "matches what you expected", with a reminder to confirm in your own app.
+- **Never "safe".** The best payment verdict is "matches what you expected" (or "no red flags" for a screenshot alone), always with a reminder to confirm in your own app.
 
 ## Accuracy (be honest)
 
@@ -41,7 +41,7 @@ Rules only, on our own labelled set (`app/data/messages.csv`, 74 messages in Ban
 | Tuning (`dev`, 46) | 25 / 25 | 0 / 21 |
 | Unseen (`holdout`, 28) | 13 / 13 | 0 / 15 |
 
-The set is small and written by us; patterns were tuned on `dev` only. Treat it as a sanity check, not a benchmark. Reproduce with `python eval/run_eval.py` (add `--ai` to include the AI).
+The set is small and written by us; patterns were tuned on `dev` only. Treat it as a sanity check, not a benchmark. Reproduce with `python eval/run_eval.py` (add `--ai` to include the AI). New rows with a new split name (for example `holdout2`) are picked up automatically by the script, `/api/metrics` and the "How it works" page.
 
 ## Run it
 
@@ -60,13 +60,14 @@ Open http://localhost:8000. Without a key it runs in rules mode, fully offline. 
 | `GEMINI_FALLBACK_MODEL` | Tried when the main model is overloaded (default `gemini-3.8-flash`; empty to disable) |
 | `ANTHROPIC_API_KEY`, `SHIELD_MODEL` | Alternative AI provider (Claude) |
 | `RATE_LIMIT` | AI-backed requests per IP per minute (default 20) |
+| `MOCK_LLM` | `1` = canned AI replies, for testing without a key |
 
 Tests: `python -m pytest -q tests` (also run by GitHub Actions on every push).
 
 ## API
 
 `GET /api/status`, `/api/health`, `/api/meta`, `/api/metrics`, `/api/rules`, `/api/trainer/scenarios`  
-`POST /api/pretx` `{text, lang}`, `POST /api/voice` (multipart: `audio`, `lang`) returns `{transcript}`, `POST /api/proof` (multipart: `image`, `expected_amount`, `expected_recipient`, `chat_time`, `order_ref`, `manual`), `POST /api/trainer/chat`, `POST /api/trainer/grade`.  
+`POST /api/pretx` `{text, lang}`, `POST /api/voice` (multipart: `audio`, `lang`) returns `{transcript}`, `POST /api/proof` (multipart: `image`, `expected_amount`, `expected_recipient` (your number), `expected_sender` (buyer's number), `chat_time`, `order_ref`, `manual` (JSON of fields typed by hand)), `POST /api/trainer/chat`, `POST /api/trainer/grade`.  
 Interactive docs at `/docs`.
 
 ## Project layout
@@ -84,6 +85,9 @@ app/static/        frontend (vanilla HTML/CSS/JS, no build step)
 app/static/engine.js  offline copy of the rules engine (runs /api/rules data)
 app/static/sw.js      service worker: keeps the app usable offline
 app/data/          labelled evaluation messages
+eval/run_eval.py   precision / recall / false-alarm report
+tests/             API, rules, payment-proof and offline-parity tests
+docs/              receipt test log
 challenges/        on-site assigned challenges
 ```
 
@@ -93,6 +97,8 @@ challenges/        on-site assigned challenges
 - Editing-app traces can be stripped, and AI visual judgement is not forensics.
 - TrxID and screenshot reuse are remembered per server instance only (on Vercel, per warm instance).
 - New scam wording needs new patterns. No integration with bKash/Nagad systems.
+- Voice-to-text needs the Gemini key; otherwise the browser's own speech recognition is used (Chrome and Edge; Safari has none).
+- Reading screenshots needs the AI and internet. Without them, the image-file checks still run and the details can be typed by hand.
 
 ## Team
 

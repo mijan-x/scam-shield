@@ -82,7 +82,7 @@
       excellent: "Strong. You spotted the traps.", okay: "Mixed. Replay and try the safer choices.", weak: "Risky. Read the warning signs and try again.",
       f_amount: "Amount", f_trx_id: "TrxID", f_sender: "From (payer)", f_recipient: "To (receiver)", f_datetime: "Time", f_provider: "Provider",
       i_format: "Format", i_size: "Size", i_editor: "Editing app",
-      m_set: "Set", m_dev: "Tuning set", m_holdout: "Unseen set", m_caught: "Scams flagged", m_false: "Real messages wrongly flagged",
+      m_set: "Set", m_dev: "Tuning set", m_holdout: "Unseen set", m_holdout2: "Unseen set 2", m_caught: "Scams flagged", m_false: "Real messages wrongly flagged",
       m_note: "These are our own small test sets (Bangla, English, Banglish). We tuned the patterns on the tuning set only. Treat this as a sanity check, not a benchmark.",
       libName: "Pattern", libWhy: "What it looks for", libWeight: "Weight",
       linkChecks: "Plus link and number checks: look-alike links, hidden short links, risky domains, and personal numbers posing as customer care.",
@@ -158,7 +158,7 @@
       excellent: "চমৎকার। ফাঁদগুলো ধরতে পেরেছেন।", okay: "মিশ্র ফল। আবার খেলে নিরাপদ বিকল্প বেছে দেখুন।", weak: "ঝুঁকিপূর্ণ। বিপদ সংকেতগুলো পড়ে আবার চেষ্টা করুন।",
       f_amount: "টাকা", f_trx_id: "TrxID", f_sender: "যেখান থেকে (প্রেরক)", f_recipient: "যেখানে (প্রাপক)", f_datetime: "সময়", f_provider: "প্রতিষ্ঠান",
       i_format: "ধরন", i_size: "মাপ", i_editor: "এডিটিং অ্যাপ",
-      m_set: "সেট", m_dev: "টিউনিং সেট", m_holdout: "অদেখা সেট", m_caught: "প্রতারণা ধরা পড়েছে", m_false: "আসল মেসেজ ভুল করে সতর্কিত",
+      m_set: "সেট", m_dev: "টিউনিং সেট", m_holdout: "অদেখা সেট", m_holdout2: "অদেখা সেট ২", m_caught: "প্রতারণা ধরা পড়েছে", m_false: "আসল মেসেজ ভুল করে সতর্কিত",
       m_note: "এগুলো আমাদের নিজেদের লেখা ছোট পরীক্ষার সেট (বাংলা, ইংরেজি, বাংলিশ)। নিয়মগুলো শুধু টিউনিং সেটে ঠিক করা হয়েছে। এটিকে প্রাথমিক যাচাই হিসেবে দেখুন, মানদণ্ড হিসেবে নয়।",
       libName: "ধরন", libWhy: "যা খোঁজে", libWeight: "ওজন",
       linkChecks: "সঙ্গে লিংক ও নম্বর যাচাই: নকল লিংক, লুকানো ছোট লিংক, ঝুঁকিপূর্ণ ডোমেইন, এবং কাস্টমার কেয়ার সাজা ব্যক্তিগত নম্বর।",
@@ -787,11 +787,12 @@
     if (metrics && metrics.dev) {
       var row = function (k) {
         var m = metrics[k];
-        return "<tr><td>" + esc(tr("m_" + k)) + '</td><td class="n">' + fmtNum(m.tp) + " / " + fmtNum(m.scam) + " (" + pct(m.recall) + ')</td><td class="n">' +
+        var name = (T[lang]["m_" + k] || T.en["m_" + k]) ? tr("m_" + k) : k;
+        return "<tr><td>" + esc(name) + '</td><td class="n">' + fmtNum(m.tp) + " / " + fmtNum(m.scam) + " (" + pct(m.recall) + ')</td><td class="n">' +
           fmtNum(m.fp) + " / " + fmtNum(m.genuine) + " (" + pct(m.false_alarm_rate) + ")</td></tr>";
       };
       $("#metrics").innerHTML = "<table><thead><tr><th>" + esc(tr("m_set")) + "</th><th>" + esc(tr("m_caught")) + "</th><th>" + esc(tr("m_false")) +
-        "</th></tr></thead><tbody>" + row("dev") + row("holdout") + '</tbody></table><p class="fine" style="margin-top:8px">' + esc(tr("m_note")) + "</p>";
+        "</th></tr></thead><tbody>" + (metrics.splits || ["dev", "holdout"]).map(row).join("") + '</tbody></table><p class="fine" style="margin-top:8px">' + esc(tr("m_note")) + "</p>";
     }
     if (meta && meta.patterns) {
       $("#library").innerHTML = "<table><thead><tr><th>" + esc(tr("libName")) + "</th><th>" + esc(tr("libWhy")) + "</th><th>" + esc(tr("libWeight")) +

@@ -126,7 +126,18 @@ def test_proof_needs_input():
 
 def test_trainer_scenarios_served():
     data = client.get("/api/trainer/scenarios").json()
-    assert len(data) == 3 and all(len(s["steps"]) == 3 for s in data)
+    from app.scenarios import PERSONA
+    assert len(data) >= 3
+    for sc in data:
+        for k in ("id", "title_en", "title_bn", "intro_en", "intro_bn", "safe_en", "safe_bn", "red_flags_en", "red_flags_bn"):
+            assert sc.get(k), f"{sc.get('id')}: missing {k}"
+        assert sc["id"] in PERSONA, f"{sc['id']}: add a PERSONA entry for free chat"
+        assert len(sc["steps"]) >= 2
+        for st in sc["steps"]:
+            assert st["scammer_en"] and st["scammer_bn"] and len(st["choices"]) >= 2
+            assert {c["score"] for c in st["choices"]} <= {0, 1, 2} and max(c["score"] for c in st["choices"]) == 2
+            for c in st["choices"]:
+                assert c["en"] and c["bn"] and c["fb_en"] and c["fb_bn"]
 
 
 def test_trainer_chat_needs_key():

@@ -332,7 +332,7 @@ def metrics():
         import csv
         rows = list(csv.DictReader(open(Path(__file__).parent / "data" / "messages.csv", encoding="utf-8")))
         out = {}
-        for split in ("dev", "holdout"):
+        for split in dict.fromkeys(r["split"] for r in rows):  # every split in the file
             part = [r for r in rows if r["split"] == split]
             preds = [(r["label"], rules.analyze(r["text"])["risk"]) for r in part]
             tp = sum(1 for l, p in preds if l == "scam" and p != "low")
@@ -345,6 +345,7 @@ def metrics():
                 "recall": round(tp / (tp + fn), 3) if tp + fn else None,
                 "false_alarm_rate": round(fp / (fp + tn), 3) if fp + tn else None,
             }
+        out["splits"] = [k for k in out]
         out["note"] = ("Small set written by the team (Bangla, English, Banglish). Patterns were tuned on 'dev'; "
                        "'holdout' was written afterwards. Treat as a sanity check, not a benchmark.")
         _METRICS.update(out)

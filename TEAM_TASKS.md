@@ -5,16 +5,16 @@ contribution is yours: `git pull --rebase`, make the change, run `python -m pyte
 Tick the box in this file in the same commit.
 
 ## Everyone (5 minutes)
-- [ ] mijan-x: write your own line in the **Team** table in `README.md` (name and what you did).
+- [ ] mijan-x: write your role in the **Team** table in `README.md` (name is done; replace "_written by the member_").
 - [ ] Maverick-145: write your own line in the **Team** table in `README.md`.
 - [ ] HasanAl-17: write your own line in the **Team** table in `README.md`.
 
 ## Maverick-145 (Antu Dev Nath): detection data and patterns
 - [ ] **New unseen test messages.** Add 10 scam and 10 genuine messages you have really seen or heard of
-      (Bangla, Banglish, English) to `app/data/messages.csv` with split `holdout2`. Do not change any
-      pattern first. Then run `python eval/run_eval.py` and paste the result into the pull request or commit message.
-      Note: `run_eval.py` reports the `dev` and `holdout` splits only, so add `holdout2` to its split list, or
-      the new rows will not be counted.
+      (Bangla, Banglish, English) to `app/data/messages.csv` with split `holdout2`, one per line in the same
+      quoted format: `"holdout2","scam","message text"`. Replace any real phone number or name with a made-up one.
+      Do not change any pattern first. Then run `python eval/run_eval.py` and put the `holdout2` result in your
+      commit message. It appears on the live "How it works" page automatically.
 - [ ] **One new scam pattern** that the new messages miss (for example SIM-replacement or fake agent
       cash-out reversal). Add it to `app/library.py` with English and Bangla texts, plus a test in
       `tests/test_app.py`. `tests/test_offline_parity.py` must still pass.
@@ -24,7 +24,9 @@ Tick the box in this file in the same commit.
       yourself) through Payment proof on the live site. Record each result in `docs/receipt-tests.md`
       (stamp, any wrong warnings). Do not commit the screenshots or anyone's full phone number.
 - [ ] **A fourth trainer scenario** (for example "fake job registration fee" or "parcel stuck at customs")
-      in `app/scenarios.py`: 3 steps, 3 choices each, English and Bangla, same format as the others.
+      in `app/scenarios.py`: copy an existing scenario, keep the same keys, 3 steps with 3 choices each
+      (scores 2, 1 and 0, with feedback), English and Bangla. Also add a line for it in `PERSONA` so free chat
+      works. `python -m pytest -q tests` tells you if anything is missing.
 
 ## mijan-x: demo and submission
 - [ ] Rehearse the demo from the demo doc three times; fix anything that feels slow.
