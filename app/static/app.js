@@ -255,7 +255,7 @@
     label = label || kind;
     return '<div class="slip-head"><div><h2 style="margin:0">' + esc(tr("h_" + label)) + "</h2>" +
       (sub ? '<p class="fine">' + esc(sub) + "</p>" : "") +
-      '<div class="score"><span class="fine">' + esc(tr("riskScore")) + ": <b>" + fmtNum(score) + "</b>/100</span>" +
+      '<div class="score"><span class="fine">' + esc(tr("riskScore")) + ": <b>" + fmtNum(score) + "</b>/" + fmtNum(100) + "</span>" +
       '<div class="score-bar" role="img" aria-label="' + esc(tr("riskScore")) + " " + score + '/100"><i class="b-' + kind + '" style="width:' + Math.max(4, score) + '%"></i></div></div></div>' +
       '<span class="stamp t-' + kind + (animate ? " land" : "") + '">' + esc(tr("s_" + label)) + "</span></div>";
   }
