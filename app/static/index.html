@@ -62,15 +62,6 @@
           </div>
         </div>
 
-        <div class="modes" role="radiogroup" aria-labelledby="modeLbl">
-          <span id="modeLbl" class="fine" data-t="modeQ">How do you want to check?</span>
-          <div class="mode-btns">
-            <button type="button" role="radio" class="mode" data-mode="quick" aria-checked="false"><b data-t="modeQuick">Screenshot only</b><small data-t="modeQuickHint">Nothing to type. The screenshot is checked against itself.</small></button>
-            <button type="button" role="radio" class="mode" data-mode="full" aria-checked="true"><b data-t="modeFull">Screenshot + details</b><small data-t="modeFullHint">Add the buyer's number and more for a stronger check.</small></button>
-          </div>
-        </div>
-
-        <div id="pDetails">
         <p class="fine" style="margin-top:12px" data-t="optHint">* The buyer's number is required. Everything else is optional, but each detail makes the check stronger.</p>
         <div class="grid2" style="margin-top:8px">
           <label><span data-t="expAmount">Amount you expected (Tk)</span><input id="pAmount" inputmode="decimal" autocomplete="off" placeholder="3500"></label>
@@ -91,7 +82,6 @@
             <label class="span2"><span data-t="mTime">Time shown</span><input id="mTime" type="datetime-local"></label>
           </div>
         </details>
-        </div>
 
         <div class="form-actions">
           <button id="pGo" class="primary" type="submit"><span data-t="checkPayment">Check payment</span></button>

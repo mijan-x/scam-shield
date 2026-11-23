@@ -22,9 +22,7 @@
       proofH: "Did the buyer really pay?",
       proofHint: "Upload the buyer's payment screenshot and say what you expected. We compare them and look for signs of editing. Your own bKash or Nagad app is always the final word.",
       dropTitle: "Add the payment screenshot", dropHelp: "Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.",
-      optHint: "* The buyer's number is required in this mode. Everything else is optional, but each detail makes the check stronger.",
-      modeQ: "How do you want to check?", modeQuick: "Screenshot only", modeQuickHint: "Nothing to type. The screenshot is checked against itself.",
-      modeFull: "Screenshot + details", modeFullHint: "Add the buyer's number and more for a stronger check.", needShot: "Add the payment screenshot first.",
+      optHint: "* The buyer's number is required. Everything else is optional, but each detail makes the check stronger.",
       buyerRequired: "Enter the buyer's number: the number the money was sent from.", buyerInvalid: "That is not a Bangladeshi mobile number. Use 11 digits like 01712345678.",
       clearForm: "Clear", cleared: "Cleared",
       remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your number (receiver)", expSender: "Buyer's number (payer) *", optional: "Optional",
@@ -101,9 +99,7 @@
       proofH: "ক্রেতা কি সত্যিই টাকা পাঠিয়েছেন?",
       proofHint: "ক্রেতার পেমেন্ট স্ক্রিনশট দিন এবং কী আশা করেছিলেন লিখুন। আমরা দুটো মিলিয়ে দেখব এবং এডিটের চিহ্ন খুঁজব। চূড়ান্ত প্রমাণ সবসময় আপনার নিজের বিকাশ বা নগদ অ্যাপ।",
       dropTitle: "পেমেন্টের স্ক্রিনশট দিন", dropHelp: "এখানে টেনে আনুন, পেস্ট করুন (Ctrl+V), বা ট্যাপ করে বেছে নিন। PNG, JPEG বা WebP, ৪ MB পর্যন্ত।",
-      optHint: "* এই পদ্ধতিতে ক্রেতার নম্বর দেওয়া আবশ্যক। বাকি সব ঐচ্ছিক, তবে প্রতিটি তথ্য যাচাইকে আরও শক্তিশালী করে।",
-      modeQ: "কীভাবে যাচাই করবেন?", modeQuick: "শুধু স্ক্রিনশট", modeQuickHint: "কিছু লিখতে হবে না। স্ক্রিনশটটি নিজের তথ্যের সঙ্গে মিলিয়ে দেখা হয়।",
-      modeFull: "স্ক্রিনশট + তথ্য", modeFullHint: "আরও শক্তিশালী যাচাইয়ের জন্য ক্রেতার নম্বরসহ তথ্য দিন।", needShot: "আগে পেমেন্টের স্ক্রিনশট দিন।",
+      optHint: "* ক্রেতার নম্বর দেওয়া আবশ্যক। বাকি সব ঐচ্ছিক, তবে প্রতিটি তথ্য যাচাইকে আরও শক্তিশালী করে।",
       buyerRequired: "ক্রেতার নম্বর দিন: যে নম্বর থেকে টাকা পাঠানো হয়েছে।", buyerInvalid: "এটি বাংলাদেশের মোবাইল নম্বর নয়। ১১ সংখ্যায় লিখুন, যেমন 01712345678।",
       clearForm: "মুছুন", cleared: "মুছে ফেলা হয়েছে",
       remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর (প্রাপক)", expSender: "ক্রেতার নম্বর (প্রেরক) *", optional: "ঐচ্ছিক",
@@ -608,7 +604,7 @@
             return '<div class="check ' + esc(c.status) + '"><span class="ic" aria-hidden="true">' + (ICON[c.status] || "•") +
               "</span><span>" + esc(c[lang] || c.en) + "</span></div>";
           }).join("") + "</div>" : "");
-        if (!fromHistory && d.image) { setMode("full"); var man = $(".manual"); man.open = true; setTimeout(function () { $("#mAmount").focus(); }, 50); }
+        if (!fromHistory && d.image) { var man = $(".manual"); man.open = true; setTimeout(function () { $("#mAmount").focus(); }, 50); }
         return;
       }
       var h = head(d.verdict, d.score || 0, null, animate, d.verdict === "consistent" && d.compared === false ? "clean" : null);
@@ -639,23 +635,6 @@
     rerender.proof = render; render(!fromHistory);
     if (!fromHistory && window.matchMedia("(max-width: 840px)").matches) $("#pOut").scrollIntoView({ behavior: "smooth", block: "start" });
   }
-  // two ways to check: screenshot only (no typing) or screenshot + details (buyer's number required)
-  var pMode = store.get("proofMode", "full") === "quick" ? "quick" : "full";
-  function setMode(m) {
-    pMode = m; store.set("proofMode", m);
-    $$(".mode").forEach(function (b) { b.setAttribute("aria-checked", b.dataset.mode === m ? "true" : "false"); b.tabIndex = b.dataset.mode === m ? 0 : -1; });
-    $("#pDetails").hidden = m === "quick";
-    buyerError(null);
-  }
-  $$(".mode").forEach(function (b, i, all) {
-    b.addEventListener("click", function () { setMode(b.dataset.mode); });
-    b.addEventListener("keydown", function (e) {
-      if (e.key === "ArrowRight" || e.key === "ArrowLeft" || e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault(); var n = all[(i + 1) % all.length]; setMode(n.dataset.mode); n.focus();
-      }
-    });
-  });
-
   // the buyer's number is required: a Bangladeshi mobile number (01XXXXXXXXX or +8801XXXXXXXXX, Bangla digits allowed)
   function bdMobile(v) {
     var d = String(v || "").replace(/[০-৯]/g, function (x) { return "০১২৩৪৫৬৭৮৯".indexOf(x); }).replace(/\D/g, "");
@@ -670,20 +649,6 @@
   $("#pBuyer").addEventListener("input", function () { if ($("#pBuyer").getAttribute("aria-invalid")) buyerError(null); });
   $("#proofForm").addEventListener("submit", function (e) {
     e.preventDefault();
-    if (pMode === "quick") {
-      if (!pFile) { toast(tr("needShot")); $("#drop").focus(); return; }
-      var qd = new FormData();
-      qd.append("image", pFile, pFile.name || "screenshot.png");
-      var qb = $("#pGo"); busy(qb, true);
-      api("/api/proof", { method: "POST", body: qd })
-        .then(function (d) {
-          showProof(d);
-          if (!d.needs_manual) addHistory("proof", { ts: Date.now(), label: (d.fields && d.fields.amount != null ? "Tk " + d.fields.amount : "") || (d.fields && d.fields.trx_id) || "Screenshot", res: d });
-        })
-        .catch(function (err) { $("#pOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
-        .then(function () { busy(qb, false); });
-      return;
-    }
     var buyerRaw = $("#pBuyer").value.trim();
     if (!buyerRaw) { buyerError("buyerRequired"); $("#pBuyer").focus(); return; }
     if (!bdMobile(buyerRaw)) { buyerError("buyerInvalid"); $("#pBuyer").focus(); return; }
@@ -858,7 +823,6 @@
 
   /* ------------------------------------------------------------ boot */
   showTab(location.hash.slice(1) || "proof");
-  setMode(pMode);
   empty($("#tOut"), "emptyT"); empty($("#pOut"), "emptyP");
   rerender.emptyT = function () { if (!rerender.pretx) empty($("#tOut"), "emptyT"); };
   rerender.emptyP = function () { if (!rerender.proof) empty($("#pOut"), "emptyP"); };
