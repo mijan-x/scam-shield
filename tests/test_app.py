@@ -401,3 +401,55 @@ def test_bad_request_is_not_retried(monkeypatch):
     with pytest.raises(RuntimeError):
         llm.complete("pretx", "s", "u")
     assert len(calls) == 1
+
+
+# ------------------------------------------------------- screenshot only (no expected details)
+_SS = {"amount": 1500, "trx_id": "8N7A6D5EF3", "datetime": "2026-11-23 10:15", "screen_status": "success",
+       "status_bar_visible": True, "status_bar_time": "10:16", "edit_suspicion": "low", "is_payment_screenshot": True}
+_TALL = {"format": "PNG", "width": 720, "height": 1600, "editor": None, "hash": 7}
+
+
+def _ss(**over):
+    x = {**_SS, **{k: v for k, v in over.items() if k != "meta"}}
+    return proof.check(x, {}, NOW, {}, meta=over.get("meta", _TALL), seen_img=[])
+
+
+def test_screenshot_only_genuine_is_not_flagged():
+    r = _ss()
+    assert r["verdict"] == "consistent" and r["compared"] is False
+    assert not [c for c in r["checks"] if c["status"] in ("warn", "fail")]
+
+
+def test_screenshot_only_clock_before_payment():
+    r = _ss(status_bar_time="10:05")
+    assert any(c["id"] == "clock" and c["status"] == "fail" for c in r["checks"]) and r["verdict"] != "consistent"
+
+
+def test_screenshot_only_pending_cropped_old():
+    assert _ss(screen_status="failed")["verdict"] == "suspicious"
+    assert _ss(status_bar_visible=False, status_bar_time=None)["verdict"] == "suspicious"
+    assert _ss(datetime="2026-11-18 10:15", status_bar_time=None)["verdict"] == "suspicious"
+    assert _ss(meta={**_TALL, "height": 800}, status_bar_time=None)["verdict"] == "suspicious"
+
+
+def test_missing_expectation_is_info_not_warning_when_compared_elsewhere():
+    r = proof.check(_SS, {"recipient": "01712345678"}, NOW, {}, meta=_TALL, seen_img=[])
+    amount = next(c for c in r["checks"] if c["id"] == "amount")
+    assert amount["status"] == "info" and r["compared"] is True
+
+
+def test_screenshot_only_without_ai_still_reports_image_checks():
+    import app.main as m
+    m.SEEN_IMG.clear()
+    r = client.post("/api/proof", files={"image": ("s.png", _png("PicsArt", size=(800, 700)), "image/png")}).json()
+    ids = {c["id"]: c["status"] for c in r["checks"]}
+    assert r["needs_manual"] is True and ids["meta_editor"] == "fail" and ids["meta_crop"] == "warn"
+
+
+def test_screenshot_only_api_with_mock_ai(monkeypatch):
+    monkeypatch.setenv("MOCK_LLM", "1")
+    import app.main as m
+    m.SEEN_IMG.clear(); SEEN_TRX.clear()
+    r = client.post("/api/proof", files={"image": ("s.png", _png(), "image/png")}).json()
+    assert r["needs_manual"] is False and r["compared"] is False
+    assert any(c["id"] == "no_expected" for c in r["checks"])

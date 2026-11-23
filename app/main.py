@@ -263,6 +263,7 @@ async def proof_check(
                "error_bn": extract_error_bn or "স্ক্রিনশট দিন অথবা তথ্য নিজে লিখুন।"}
         if meta:
             out["image"] = {k: meta[k] for k in ("format", "width", "height", "editor")}
+            out["checks"] = proof.image_checks(meta, order_ref.strip().lower(), SEEN_IMG)
         return out
 
     res = proof.check(

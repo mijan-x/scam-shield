@@ -77,7 +77,8 @@ def _mock(task: str, user: str) -> str:
         return json.dumps({
             "is_payment_screenshot": True, "provider": "bkash", "amount": 5000,
             "trx_id": "8N7A6D5EF3", "sender": "01700000000", "recipient": "01800000000",
-            "datetime": "2026-11-23 10:15", "visual_flags": ["(mock) spacing around the amount looks uneven"],
+            "datetime": "2026-11-23 10:15", "screen_status": "success", "status_bar_visible": True,
+            "status_bar_time": "10:16", "visual_flags": ["(mock) spacing around the amount looks uneven"],
             "edit_suspicion": "medium", "notes": "mock extraction",
         })
     if task == "trainer_chat":
