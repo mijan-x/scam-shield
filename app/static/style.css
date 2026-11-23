@@ -108,6 +108,14 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); outline: 
 textarea { resize: vertical; min-height: 150px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
 .grid2 .span2 { grid-column: 1 / -1; }
+.modes { margin-top: 16px; }
+.mode-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+.mode { text-align: left; background: var(--paper); border: 1.5px solid var(--line); border-radius: var(--radius-s); padding: 10px 12px; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.mode b { font-size: .95rem; }
+.mode small { color: var(--mute); font-size: .8rem; line-height: 1.35; }
+.mode[aria-checked="true"] { border-color: var(--blue); background: color-mix(in srgb, var(--blue) 8%, var(--slip)); }
+.mode[aria-checked="true"] b::before { content: "● "; color: var(--blue); }
+@media (max-width: 420px) { .mode-btns { grid-template-columns: 1fr; } }
 .field-err { display: block; color: var(--red); font-size: .82rem; margin-top: 4px; }
 input[aria-invalid="true"] { border-color: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 20%, transparent); }
 @media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
