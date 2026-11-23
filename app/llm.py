@@ -31,6 +31,11 @@ def model_name() -> Optional[str]:
     return MODEL if p == "anthropic" else None
 
 
+def can_transcribe() -> bool:
+    """Speech-to-text needs Gemini (Claude does not take audio) or mock mode."""
+    return os.getenv("MOCK_LLM") == "1" or provider() == "gemini"
+
+
 def available() -> bool:
     return provider() is not None or os.getenv("MOCK_LLM") == "1"
 
@@ -70,6 +75,8 @@ def _mock(task: str, user: str) -> str:
         })
     if task == "trainer_chat":
         return "(mock scammer) Please hurry, I need the money back now!"
+    if task == "transcribe":
+        return "Apnar bKash account block hoye jabe, ekhoni PIN ta bolun"
     if task == "trainer_grade":
         return json.dumps({
             "caught": ["(mock) you checked your own account"],
@@ -83,7 +90,7 @@ def _mock(task: str, user: str) -> str:
 
 def complete(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]] = None,
              max_tokens: int = 1200) -> str:
-    """Return the model's text reply. `image` is (bytes, media_type)."""
+    """Return the model's text reply. `image` is (bytes, media_type): an image, or audio for Gemini."""
     if os.getenv("MOCK_LLM") == "1":
         return _mock(task, user)
     p = provider()

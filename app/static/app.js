@@ -31,7 +31,14 @@
       pretxH: "Got a strange call or message?",
       pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
       msgLabel: "Message or what happened", msgPh: "Example: a man says he sent money to my number by mistake and wants it back",
-      mic: "Speak", micStop: "Stop", tryEx: "Try one:", checkMsg: "Check message", kbd: "Tip: Ctrl+Enter checks too.",
+      recVoice: "Record voice", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
+      checkVoice: "Check voice", cancel: "Cancel", transcribing: "Turning your voice into text",
+      micDenied: "Microphone is blocked. Allow it from the icon in the address bar, then try again.",
+      noSpeech: "No words were heard. Try again closer to the microphone, or type the message.",
+      voiceMax: "Limit reached, recording paused. Press Check voice.", maxNote: "up to 1:30",
+      noRecorder: "This browser cannot record audio. Type the message instead.",
+      voiceFallback: "AI voice-to-text was not available, so your browser's speech recognition was used.",
+      tryEx: "Try one:", checkMsg: "Check message", kbd: "Tip: Ctrl+Enter checks too.",
       trainerH: "Practise saying no", trHome: "Play through a real scam, step by step. Nothing here is real and no one is calling you.",
       howH: "How Scam Shield decides",
       howP: "Every answer comes from rules you can read below. AI, when switched on, adds reasoning and reads screenshots, but it can only raise a warning, never lower one.",
@@ -97,7 +104,14 @@
       pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
       pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
       msgLabel: "মেসেজ বা কী ঘটেছে", msgPh: "যেমন: একজন বলছে ভুল করে আমার নম্বরে টাকা পাঠিয়েছে, ফেরত চায়",
-      mic: "বলুন", micStop: "থামুন", tryEx: "উদাহরণ:", checkMsg: "মেসেজ যাচাই করুন", kbd: "Ctrl+Enter চাপলেও যাচাই হবে।",
+      recVoice: "ভয়েস রেকর্ড করুন", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
+      checkVoice: "ভয়েস যাচাই করুন", cancel: "বাতিল", transcribing: "আপনার কথা লেখায় রূপান্তর হচ্ছে",
+      micDenied: "মাইক্রোফোন বন্ধ করা আছে। অ্যাড্রেস বারের আইকন থেকে অনুমতি দিয়ে আবার চেষ্টা করুন।",
+      noSpeech: "কোনো কথা শোনা যায়নি। মাইক্রোফোনের কাছে এসে আবার বলুন, অথবা মেসেজটি লিখুন।",
+      voiceMax: "সময়সীমা শেষ, রেকর্ড থামানো হয়েছে। ভয়েস যাচাই করুন চাপুন।", maxNote: "সর্বোচ্চ ১:৩০",
+      noRecorder: "এই ব্রাউজার অডিও রেকর্ড করতে পারে না। মেসেজটি লিখে দিন।",
+      voiceFallback: "এআই দিয়ে ভয়েস লেখায় রূপান্তর করা যায়নি, তাই ব্রাউজারের নিজস্ব স্পিচ রিকগনিশন ব্যবহার হয়েছে।",
+      tryEx: "উদাহরণ:", checkMsg: "মেসেজ যাচাই করুন", kbd: "Ctrl+Enter চাপলেও যাচাই হবে।",
       trainerH: "না বলা অনুশীলন করুন", trHome: "ধাপে ধাপে একটি বাস্তব প্রতারণা খেলে দেখুন। এখানে সবকিছু নকল, কেউ আপনাকে ফোন করছে না।",
       howH: "স্ক্যাম শিল্ড কীভাবে সিদ্ধান্ত নেয়",
       howP: "প্রতিটি উত্তর আসে নিচের নিয়মগুলো থেকে, যা আপনি পড়তে পারবেন। এআই চালু থাকলে যুক্তি যোগ করে ও স্ক্রিনশট পড়ে, কিন্তু সতর্কতা শুধু বাড়াতে পারে, কমাতে পারে না।",
@@ -152,7 +166,7 @@
 
   var lang = store.get("lang", "en");
   if (lang !== "en" && lang !== "bn") lang = "en";
-  var aiMode = "rules";
+  var aiMode = "rules", voiceAI = false;
   var scenarios = store.get("scenarios", []), meta = null, metrics = null;
   var rulesData = store.get("rules", null);
   var isOffline = navigator.onLine === false;
@@ -176,7 +190,7 @@
     $("#langBtn").setAttribute("aria-label", lang === "en" ? "বাংলায় দেখুন" : "Switch to English");
     $$("[data-t]").forEach(function (el) { el.textContent = tr(el.getAttribute("data-t")); });
     $$("[data-tp]").forEach(function (el) { el.placeholder = tr(el.getAttribute("data-tp")); });
-    var micSpan = $("#tMic span"); if (micSpan) micSpan.textContent = rec ? tr("micStop") : tr("mic");
+    if (window.__voiceRender) window.__voiceRender();
     var b = $("#aiBadge");
     b.textContent = isOffline ? tr("offMode") : aiMode === "live" ? tr("aiOn") : aiMode === "mock" ? tr("aiDemo") : tr("aiOff");
     b.classList.toggle("on", !isOffline && aiMode === "live");
@@ -371,20 +385,172 @@
     c.addEventListener("click", function () { $("#tText").value = c.dataset.ex; countChars(); $("#tText").focus(); });
   });
 
-  // voice input (Web Speech API: Chrome / Edge, needs internet)
-  var rec = null;
-  $("#tMic").addEventListener("click", function () {
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition, btn = $("#tMic");
-    if (!SR) { toast(tr("noMic")); return; }
-    if (rec) { rec.stop(); return; }
-    rec = new SR(); rec.lang = lang === "bn" ? "bn-BD" : "en-US"; rec.interimResults = false;
-    rec.onresult = function (e) {
-      var t = Array.prototype.map.call(e.results, function (r) { return r[0].transcript; }).join(" ");
-      var box = $("#tText"); box.value = (box.value ? box.value + " " : "") + t; countChars();
-    };
-    var stop = function () { rec = null; btn.classList.remove("rec"); $("span", btn).textContent = tr("mic"); };
-    rec.onend = stop; rec.onerror = stop;
-    btn.classList.add("rec"); $("span", btn).textContent = tr("micStop"); rec.start();
+  /* ------------------------------------------------------------ voice recorder
+   * Record -> Pause/Resume -> Check voice. The recording is converted to a small
+   * 16 kHz mono WAV and sent to /api/voice (Gemini speech-to-text). Where that is not
+   * available (no Gemini key, offline), the browser's own live speech recognition,
+   * which runs alongside the recording, supplies the text instead. */
+  var MAX_SEC = 90;
+  var V = { state: "idle", rec: null, stream: null, chunks: [], elapsed: 0, tick: null, startedAt: 0,
+            sr: null, srFinal: "", srInterim: "", srWanted: false };
+
+  function fmtTime(sec) { var m = Math.floor(sec / 60), x = Math.floor(sec % 60); return fmtNum(m) + ":" + (x < 10 ? (lang === "bn" ? "০" : "0") : "") + fmtNum(x); }
+  function liveText() { return (V.srFinal + " " + V.srInterim).replace(/\s+/g, " ").trim(); }
+  function elapsedNow() { return V.elapsed + (V.state === "recording" ? (Date.now() - V.startedAt) / 1000 : 0); }
+
+  function voiceRender() {
+    var panel = $("#vPanel"), start = $("#vStart");
+    start.hidden = V.state !== "idle";
+    panel.hidden = V.state === "idle";
+    if (V.state === "idle") return;
+    panel.classList.toggle("paused", V.state === "paused");
+    panel.classList.toggle("busy", V.state === "busy");
+    $("#vState").textContent = V.state === "recording" ? tr("recording") : V.state === "paused" ? tr("paused") : tr("transcribing") + "…";
+    $("#vTime").textContent = fmtTime(elapsedNow());
+    $("#vMax").textContent = V.state === "busy" ? "" : tr("maxNote");
+    $("#vText").textContent = liveText();
+    $("#vPause").hidden = V.state === "busy";
+    $("#vPause").textContent = V.state === "paused" ? tr("resume") : tr("pause");
+    $("#vSubmit").disabled = V.state === "busy";
+    $("#vSubmit").setAttribute("aria-busy", V.state === "busy" ? "true" : "false");
+    $("#vCancel").hidden = V.state === "busy";
+  }
+  window.__voiceRender = voiceRender;
+
+  function srStart() {
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR || V.sr) return;
+    try {
+      var r = new SR();
+      r.lang = lang === "bn" ? "bn-BD" : "en-US"; r.continuous = true; r.interimResults = true;
+      r.onresult = function (e) {
+        var interim = "";
+        for (var i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) V.srFinal += " " + e.results[i][0].transcript;
+          else interim += " " + e.results[i][0].transcript;
+        }
+        V.srInterim = interim; voiceRender();
+      };
+      r.onerror = function () {};
+      r.onend = function () { V.sr = null; V.srInterim = ""; if (V.srWanted && V.state === "recording") srStart(); };
+      V.sr = r; V.srWanted = true; r.start();
+    } catch (e) { V.sr = null; }
+  }
+  function srStop() { V.srWanted = false; if (V.sr) { try { V.sr.stop(); } catch (e) {} } }
+
+  function startTick() {
+    clearInterval(V.tick);
+    V.tick = setInterval(function () {
+      if (elapsedNow() >= MAX_SEC) { pauseRec(); toast(tr("voiceMax")); }
+      voiceRender();
+    }, 250);
+  }
+  function releaseMic() { if (V.stream) V.stream.getTracks().forEach(function (t) { t.stop(); }); V.stream = null; }
+  function resetVoice() {
+    clearInterval(V.tick); srStop();
+    if (V.rec && V.rec.state !== "inactive") { try { V.rec.onstop = null; V.rec.stop(); } catch (e) {} }
+    releaseMic();
+    V.state = "idle"; V.rec = null; V.chunks = []; V.elapsed = 0; V.srFinal = ""; V.srInterim = "";
+    voiceRender();
+  }
+
+  function startRec() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === "undefined") {
+      toast(tr("noRecorder")); return;
+    }
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (stream) {
+      V.stream = stream; V.chunks = []; V.elapsed = 0; V.srFinal = ""; V.srInterim = "";
+      V.rec = new MediaRecorder(stream);
+      V.rec.ondataavailable = function (e) { if (e.data && e.data.size) V.chunks.push(e.data); };
+      V.rec.start(1000);
+      V.state = "recording"; V.startedAt = Date.now();
+      srStart(); startTick(); voiceRender();
+      $("#vPause").focus();
+    }, function () { toast(tr("micDenied")); });
+  }
+  function pauseRec() {
+    if (V.state !== "recording") return;
+    V.elapsed = elapsedNow(); V.state = "paused";
+    try { V.rec.pause(); } catch (e) {}
+    srStop(); voiceRender();
+  }
+  function resumeRec() {
+    if (V.state !== "paused" || elapsedNow() >= MAX_SEC) return;
+    try { V.rec.resume(); } catch (e) {}
+    V.state = "recording"; V.startedAt = Date.now();
+    srStart(); voiceRender();
+  }
+
+  // decode whatever the browser recorded and re-encode as 16 kHz mono 16-bit WAV
+  function toWav(blob) {
+    var AC = window.AudioContext || window.webkitAudioContext, OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!AC || !OAC) return Promise.reject(new Error("no audio api"));
+    return blob.arrayBuffer().then(function (buf) {
+      var ac = new AC();
+      return new Promise(function (ok, bad) { ac.decodeAudioData(buf, ok, bad); }).then(function (decoded) {
+        try { ac.close(); } catch (e) {}
+        var rate = 16000, len = Math.max(1, Math.ceil(decoded.duration * rate));
+        var off = new OAC(1, len, rate), src = off.createBufferSource();
+        src.buffer = decoded; src.connect(off.destination); src.start(0);
+        return off.startRendering();
+      });
+    }).then(function (rendered) {
+      var pcm = rendered.getChannelData(0), n = pcm.length, out = new DataView(new ArrayBuffer(44 + n * 2));
+      var w = function (o, str) { for (var i = 0; i < str.length; i++) out.setUint8(o + i, str.charCodeAt(i)); };
+      w(0, "RIFF"); out.setUint32(4, 36 + n * 2, true); w(8, "WAVE"); w(12, "fmt ");
+      out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true);
+      out.setUint32(24, 16000, true); out.setUint32(28, 32000, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+      w(36, "data"); out.setUint32(40, n * 2, true);
+      for (var i = 0; i < n; i++) { var v = Math.max(-1, Math.min(1, pcm[i])); out.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7FFF, true); }
+      return new Blob([out], { type: "audio/wav" });
+    });
+  }
+
+  function useTranscript(text, note) {
+    text = (text || "").trim();
+    if (!text) { toast(tr("noSpeech")); resetVoice(); return; }
+    var box = $("#tText");
+    box.value = (box.value.trim() ? box.value.trim() + " " : "") + text;
+    countChars(); resetVoice();
+    if (note) toast(note);
+    $("#pretxForm").requestSubmit();
+  }
+
+  function submitRec() {
+    if (V.state !== "recording" && V.state !== "paused") return;
+    V.elapsed = elapsedNow(); clearInterval(V.tick); srStop();
+    V.state = "busy"; voiceRender();
+    var rec = V.rec;
+    var stopped = new Promise(function (ok) {
+      if (!rec || rec.state === "inactive") { ok(); return; }
+      rec.onstop = function () { ok(); };
+      try { rec.stop(); } catch (e) { ok(); }
+    });
+    stopped.then(function () {
+      releaseMic();
+      // give the speech recogniser a moment to deliver its last words
+      return new Promise(function (ok) { setTimeout(ok, 400); });
+    }).then(function () {
+      var live = liveText();
+      if (!voiceAI || isOffline || !V.chunks.length) { useTranscript(live); return; }
+      var blob = new Blob(V.chunks, { type: (rec && rec.mimeType) || "audio/webm" });
+      return toWav(blob).catch(function () { return blob; }).then(function (audio) {
+        var fd = new FormData();
+        fd.append("audio", audio, audio.type === "audio/wav" ? "voice.wav" : "voice.webm");
+        fd.append("lang", lang);
+        return api("/api/voice", { method: "POST", body: fd });
+      }).then(function (d) { useTranscript(d.transcript || live); },
+        function () { useTranscript(live, live ? tr("voiceFallback") : null); });
+    });
+  }
+
+  $("#vStart").addEventListener("click", startRec);
+  $("#vPause").addEventListener("click", function () { if (V.state === "recording") pauseRec(); else resumeRec(); });
+  $("#vSubmit").addEventListener("click", submitRec);
+  $("#vCancel").addEventListener("click", resetVoice);
+  document.addEventListener("keydown", function (e) {
+    if (V.state === "idle" || V.state === "busy") return;
+    if (e.key === "Escape") resetVoice();
   });
 
   /* ------------------------------------------------------------ payment proof */
@@ -620,7 +786,7 @@
     window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js").catch(function () {}); });
   }
   Promise.all([
-    api("/api/status").then(function (s) { aiMode = s.ai; setOffline(false); }).catch(function (e) { if (e.offline) isOffline = true; }),
+    api("/api/status").then(function (s) { aiMode = s.ai; voiceAI = !!s.voice; setOffline(false); }).catch(function (e) { if (e.offline) isOffline = true; }),
     api("/api/rules").then(function (r) { rulesData = r; store.set("rules", r); }).catch(function () {}),
     api("/api/trainer/scenarios").then(function (s) { scenarios = s; store.set("scenarios", s); }).catch(function () {}),
     api("/api/meta").then(function (m) { meta = m; }).catch(function () {}),

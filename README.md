@@ -10,7 +10,7 @@ Bangladesh runs on bKash, Nagad and Rocket. So do its scammers: fake "payment do
 | Tool | For | What happens |
 |---|---|---|
 | **Payment proof** | Online sellers | Upload the buyer's screenshot and what you expected. We compare amount, your number, payment time and TrxID; look for editing-app traces in the file; and catch the same screenshot or TrxID being reused for another order. Verdict: *matches / suspicious / likely fake*, never "safe". |
-| **Message check** | Everyone | Paste an SMS or describe a call (Bangla, English, Banglish, or speak it). The exact risky words are highlighted, links and phone numbers are judged (look-alike domains, hidden short links, personal numbers posing as customer care), and you get plain advice plus official hotlines. |
+| **Message check** | Everyone | Paste an SMS or describe a call (Bangla, English, Banglish), or record it: Record, Pause/Resume, then Check voice turns the recording into text (Gemini speech-to-text, falling back to the browser's own recognition) and checks it. The exact risky words are highlighted, links and phone numbers are judged (look-alike domains, hidden short links, personal numbers posing as customer care), and you get plain advice plus official hotlines. |
 | **Scam trainer** | Everyone | Three scripted scams with instant feedback, working offline. With an AI key, a free-chat mode where the AI plays the scammer and grades you. |
 | **How it works** | Judges, users | Pipeline, live accuracy numbers, and the full pattern library, in the app itself. |
 | **Offline mode** | Rural users, bad networks | Open the site once online and it is saved on the device. With no internet, message checks run in the browser with the same rules, and the trainer still works. |
@@ -65,7 +65,7 @@ Tests: `python -m pytest -q tests` (also run by GitHub Actions on every push).
 ## API
 
 `GET /api/status`, `/api/health`, `/api/meta`, `/api/metrics`, `/api/rules`, `/api/trainer/scenarios`  
-`POST /api/pretx` `{text, lang}`, `POST /api/proof` (multipart: `image`, `expected_amount`, `expected_recipient`, `chat_time`, `order_ref`, `manual`), `POST /api/trainer/chat`, `POST /api/trainer/grade`.  
+`POST /api/pretx` `{text, lang}`, `POST /api/voice` (multipart: `audio`, `lang`) returns `{transcript}`, `POST /api/proof` (multipart: `image`, `expected_amount`, `expected_recipient`, `chat_time`, `order_ref`, `manual`), `POST /api/trainer/chat`, `POST /api/trainer/grade`.  
 Interactive docs at `/docs`.
 
 ## Project layout
