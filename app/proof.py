@@ -21,11 +21,15 @@ EXTRACT_SYSTEM = (
     "completed payment. status_bar_visible says whether the phone's own status bar (clock, battery, signal) is "
     "visible at the very top; status_bar_time is the clock shown there, converted to 24h (use the receipt's "
     "date context; if the status bar shows 12h time without AM/PM, give your best 24h reading). "
-    "visual_flags lists concrete oddities you can see: inconsistent fonts or sizes, misaligned or unevenly "
-    "spaced digits, blurred or pixelated patches around numbers, elements that look pasted, a status bar "
-    "time that disagrees with the transaction time, missing parts of the usual layout. "
-    "edit_suspicion is your honest visual impression; say low when you see nothing unusual. "
-    "You are not a forensic tool, so keep flags factual and do not exaggerate."
+    "visual_flags lists ONLY concrete signs of tampering in the key fields (amount, transaction ID, recipient, "
+    "date/time): digits in a different font, size, weight or colour from the text around them, digits that are "
+    "misaligned or unevenly spaced, blurred, smudged or pixelated patches around those fields, text that looks "
+    "pasted on top of the background. Do NOT flag: logos, colours, profile pictures, names, icons, layout or "
+    "design differences (these apps change their design often and differ between versions and phones), JPEG "
+    "compression noise, dark mode, or a missing phone status bar (receipts saved with the app's share button "
+    "have none). edit_suspicion: high only when you see clear tampering in a key field; medium when something "
+    "in a key field looks off but you are unsure; otherwise low. Most genuine screenshots are low. "
+    "You are not a forensic tool: keep flags factual and never exaggerate."
 )
 
 TRX_RE = re.compile(r"^[A-Z0-9]{8,12}$")
@@ -69,7 +73,7 @@ def image_checks(meta: Optional[dict], order: str, seen_img: Optional[list]) -> 
         add("meta_size", "warn", "The image is very small, so details are hard to verify. Ask for the original screenshot.",
             "ছবিটি খুব ছোট, তাই খুঁটিনাটি যাচাই করা কঠিন। আসল স্ক্রিনশট চেয়ে নিন।")
     elif w and h / w < 1.3:
-        add("meta_crop", "warn",
+        add("meta_crop", "info",
             "The image is not the tall shape of a phone screenshot, so it was probably cropped. Cropping can hide edits; ask for the full screenshot.",
             "ছবিটি ফোনের স্ক্রিনশটের মতো লম্বা নয়, সম্ভবত কেটে ছোট করা হয়েছে। কাটা ছবিতে এডিট লুকানো যায়; পুরো স্ক্রিনশট চেয়ে নিন।")
     if seen_img is not None and meta.get("hash") is not None:
@@ -185,18 +189,21 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
     susp = (extracted.get("edit_suspicion") or "").lower()
     flags = extracted.get("visual_flags") or []
     if susp in ("medium", "high"):
-        add("visual", "fail" if susp == "high" else "warn",
-            "The image shows possible signs of editing: " + "; ".join(flags[:3]) if flags else "The image may have been edited.",
-            "ছবিতে সম্পাদনার সম্ভাব্য চিহ্ন আছে: " + "; ".join(flags[:3]) if flags else "ছবিটি সম্পাদনা করা হয়ে থাকতে পারে।")
+        what_en = "; ".join(flags[:3]) if flags else "something in the key fields looks off"
+        add("visual", "warn" if susp == "high" else "info",
+            f"The AI noticed possible signs of editing: {what_en}. This is the AI's impression, not proof; check the amount in your own app.",
+            f"এআই সম্পাদনার সম্ভাব্য চিহ্ন দেখেছে: {what_en}। এটি এআই-এর ধারণা, প্রমাণ নয়; নিজের অ্যাপে টাকার পরিমাণ দেখে নিন।")
     status = (extracted.get("screen_status") or "").lower()
     if status in ("pending", "failed"):
         add("screen_status", "fail",
             f"The screen shows a {status} transaction, not a completed payment.",
             "স্ক্রিনে লেনদেনটি " + ("অপেক্ষমাণ" if status == "pending" else "ব্যর্থ") + " দেখাচ্ছে, সম্পন্ন পেমেন্ট নয়।")
     if extracted.get("status_bar_visible") is False:
-        add("status_bar", "warn",
-            "The top of the phone screen (clock and status bar) is cut off. Cropping can hide edits; ask for the full screenshot.",
-            "ফোন-স্ক্রিনের উপরের অংশ (ঘড়ি ও স্ট্যাটাস বার) কাটা। কাটা ছবিতে এডিট লুকানো যায়; পুরো স্ক্রিনশট চেয়ে নিন।")
+        add("status_bar", "info",
+            "No phone clock is visible at the top. That is normal for a receipt saved with the app's share button; "
+            "if it is a normal screenshot, it was cropped, and a full screenshot would let us check the clock.",
+            "উপরে ফোনের ঘড়ি দেখা যাচ্ছে না। অ্যাপের শেয়ার বাটন দিয়ে সেভ করা রসিদে এমনই হয়; "
+            "সাধারণ স্ক্রিনশট হলে সেটি কাটা হয়েছে, পুরো স্ক্রিনশট পেলে ঘড়িও মেলানো যেত।")
     if extracted.get("is_payment_screenshot") is False:
         add("kind", "fail", "This does not look like a payment confirmation screenshot.", "এটি পেমেন্ট নিশ্চিতকরণের স্ক্রিনশট বলে মনে হচ্ছে না।")
 
@@ -207,17 +214,20 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
     checks.extend(image)
 
     fails = [c for c in checks if c["status"] == "fail"]
-    warns = [c for c in checks if c["status"] == "warn"]
+    warns = [c for c in checks if c["status"] == "warn" and c["id"] != "visual"]
+    ai_warn = any(c["id"] == "visual" and c["status"] == "warn" for c in checks)
     compared = any(expected.get(k) for k in ("amount", "recipient", "chat_time"))
-    # with nothing to compare against, the screenshot's own warnings carry more weight
+    status_of = {c["id"]: c["status"] for c in checks}
+    # the hard facts the seller gave us all line up
+    strong_match = status_of.get("amount") == "ok" and status_of.get("recipient", "ok") == "ok" and not fails
     warn_limit = 2 if compared else 1
-    if len(fails) >= 2 or (fails and susp == "high"):
+    if len(fails) >= 2 or (fails and ai_warn):
         verdict = "likely_fake"
-    elif fails or len(warns) >= warn_limit or susp in ("medium", "high"):
+    elif fails or len(warns) >= warn_limit or (ai_warn and not strong_match):
         verdict = "suspicious"
     else:
         verdict = "consistent"
-    score = min(100, 35 * len(fails) + 12 * len(warns) + {"high": 25, "medium": 12}.get(susp, 0))
+    score = min(100, 35 * len(fails) + 12 * len(warns) + (20 if ai_warn else 0))
     if verdict == "likely_fake":
         score = max(score, 70)
     elif verdict == "suspicious":
