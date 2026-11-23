@@ -91,6 +91,59 @@ def test_proof_trx_reuse_flagged():
     assert any(c["id"] == "trx_reuse" for c in r["checks"])
 
 
+GOOD = {"amount": 3500, "recipient": "01712345678", "datetime": "2026-11-23 11:20"}
+EXP = {"amount": 3500, "recipient": "01712345678", "chat_time": "2026-11-23T11:30", "order_ref": "a"}
+
+
+def test_wrong_trx_format_makes_whole_payment_likely_fake():
+    # everything else matches, only the transaction ID is impossible
+    for bad in ("ABC12", "8N7A-6D5EF3", "1234567890", "AAAAAAAAAA", "8N7A6D5EF3X99ZZ"):
+        r = proof.check({**GOOD, "trx_id": bad}, EXP, NOW, fresh())
+        assert r["verdict"] == "likely_fake", bad
+        assert any(c["id"] == "trx_format" and c["status"] == "fail" for c in r["checks"]), bad
+
+
+def test_bkash_trx_must_be_10_characters():
+    r = proof.check({**GOOD, "trx_id": "8N7A6D5EF", "provider": "bkash"}, EXP, NOW, fresh())
+    assert r["verdict"] == "likely_fake"
+    r = proof.check({**GOOD, "trx_id": "8N7A6D5EF3", "provider": "bkash"}, EXP, NOW, fresh())
+    assert r["verdict"] == "consistent"
+
+
+def test_bank_reference_can_be_longer():
+    r = proof.check({**GOOD, "trx_id": "FT2632814029X7Q1", "provider": "bank"}, EXP, NOW, fresh())
+    assert r["verdict"] == "consistent"
+
+
+def test_trx_label_and_spaces_are_ignored():
+    r = proof.check({**GOOD, "trx_id": "TrxID: 8N7A 6D5E F3"}, EXP, NOW, fresh())
+    assert r["verdict"] == "consistent"
+
+
+def test_trx_differs_from_sellers_own_message_is_likely_fake():
+    r = proof.check({**GOOD, "trx_id": "8N7A6D5EF3"}, {**EXP, "trx_id": "9K2L4M6N8P"}, NOW, fresh())
+    assert r["verdict"] == "likely_fake"
+    assert any(c["id"] == "trx_match" and c["status"] == "fail" for c in r["checks"])
+    r = proof.check({**GOOD, "trx_id": "8N7A6D5EF3"}, {**EXP, "trx_id": "8n7a6d5ef3"}, NOW, fresh())
+    assert r["verdict"] == "consistent"
+    assert any(c["id"] == "trx_match" and c["status"] == "ok" for c in r["checks"])
+
+
+def test_reused_trx_is_likely_fake():
+    seen = {}
+    f = {**GOOD, "trx_id": "8N7A6D5EF3"}
+    proof.check(f, {**EXP, "order_ref": "order-1"}, NOW, seen)
+    r = proof.check(f, {**EXP, "order_ref": "order-2"}, NOW, seen)
+    assert r["verdict"] == "likely_fake"
+
+
+def test_api_own_trx_field():
+    SEEN_TRX.clear()
+    manual = json.dumps({"amount": "3500", "trx_id": "8N7A6D5EF3", "datetime": "2026-11-01T11:20"})
+    r = client.post("/api/proof", data={"manual": manual, "expected_amount": "3500", "expected_trx": "7Q2W4E6R8T"}).json()
+    assert r["verdict"] == "likely_fake"
+
+
 def test_proof_never_says_safe():
     r = proof.check({"amount": 1, "trx_id": "8N7A6D5EF3", "datetime": "2026-11-23 11:20"}, {"amount": 1}, NOW, {})
     assert r["verdict"] in ("consistent", "suspicious", "likely_fake")

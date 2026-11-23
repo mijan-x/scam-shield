@@ -37,6 +37,41 @@ EXTRACT_SYSTEM = (
 )
 
 TRX_RE = re.compile(r"^[A-Z0-9]{8,12}$")
+# a wrong transaction ID makes the whole payment wrong, whatever else matches
+HARD_FAILS = {"trx_format", "trx_match", "trx_reuse"}
+
+
+def _trx(v) -> str:
+    """Transaction ID as printed: upper case, spaces and a leading 'TrxID' label removed."""
+    t = re.sub(r"\s+", "", str(v or "")).upper()
+    return re.sub(r"^(TRXID|TXNID|TRANSACTIONID)[:#.\-]*", "", t)
+
+
+def _bn(n) -> str:
+    return str(n).translate(str.maketrans("0123456789", "০১২৩৪৫৬৭৮৯"))
+
+
+def trx_problem(trx: str, provider: str = ""):
+    """Why a transaction ID cannot be real, as (en, bn); None when it looks right."""
+    if re.search(r"[^A-Z0-9/\-]" if provider in ("bank", "other") else r"[^A-Z0-9]", trx):
+        return ("it contains symbols; real IDs use only capital letters and digits",
+                "এতে চিহ্ন আছে; আসল আইডিতে শুধু ইংরেজি বড় হাতের অক্ষর ও সংখ্যা থাকে")
+    if provider in ("bank", "other"):
+        # bank and card references vary a lot; only reject clearly impossible lengths
+        if not 6 <= len(trx) <= 24:
+            return (f"it has {len(trx)} characters",
+                    f"এতে {_bn(len(trx))}টি অক্ষর")
+    elif not TRX_RE.match(trx):
+        return (f"it has {len(trx)} characters; real IDs have 8 to 12",
+                f"এতে {_bn(len(trx))}টি অক্ষর; আসল আইডিতে ৮ থেকে ১২টি থাকে")
+    if provider == "bkash" and len(trx) != 10:
+        return (f"bKash IDs have exactly 10 characters, this has {len(trx)}",
+                f"বিকাশের আইডিতে ঠিক ১০টি অক্ষর থাকে, এতে {_bn(len(trx))}টি")
+    seqs = ("01234567890123456789", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    if len(set(trx)) <= 2 or any(trx in q or trx[::-1] in q for q in seqs):
+        return ("it is a repeated or sequential pattern, not a real ID",
+                "এটি একই বা ধারাবাহিক অক্ষরের ধাঁচ, আসল আইডি নয়")
+    return None
 
 
 def _digits(s) -> str:
@@ -266,14 +301,28 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
                 f"স্ক্রিনশটের ফোন-ঘড়িতে {extracted.get('status_bar_time')}, যা পেমেন্টের সময় {px:%H:%M}-এর আগে। "
                 "আসল স্ক্রিনশট পেমেন্টের আগে তোলা সম্ভব নয়।")
 
-    # 4. transaction ID format and reuse
-    trx = (extracted.get("trx_id") or "").strip().upper()
+    # 4. transaction ID: the seller's own record, format, and reuse
+    trx = _trx(extracted.get("trx_id"))
+    own = _trx(expected.get("trx_id"))
+    provider = (extracted.get("provider") or "").lower()
     if not trx:
         add("trx", "warn", "No transaction ID could be read.", "লেনদেন আইডি পড়া যায়নি।")
     else:
-        if not TRX_RE.match(trx):
-            add("trx_format", "warn", f"Transaction ID '{trx}' does not look like a typical 8 to 12 character code (heuristic only).",
-                f"লেনদেন আইডি '{trx}' সাধারণ ৮ থেকে ১২ অক্ষরের কোডের মতো দেখাচ্ছে না (আনুমানিক নিয়ম)।")
+        bad = trx_problem(trx, provider)
+        if bad:
+            add("trx_format", "fail",
+                f"Transaction ID '{trx}' is not a valid transaction ID: {bad[0]}. A real receipt always shows a proper ID.",
+                f"লেনদেন আইডি '{trx}' সঠিক নয়: {bad[1]}। আসল রসিদে সবসময় সঠিক আইডি থাকে।")
+        if own:
+            if own == trx:
+                add("trx_match", "ok", "The transaction ID matches the one in your own message.",
+                    "লেনদেন আইডি আপনার নিজের মেসেজের আইডির সাথে মিলেছে।")
+            else:
+                add("trx_match", "fail",
+                    f"The transaction ID on the screenshot ({trx}) is not the one in your own message ({own}). "
+                    "The money in your account came from a different payment, or none came at all.",
+                    f"স্ক্রিনশটের লেনদেন আইডি ({trx}) আপনার নিজের মেসেজের আইডি ({own}) নয়। "
+                    "আপনার অ্যাকাউন্টে এই পেমেন্টের টাকা আসেনি।")
         order = (expected.get("order_ref") or "").strip().lower()
         prev = seen_trx.get(trx)
         if prev is not None and prev != order:
@@ -281,9 +330,9 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
                 "এই লেনদেন আইডি আগেই অন্য একটি অর্ডারের জন্য ব্যবহার করা হয়েছে।")
         else:
             seen_trx[trx] = order
-            if TRX_RE.match(trx):
-                add("trx", "ok", "Transaction ID format looks plausible and has not been used for another order.",
-                    "লেনদেন আইডির ধরন স্বাভাবিক এবং অন্য অর্ডারে ব্যবহৃত হয়নি।")
+            if not bad:
+                add("trx", "ok", "Transaction ID format looks right and has not been used for another order.",
+                    "লেনদেন আইডির ধরন ঠিক আছে এবং অন্য অর্ডারে ব্যবহৃত হয়নি।")
 
     # 5. visual impression from the vision model (only when an image was analysed)
     susp = (extracted.get("edit_suspicion") or "").lower()
@@ -316,12 +365,13 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
     fails = [c for c in checks if c["status"] == "fail"]
     warns = [c for c in checks if c["status"] == "warn" and c["id"] != "visual"]
     ai_warn = any(c["id"] == "visual" and c["status"] == "warn" for c in checks)
-    compared = any(expected.get(k) for k in ("amount", "recipient", "sender", "chat_time"))
+    compared = any(expected.get(k) for k in ("amount", "recipient", "sender", "chat_time", "trx_id"))
     status_of = {c["id"]: c["status"] for c in checks}
     # the hard facts the seller gave us all line up
     strong_match = status_of.get("amount") == "ok" and status_of.get("recipient", "ok") == "ok" and not fails
     warn_limit = 2 if compared else 1
-    if len(fails) >= 2 or (fails and ai_warn):
+    hard = any(c["id"] in HARD_FAILS for c in fails)
+    if hard or len(fails) >= 2 or (fails and ai_warn):
         verdict = "likely_fake"
     elif fails or len(warns) >= warn_limit or (ai_warn and not strong_match):
         verdict = "suspicious"
