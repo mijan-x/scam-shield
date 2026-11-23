@@ -94,6 +94,16 @@ challenges/        on-site assigned challenges
 - TrxID and screenshot reuse are remembered per server instance only (on Vercel, per warm instance).
 - New scam wording needs new patterns. No integration with bKash/Nagad systems.
 
+## Team
+
+| Member | GitHub | Role and contribution |
+|---|---|---|
+| (your name) | [@mijan-x](https://github.com/mijan-x) | _written by the member_ |
+| Antu Dev Nath | [@Maverick-145](https://github.com/Maverick-145) | _written by the member_ |
+| Md. Hasan ahmed | [@HasanAl-17](https://github.com/HasanAl-17) | _written by the member_ |
+
+Open work for the team is listed in [TEAM_TASKS.md](TEAM_TASKS.md).
+
 ## Credits
 
 - Built by team JU_Segfault, with **Claude (Anthropic) as an AI coding assistant**.
