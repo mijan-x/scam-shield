@@ -22,9 +22,10 @@
       proofH: "Did the buyer really pay?",
       proofHint: "Upload the buyer's payment screenshot and say what you expected. We compare them and look for signs of editing. Your own bKash or Nagad app is always the final word.",
       dropTitle: "Add the payment screenshot", dropHelp: "Drop it here, paste it (Ctrl+V), or tap to choose. PNG, JPEG or WebP, up to 4 MB.",
-      optHint: "Only have the screenshot? That works. Filling these in makes the check stronger.",
+      optHint: "* The buyer's number is required. Everything else is optional, but each detail makes the check stronger.",
+      buyerRequired: "Enter the buyer's number: the number the money was sent from.", buyerInvalid: "That is not a Bangladeshi mobile number. Use 11 digits like 01712345678.",
       clearForm: "Clear", cleared: "Cleared",
-      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your number (receives the money)", expSender: "Buyer's number (pays the money)", optional: "Optional",
+      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your number (receiver)", expSender: "Buyer's number (payer) *", optional: "Optional",
       chatTime: "About when the buyer paid (rough is fine)", orderRef: "Order name or number",
       manual: "Type the screenshot details yourself",
       manualHint: "Use this if you have no screenshot, or to correct what was read. Anything you type here is used instead.",
@@ -98,9 +99,10 @@
       proofH: "ক্রেতা কি সত্যিই টাকা পাঠিয়েছেন?",
       proofHint: "ক্রেতার পেমেন্ট স্ক্রিনশট দিন এবং কী আশা করেছিলেন লিখুন। আমরা দুটো মিলিয়ে দেখব এবং এডিটের চিহ্ন খুঁজব। চূড়ান্ত প্রমাণ সবসময় আপনার নিজের বিকাশ বা নগদ অ্যাপ।",
       dropTitle: "পেমেন্টের স্ক্রিনশট দিন", dropHelp: "এখানে টেনে আনুন, পেস্ট করুন (Ctrl+V), বা ট্যাপ করে বেছে নিন। PNG, JPEG বা WebP, ৪ MB পর্যন্ত।",
-      optHint: "শুধু স্ক্রিনশট আছে? তাতেই চলবে। নিচের তথ্যগুলো দিলে যাচাই আরও শক্তিশালী হয়।",
+      optHint: "* ক্রেতার নম্বর দেওয়া আবশ্যক। বাকি সব ঐচ্ছিক, তবে প্রতিটি তথ্য যাচাইকে আরও শক্তিশালী করে।",
+      buyerRequired: "ক্রেতার নম্বর দিন: যে নম্বর থেকে টাকা পাঠানো হয়েছে।", buyerInvalid: "এটি বাংলাদেশের মোবাইল নম্বর নয়। ১১ সংখ্যায় লিখুন, যেমন 01712345678।",
       clearForm: "মুছুন", cleared: "মুছে ফেলা হয়েছে",
-      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর (যেখানে টাকা আসবে)", expSender: "ক্রেতার নম্বর (যেখান থেকে টাকা যাবে)", optional: "ঐচ্ছিক",
+      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর (প্রাপক)", expSender: "ক্রেতার নম্বর (প্রেরক) *", optional: "ঐচ্ছিক",
       chatTime: "ক্রেতা আনুমানিক কখন পাঠিয়েছেন", orderRef: "অর্ডারের নাম বা নম্বর",
       manual: "স্ক্রিনশটের তথ্য নিজে লিখুন",
       manualHint: "স্ক্রিনশট না থাকলে, বা পড়া তথ্য ঠিক করতে এটি ব্যবহার করুন। এখানে যা লিখবেন সেটাই ধরা হবে।",
@@ -197,6 +199,7 @@
     $$("[data-t]").forEach(function (el) { el.textContent = tr(el.getAttribute("data-t")); });
     $$("[data-tp]").forEach(function (el) { el.placeholder = tr(el.getAttribute("data-tp")); });
     if (window.__voiceRender) window.__voiceRender();
+    var be = $("#pBuyerErr"); if (be && be.getAttribute("data-k")) be.textContent = tr(be.getAttribute("data-k"));
     var b = $("#aiBadge");
     b.textContent = isOffline ? tr("offMode") : aiMode === "live" ? tr("aiOn") : aiMode === "mock" ? tr("aiDemo") : tr("aiOff");
     b.classList.toggle("on", !isOffline && aiMode === "live");
@@ -632,8 +635,24 @@
     rerender.proof = render; render(!fromHistory);
     if (!fromHistory && window.matchMedia("(max-width: 840px)").matches) $("#pOut").scrollIntoView({ behavior: "smooth", block: "start" });
   }
+  // the buyer's number is required: a Bangladeshi mobile number (01XXXXXXXXX or +8801XXXXXXXXX, Bangla digits allowed)
+  function bdMobile(v) {
+    var d = String(v || "").replace(/[০-৯]/g, function (x) { return "০১২৩৪৫৬৭৮৯".indexOf(x); }).replace(/\D/g, "");
+    if (d.indexOf("880") === 0) d = d.slice(2);
+    return /^01[3-9]\d{8}$/.test(d) ? d : null;
+  }
+  function buyerError(key) {
+    var input = $("#pBuyer"), err = $("#pBuyerErr");
+    if (!key) { input.removeAttribute("aria-invalid"); err.hidden = true; err.textContent = ""; err.removeAttribute("data-k"); return; }
+    input.setAttribute("aria-invalid", "true"); err.hidden = false; err.textContent = tr(key); err.setAttribute("data-k", key);
+  }
+  $("#pBuyer").addEventListener("input", function () { if ($("#pBuyer").getAttribute("aria-invalid")) buyerError(null); });
   $("#proofForm").addEventListener("submit", function (e) {
     e.preventDefault();
+    var buyerRaw = $("#pBuyer").value.trim();
+    if (!buyerRaw) { buyerError("buyerRequired"); $("#pBuyer").focus(); return; }
+    if (!bdMobile(buyerRaw)) { buyerError("buyerInvalid"); $("#pBuyer").focus(); return; }
+    buyerError(null);
     var manual = { amount: $("#mAmount").value, trx_id: $("#mTrx").value, recipient: $("#mRecipient").value, sender: $("#mSender").value, datetime: $("#mTime").value };
     var hasManual = Object.keys(manual).some(function (k) { return manual[k]; });
     if (!pFile && !hasManual) { toast(tr("needInput")); return; }
@@ -641,7 +660,7 @@
     if (pFile) fd.append("image", pFile, pFile.name || "screenshot.png");
     fd.append("expected_amount", $("#pAmount").value);
     fd.append("expected_recipient", $("#pRecipient").value);
-    fd.append("expected_sender", $("#pBuyer").value);
+    fd.append("expected_sender", bdMobile($("#pBuyer").value));
     fd.append("chat_time", $("#pChat").value);
     fd.append("order_ref", $("#pOrder").value);
     fd.append("manual", JSON.stringify(manual));
@@ -663,7 +682,7 @@
   $("#pClear").addEventListener("click", function () {
     clearFile();
     ["#pAmount", "#pRecipient", "#pBuyer", "#pChat", "#pOrder", "#mAmount", "#mTrx", "#mRecipient", "#mSender", "#mTime"].forEach(function (id) { $(id).value = ""; });
-    $(".manual").open = false;
+    $(".manual").open = false; buyerError(null);
     delete rerender.proof; empty($("#pOut"), "emptyP");
     toast(tr("cleared")); $("#drop").focus();
   });
