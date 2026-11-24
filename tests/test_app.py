@@ -644,3 +644,76 @@ def test_bangla_digit_numbers_are_compared_correctly():
     r, ids = _r3({"recipient": "01712345678", "sender": "01911111111"},
                  {"recipient": "০১৭১২৩৪৫৬৭৮", "sender": "০১৯১১১১১১১১"})
     assert ids["recipient"] == "ok" and ids["sender"] == "ok"
+
+
+# ------------------------------------------------------- screen check (photo of a call or message)
+from app import screen as scr
+
+
+def test_number_kinds():
+    assert scr.number_kind("16247") == "official"
+    assert scr.number_kind("01812345678") == "personal"
+    assert scr.number_kind("+880 1812-345678") == "personal"
+    assert scr.number_kind("০১৮১২৩৪৫৬৭৮") == "personal"
+    assert scr.number_kind("+44 7700 900123") == "foreign"
+    assert scr.number_kind("") == "none"
+
+
+def test_brand_name_on_personal_number_is_high():
+    f = scr.flags("call", "01812345678", "bKash Customer Care", "")
+    assert f and f[0]["id"] == "brand_from_personal" and f[0]["weight"] >= 65
+
+
+def test_official_sender_name_is_not_flagged():
+    # real bKash SMS come from the sender name "bKash", with no number
+    assert scr.flags("sms", None, "bKash", "You have received Tk 500.00 from 01712345678. TrxID 8N7A6D5EF3") == []
+    assert scr.flags("call", "16247", "bKash", "") == []
+
+
+def test_brand_sms_from_personal_number_and_foreign_and_spam():
+    assert [x["id"] for x in scr.flags("sms", "01912345678", None, "Your Nagad account will be closed")] == ["brand_sms_from_personal"]
+    assert [x["id"] for x in scr.flags("call", "+234 801 234 5678", None, "")] == ["foreign_number"]
+    assert [x["id"] for x in scr.flags("call", "01712345678", "Suspected spam", "")] == ["phone_spam_label"]
+
+
+def _screen_ai(monkeypatch, reply):
+    from app import llm
+    monkeypatch.setenv("MOCK_LLM", "1")
+    monkeypatch.setattr(llm, "complete", lambda *a, **k: json.dumps(reply) if isinstance(reply, dict) else (_ for _ in ()).throw(reply))
+
+
+def test_api_screen_sms_scam(monkeypatch):
+    monkeypatch.setenv("MOCK_LLM", "1")
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == "high" and r["screen"]["kind"] == "sms" and r["screen"]["number_kind"] == "personal"
+    assert "PIN" in r["text"] and any(p["id"] == "brand_from_personal" for p in r["patterns"])
+
+
+def test_api_screen_call_only_is_not_high(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "number": "01712345678", "name": None,
+                             "text": "", "risk": "low"})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == "low" and r["screen"]["kind"] == "call"
+    assert any("hang up" in x["en"] for x in r["reasons"])
+
+
+def test_api_screen_ai_cannot_lower_risk(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "number": "01712345678", "name": "Nagad Agent",
+                             "text": "", "risk": "low"})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == "high"
+
+
+def test_api_screen_not_a_phone_and_busy(monkeypatch):
+    from app import llm
+    _screen_ai(monkeypatch, {"is_phone_screen": False})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["needs_text"] is True and r["error_bn"]
+    _screen_ai(monkeypatch, llm.AIBusy("503"))
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["needs_text"] is True and "busy" in r["error"]
+
+
+def test_api_screen_rejects_non_images(monkeypatch):
+    monkeypatch.setenv("MOCK_LLM", "1")
+    assert client.post("/api/screen", files={"image": ("a.txt", b"hello", "text/plain")}).status_code == 415
