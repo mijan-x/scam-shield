@@ -34,7 +34,7 @@
       pretxH: "Got a strange call or message?",
       pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
       msgLabel: "Message or what happened", msgPh: "Example: a man says he sent money to my number by mistake and wants it back",
-      recVoice: "Record voice", scanScreen: "Scan phone screen", camHint: "Point the camera at the phone showing the call or message, then press Capture.", capture: "Capture and check", pickPhoto: "Upload a photo or screenshot", camNo: "The camera is not available here. Upload a photo or screenshot of the call or message instead.", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
+      recVoice: "Record voice", scanScreen: "Scan a screen", camHint: "Point the camera at the phone showing the call or message, then press Capture and check.", capture: "Capture and check", srcCam: "Camera", srcShare: "Share my screen", srcUpload: "Upload screenshot", shareHint: "Pick the window or screen with the call or chat (WhatsApp Web, Messenger, a phone-mirroring app), then press Capture and check.", fileHint: "Choose a screenshot or photo of the call or message. You can also paste one here with Ctrl+V.", autoChk: "Check again by itself when the screen changes (every 10 s)", shareNo: "Screen sharing works in a computer browser. On a phone, take a screenshot and upload it.", shareEnded: "Screen sharing stopped.", camNo: "The camera is not available here. Upload a screenshot or photo of the call or message instead.", d_incoming: "Incoming call", d_outgoing: "Outgoing call (you are calling)", d_ongoing: "Call in progress", d_missed: "Missed call", d_unknown: "Call", m_outgoing: "sent by you", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
       checkVoice: "Check voice", cancel: "Cancel", transcribing: "Turning your voice into text",
       micDenied: "Microphone is blocked. Allow it from the icon in the address bar, then try again.",
       noSpeech: "No words were heard. Try again closer to the microphone, or type the message.",
@@ -111,7 +111,7 @@
       pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
       pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
       msgLabel: "মেসেজ বা কী ঘটেছে", msgPh: "যেমন: একজন বলছে ভুল করে আমার নম্বরে টাকা পাঠিয়েছে, ফেরত চায়",
-      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "ফোনের স্ক্রিন স্ক্যান", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ক্যাপচার চাপুন।", capture: "ছবি তুলে যাচাই করুন", pickPhoto: "ছবি বা স্ক্রিনশট দিন", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের ছবি বা স্ক্রিনশট দিন।", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
+      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "স্ক্রিন যাচাই", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ছবি তুলে যাচাই চাপুন।", capture: "ছবি তুলে যাচাই করুন", srcCam: "ক্যামেরা", srcShare: "নিজের স্ক্রিন শেয়ার", srcUpload: "স্ক্রিনশট দিন", shareHint: "কল বা চ্যাট যে উইন্ডো বা স্ক্রিনে আছে তা বেছে নিন (হোয়াটসঅ্যাপ ওয়েব, মেসেঞ্জার, ফোন-মিররিং অ্যাপ), তারপর ছবি তুলে যাচাই চাপুন।", fileHint: "কল বা মেসেজের স্ক্রিনশট বা ছবি বেছে নিন। Ctrl+V দিয়ে পেস্টও করতে পারেন।", autoChk: "স্ক্রিন বদলালে নিজে থেকে আবার যাচাই করুন (প্রতি ১০ সেকেন্ড)", shareNo: "স্ক্রিন শেয়ার কম্পিউটারের ব্রাউজারে কাজ করে। ফোনে স্ক্রিনশট নিয়ে আপলোড করুন।", shareEnded: "স্ক্রিন শেয়ার বন্ধ হয়েছে।", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের স্ক্রিনশট বা ছবি দিন।", d_incoming: "ইনকামিং কল", d_outgoing: "আউটগোয়িং কল (আপনি কল করছেন)", d_ongoing: "চলমান কল", d_missed: "মিসড কল", d_unknown: "কল", m_outgoing: "আপনার পাঠানো", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
       checkVoice: "ভয়েস যাচাই করুন", cancel: "বাতিল", transcribing: "আপনার কথা লেখায় রূপান্তর হচ্ছে",
       micDenied: "মাইক্রোফোন বন্ধ করা আছে। অ্যাড্রেস বারের আইকন থেকে অনুমতি দিয়ে আবার চেষ্টা করুন।",
       noSpeech: "কোনো কথা শোনা যায়নি। মাইক্রোফোনের কাছে এসে আবার বলুন, অথবা মেসেজটি লিখুন।",
@@ -329,7 +329,9 @@
       var el = $("#tOut"), h = head(d.risk, d.score, null, animate);
       if (d.screen) {
         var sc = d.screen, nk = sc.number_kind;
-        h += '<div class="sec"><h3>' + esc(tr("screenH")) + '</h3><div class="screen-read"><b>' + esc(tr("k_" + sc.kind)) + "</b>" +
+        var kindLabel = sc.kind === "call" ? tr("d_" + (sc.direction || "unknown")) :
+          tr("k_" + sc.kind) + (sc.direction === "outgoing" ? " (" + tr("m_outgoing") + ")" : "");
+        h += '<div class="sec"><h3>' + esc(tr("screenH")) + '</h3><div class="screen-read"><b>' + esc(kindLabel) + "</b>" +
           (sc.name ? "<span>" + esc(sc.name) + "</span>" : "") + (sc.number ? '<code>' + esc(sc.number) + "</code>" : "") +
           (T.en["nk_" + nk] ? '<span class="tag ' + (nk === "official" ? "good" : "bad") + '">' + esc(tr("nk_" + nk)) + "</span>" : "") +
           "</div>" + (!(d.highlights && d.highlights.length) && d.text ? '<div class="quote">' + esc(d.text) + "</div>" : "") + "</div>";
@@ -399,63 +401,134 @@
       .catch(function (err) { $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
       .then(function () { busy(btn, false); });
   });
-  // ---------------------------------------------------- screen check (photo of a call or message)
-  var S = { stream: null };
-  function camStop() { if (S.stream) S.stream.getTracks().forEach(function (t) { t.stop(); }); S.stream = null; $("#sVideo").srcObject = null; }
-  function camClose() { camStop(); $("#sPanel").hidden = true; }
+  // ------------------------------------- screen check: camera, own screen (live share) or screenshot
+  var S = { stream: null, src: "cam", timer: null, last: null, sending: false };
+  var canShare = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) &&
+    !/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function camStop() {
+    clearInterval(S.timer); S.timer = null; S.last = null;
+    if (S.stream) S.stream.getTracks().forEach(function (t) { t.onended = null; t.stop(); });
+    S.stream = null; $("#sVideo").srcObject = null;
+  }
+  function camClose() { camStop(); $("#sPanel").hidden = true; $("#sAuto").checked = false; }
+  function srcUI(src, hintKey) {
+    S.src = src;
+    $$(".src").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.src === src ? "true" : "false"); });
+    var live = src !== "file";
+    $("#sVideo").hidden = !live; $("#sShot").hidden = !live;
+    $("#sAutoRow").hidden = src !== "share";
+    $("#sHint").textContent = tr(hintKey || (src === "cam" ? "camHint" : src === "share" ? "shareHint" : "fileHint"));
+  }
+  function useStream(stream) {
+    if ($("#sPanel").hidden) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+    S.stream = stream; var v = $("#sVideo"); v.srcObject = stream; v.play().catch(function () {});
+  }
+  function startCam() {
+    camStop(); srcUI("cam");
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { srcUI("file", "camNo"); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+      .then(useStream, function () { srcUI("file", "camNo"); });
+  }
+  function startShare() {
+    camStop(); srcUI("share");
+    if (!canShare) { srcUI("file", "shareNo"); return; }
+    navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 5 }, audio: false }).then(function (stream) {
+      useStream(stream);
+      stream.getVideoTracks()[0].onended = function () { camStop(); srcUI("file", "shareEnded"); };
+    }, function () { srcUI("file", "fileHint"); });
+  }
   function camOpen() {
     if (aiMode === "rules" || isOffline) { toast(tr("needAI")); return; }
     $("#sPanel").hidden = false;
-    var v = $("#sVideo"), noCam = function () {
-      v.hidden = true; $("#sShot").hidden = true; $("#sHint").textContent = tr("camNo");
-    };
-    v.hidden = false; $("#sShot").hidden = false; $("#sHint").textContent = tr("camHint");
-    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { noCam(); return; }
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
-      .then(function (stream) {
-        if ($("#sPanel").hidden) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
-        S.stream = stream; v.srcObject = stream; v.play().catch(function () {});
-      }, noCam);
+    $('.src[data-src="share"]').hidden = !canShare;
+    startCam();
   }
-  // shrink to at most 1600 px so phone photos stay well under the 4 MB upload limit
+  // shrink to at most 1600 px so photos stay well under the 4 MB upload limit
   function toJpeg(source, w, h) {
     var k = Math.min(1, 1600 / Math.max(w, h)), c = document.createElement("canvas");
     c.width = Math.round(w * k); c.height = Math.round(h * k);
     c.getContext("2d").drawImage(source, 0, 0, c.width, c.height);
     return new Promise(function (ok) { c.toBlob(ok, "image/jpeg", 0.88); });
   }
-  function screenSend(blob) {
-    camClose();
-    if (!blob) return;
-    var btn = $("#sStart"); busy(btn, true); busy($("#tGo"), true);
-    $("#tOut").innerHTML = '<p class="fine">' + esc(tr("reading")) + "</p>";
+  // a tiny grey thumbnail, to notice when the shared screen has changed
+  function thumb(v) {
+    var c = document.createElement("canvas"); c.width = 32; c.height = 32;
+    var g = c.getContext("2d"); g.drawImage(v, 0, 0, 32, 32);
+    var px = g.getImageData(0, 0, 32, 32).data, out = new Array(1024);
+    for (var i = 0; i < 1024; i++) out[i] = (px[i * 4] + px[i * 4 + 1] + px[i * 4 + 2]) / 3;
+    return out;
+  }
+  function changed(a, b) {
+    if (!a || !b) return true;
+    var d = 0; for (var i = 0; i < a.length; i++) d += Math.abs(a[i] - b[i]);
+    return d / a.length > 4;
+  }
+  function screenSend(blob, keepOpen) {
+    if (!keepOpen) camClose();
+    if (!blob || S.sending) return;
+    S.sending = true;
+    var btn = $("#sStart"); busy(btn, true); busy($("#tGo"), true); busy($("#sShot"), true);
+    if (!keepOpen) $("#tOut").innerHTML = '<p class="fine">' + esc(tr("reading")) + "</p>";
     var fd = new FormData(); fd.append("image", blob, "screen.jpg"); fd.append("lang", lang);
     api("/api/screen", { method: "POST", body: fd }).then(function (d) {
       if (d.needs_text) {
+        if (keepOpen) { toast(lang === "bn" ? d.error_bn || d.error : d.error); return; }
         $("#tOut").innerHTML = '<p class="err">' + esc(lang === "bn" ? d.error_bn || d.error : d.error) + "</p>";
         $("#tText").focus(); return;
       }
       $("#tText").value = d.text || ""; countChars();
       showPretx(d, d.text || "");
       addHistory("pretx", { ts: Date.now(), label: tr("fromScreen") + ": " + (d.screen.name || d.screen.number || (d.text || "").slice(0, 40)), input: d.text, res: d });
-    }).catch(function (err) { $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
-      .then(function () { busy(btn, false); busy($("#tGo"), false); });
+    }).catch(function (err) { if (!keepOpen) $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; else toast(err.message); })
+      .then(function () { S.sending = false; busy(btn, false); busy($("#tGo"), false); busy($("#sShot"), false); });
+  }
+  function grab(keepOpen) {
+    var v = $("#sVideo");
+    if (!v.videoWidth) { toast(tr("camNo")); return; }
+    S.last = thumb(v);
+    toJpeg(v, v.videoWidth, v.videoHeight).then(function (b) { screenSend(b, keepOpen); });
+  }
+  function fileToCheck(f) {
+    if (!f || f.type.indexOf("image/") !== 0) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () { URL.revokeObjectURL(url); toJpeg(img, img.naturalWidth, img.naturalHeight).then(function (b) { screenSend(b); }); };
+    img.onerror = function () { URL.revokeObjectURL(url); toast(tr("camNo")); };
+    img.src = url;
   }
   $("#sStart").addEventListener("click", function () { if ($("#sPanel").hidden) camOpen(); else camClose(); });
   $("#sCancel").addEventListener("click", camClose);
-  $("#sShot").addEventListener("click", function () {
-    var v = $("#sVideo");
-    if (!v.videoWidth) { toast(tr("camNo")); return; }
-    toJpeg(v, v.videoWidth, v.videoHeight).then(screenSend);
+  $$(".src").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var src = b.dataset.src;
+      if (src === "cam") startCam();
+      else if (src === "share") startShare();
+      else { camStop(); srcUI("file"); $("#sFile").click(); }
+    });
   });
-  $("#sPick").addEventListener("click", function () { $("#sFile").click(); });
-  $("#sFile").addEventListener("change", function (e) {
-    var f = e.target.files[0]; e.target.value = "";
-    if (!f) return;
-    var img = new Image(), url = URL.createObjectURL(f);
-    img.onload = function () { URL.revokeObjectURL(url); toJpeg(img, img.naturalWidth, img.naturalHeight).then(screenSend); };
-    img.onerror = function () { URL.revokeObjectURL(url); toast(tr("camNo")); };
-    img.src = url;
+  // while sharing the screen live, keep the panel open so the next capture is one click away
+  $("#sShot").addEventListener("click", function () { grab(S.src === "share"); });
+  $("#sAuto").addEventListener("change", function () {
+    clearInterval(S.timer); S.timer = null;
+    if (!this.checked) return;
+    grab(true);
+    S.timer = setInterval(function () {
+      var v = $("#sVideo");
+      if (!S.stream || !v.videoWidth || S.sending) return;
+      if (changed(thumb(v), S.last)) grab(true);
+    }, 10000);
+  });
+  $("#sFile").addEventListener("change", function (e) { var f = e.target.files[0]; e.target.value = ""; fileToCheck(f); });
+  // paste a screenshot straight into the Message check
+  document.addEventListener("paste", function (e) {
+    if ($("#pretx").hidden) return;
+    var items = (e.clipboardData || {}).items || [];
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image/") === 0) {
+        e.preventDefault();
+        if (aiMode === "rules" || isOffline) { toast(tr("needAI")); return; }
+        fileToCheck(items[i].getAsFile()); return;
+      }
+    }
   });
   $$(".chip[data-ex]").forEach(function (c) {
     c.addEventListener("click", function () { $("#tText").value = c.dataset.ex; countChars(); $("#tText").focus(); });

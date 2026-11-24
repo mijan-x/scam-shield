@@ -216,15 +216,18 @@ async def screen_check(image: UploadFile = File(...), lang: str = Form("en")):
                 "error": "This does not look like a phone screen with a call or message. Take a photo of the call or message.",
                 "error_bn": "এটি কল বা মেসেজের স্ক্রিন মনে হচ্ছে না। কল বা মেসেজের স্ক্রিনের ছবি তুলুন।"}
     kind = ai.get("kind") if ai.get("kind") in ("call", "sms", "chat", "other") else "other"
+    direction = ai.get("direction") if ai.get("direction") in ("incoming", "outgoing", "ongoing", "missed") else "unknown"
     number = str(ai.get("number") or "").strip()[:40] or None
     name = str(ai.get("name") or "").strip()[:80] or None
     words = str(ai.get("text") or "").strip()[:4000]
+    who = name or number or "an unknown number"
     if kind == "call" and not words:
-        text = f"Incoming call from {name or number or 'an unknown caller'}"
+        text = {"outgoing": f"Outgoing call to {who}", "incoming": f"Incoming call from {who}",
+                "missed": f"Missed call from {who}"}.get(direction, f"Call with {who}")
     else:
         text = words or f"Message from {name or number or 'unknown'}"
     out = rules_result(text)
-    extra = screen.flags(kind, number, name, words)
+    extra = screen.flags(kind, number, name, words, direction)
     if extra:
         out["patterns"] = sorted(out["patterns"] + extra, key=lambda p: -p["weight"])
         out["reasons"] = [{"en": f["why_en"], "bn": f["why_bn"]} for f in extra] + out["reasons"]
@@ -238,9 +241,10 @@ async def screen_check(image: UploadFile = File(...), lang: str = Form("en")):
                 out["advice_bn"] = ("উত্তর দেবেন না, ফিরতি কল দেবেন না, কোনো পিন বা ওটিপি দেবেন না। চিন্তা হলে নিজে "
                                     "অফিসিয়াল হটলাইনে ফোন করুন।")
     merge_ai(out, ai)
-    out["reasons"] = out["reasons"] + [n for n in screen.notes(kind, number, name) if n["en"] not in {r["en"] for r in out["reasons"]}]
+    out["reasons"] = out["reasons"] + [n for n in screen.notes(kind, number, name, direction) if n["en"] not in {r["en"] for r in out["reasons"]}]
     out["text"] = text
-    out["screen"] = {"kind": kind, "number": number, "name": name, "number_kind": screen.number_kind(number)}
+    out["screen"] = {"kind": kind, "direction": direction, "number": number, "name": name,
+                     "number_kind": screen.number_kind(number)}
     return out
 
 
