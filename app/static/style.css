@@ -324,3 +324,4 @@ mark.caution { background: linear-gradient(transparent 12%, var(--mark-caution) 
 .auto-chk { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
 @media (max-width: 420px) { .src-btns { grid-template-columns: 1fr 1fr; } }
 .auto-chk input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; flex: none; box-shadow: none; }
+.screen-read .tag.warn { border-color: var(--amber); color: var(--amber); }
