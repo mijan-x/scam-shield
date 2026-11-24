@@ -382,6 +382,15 @@ async def proof_check(
                         "Read this payment screenshot and return the JSON described.", image=(data, media)))
             except Exception as e:  # noqa: BLE001
                 extract_error, extract_error_bn = ai_error(e)
+            # second, closer look: the key fields cut out and enlarged side by side
+            if extracted.get("field_boxes"):
+                try:
+                    strip = forensics.zoom_strip(data, extracted["field_boxes"])
+                    if strip:
+                        proof.merge_zoom(extracted, llm.extract_json(llm.complete(
+                            "zoom", proof.ZOOM_SYSTEM, "Check these crops.", image=(strip, "image/png"))))
+                except Exception:  # noqa: BLE001  (the first read still stands)
+                    pass
         else:
             extract_error = "AI reading is off (no API key). Enter the fields by hand."
             extract_error_bn = "এআই চালু নেই। তথ্য নিজে লিখুন।"

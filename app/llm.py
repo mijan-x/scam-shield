@@ -22,7 +22,7 @@ TRANSIENT = {429, 500, 502, 503, 504}
 class AIBusy(RuntimeError):
     """The AI provider is overloaded or rate-limited; worth trying again later."""
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-JSON_TASKS = {"pretx", "extract", "trainer_grade", "screen"}
+JSON_TASKS = {"pretx", "extract", "trainer_grade", "screen", "zoom"}
 
 
 def provider() -> Optional[str]:
@@ -86,7 +86,12 @@ def _mock(task: str, user: str) -> str:
                              "detail": "(mock) the amount digits look heavier than the other digits",
                              "box": [420, 300, 470, 700]}],
             "reference_used": "Image 1" in user, "reference_same_app": True,
+            "field_boxes": {"amount": [420, 300, 470, 700], "trx_id": [560, 300, 600, 700],
+                            "datetime": [620, 300, 660, 700], "label": [380, 300, 410, 600]},
         })
+    if task == "zoom":
+        return json.dumps({"rows": [{"field": "amount", "edited": "possible", "issue": "different_font",
+                                     "detail": "(mock) the 5 has a different shape from other digits"}]})
     if task == "screen":
         return json.dumps({
             "is_phone_screen": True, "kind": "sms", "number": "01812345678", "name": "bKash Care",
