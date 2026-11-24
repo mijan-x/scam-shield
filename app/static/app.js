@@ -25,7 +25,7 @@
       optHint: "All fields are optional, but each detail makes the check stronger.",
       buyerRequired: "Enter the buyer's number: the number the money was sent from.", buyerInvalid: "That is not a Bangladeshi mobile number. Use 11 digits like 01712345678.",
       clearForm: "Clear", cleared: "Cleared",
-      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your number (receiver)", expSender: "Buyer's number (payer)", ownTrx: "TrxID in your own message", optional: "Optional",
+      remove: "Remove", expAmount: "Amount you expected (Tk)", expRecipient: "Your number (receiver)", expSender: "Buyer's number (payer)", optional: "Optional",
       chatTime: "About when the buyer paid (rough is fine)", orderRef: "Order name or number",
       manual: "Type the screenshot details yourself",
       manualHint: "Use this if you have no screenshot, or to correct what was read. Anything you type here is used instead.",
@@ -102,7 +102,7 @@
       optHint: "সব ঘর ঐচ্ছিক, তবে প্রতিটি তথ্য যাচাইকে আরও শক্তিশালী করে।",
       buyerRequired: "ক্রেতার নম্বর দিন: যে নম্বর থেকে টাকা পাঠানো হয়েছে।", buyerInvalid: "এটি বাংলাদেশের মোবাইল নম্বর নয়। ১১ সংখ্যায় লিখুন, যেমন 01712345678।",
       clearForm: "মুছুন", cleared: "মুছে ফেলা হয়েছে",
-      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর (প্রাপক)", expSender: "ক্রেতার নম্বর (প্রেরক)", ownTrx: "আপনার নিজের মেসেজের TrxID", optional: "ঐচ্ছিক",
+      remove: "সরান", expAmount: "প্রত্যাশিত টাকা", expRecipient: "আপনার নম্বর (প্রাপক)", expSender: "ক্রেতার নম্বর (প্রেরক)", optional: "ঐচ্ছিক",
       chatTime: "ক্রেতা আনুমানিক কখন পাঠিয়েছেন", orderRef: "অর্ডারের নাম বা নম্বর",
       manual: "স্ক্রিনশটের তথ্য নিজে লিখুন",
       manualHint: "স্ক্রিনশট না থাকলে, বা পড়া তথ্য ঠিক করতে এটি ব্যবহার করুন। এখানে যা লিখবেন সেটাই ধরা হবে।",
@@ -660,7 +660,6 @@
     fd.append("expected_amount", $("#pAmount").value);
     fd.append("expected_recipient", $("#pRecipient").value);
     fd.append("expected_sender", bdMobile($("#pBuyer").value) || "");
-    fd.append("expected_trx", $("#pTrx").value);
     fd.append("chat_time", $("#pChat").value);
     fd.append("order_ref", $("#pOrder").value);
     fd.append("manual", JSON.stringify(manual));
@@ -681,7 +680,7 @@
   /* ------------------------------------------------------------ clear buttons */
   $("#pClear").addEventListener("click", function () {
     clearFile();
-    ["#pAmount", "#pRecipient", "#pBuyer", "#pTrx", "#pChat", "#pOrder", "#mAmount", "#mTrx", "#mRecipient", "#mSender", "#mTime"].forEach(function (id) { $(id).value = ""; });
+    ["#pAmount", "#pRecipient", "#pBuyer", "#pChat", "#pOrder", "#mAmount", "#mTrx", "#mRecipient", "#mSender", "#mTime"].forEach(function (id) { $(id).value = ""; });
     $(".manual").open = false; buyerError(null);
     delete rerender.proof; empty($("#pOut"), "emptyP");
     toast(tr("cleared")); $("#drop").focus();
