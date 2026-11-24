@@ -61,6 +61,17 @@
             <div class="drop-meta"><span id="pName"></span><button type="button" id="pRemove" class="link" data-t="remove">Remove</button></div>
           </div>
         </div>
+        <div class="ref-box">
+          <button type="button" id="refAdd" class="ghost"><span data-t="refAdd">Compare with a real receipt (optional)</span></button>
+          <div id="refFull" class="ref-full" hidden>
+            <img id="refImg" alt="Your reference receipt">
+            <div><b data-t="refOn">Comparing with your real receipt</b>
+              <p class="fine" data-t="refNote">Saved on this device only. Use a genuine receipt from the same app.</p>
+              <button type="button" id="refRemove" class="link" data-t="remove">Remove</button></div>
+          </div>
+          <p class="fine" id="refHint" data-t="refHint">Add one genuine receipt from the same app (bKash, Nagad…). The AI then compares the fonts, boldness and sizes of the buyer's screenshot against it.</p>
+          <input type="file" id="refFile" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
 
         <p class="fine" style="margin-top:12px" data-t="optHint">All fields are optional, but each detail makes the check stronger.</p>
         <div class="grid2" style="margin-top:8px">

@@ -16,7 +16,10 @@ EXTRACT_SYSTEM = (
     '"amount": number|null, "trx_id": string|null, "sender": string|null, "recipient": string|null, '
     '"datetime": "YYYY-MM-DD HH:MM" (24h)|null, "screen_status": "success|pending|failed|unknown", '
     '"status_bar_visible": bool, "status_bar_time": "HH:MM" (24h)|null, "visual_flags": [short strings], '
-    '"edit_suspicion": "low|medium|high", "notes": string}. '
+    '"edit_suspicion": "low|medium|high", "notes": string, "text_checks": [ {"field": '
+    '"amount|trx_id|recipient|sender|datetime", "issue": "bolder|lighter|larger|smaller|different_font|misaligned|'
+    'spacing|colour|patch|blur", "detail": short string, "confidence": "low|medium|high", "box": [ymin, xmin, ymax, '
+    'xmax] on a 0-1000 scale of the checked image} ]}. '
     "sender is the number or name the money LEFT; recipient is the number or name that RECEIVED it. On a "
     "'Send Money' or 'Payment' success screen (the payer's phone) the number shown is the recipient. On a "
     "'Received money' or 'Cash In' screen (the receiver's phone) the number shown is the sender. Copy numbers "
@@ -33,8 +36,72 @@ EXTRACT_SYSTEM = (
     "compression noise, dark mode, or a missing phone status bar (receipts saved with the app's share button "
     "have none). edit_suspicion: high only when you see clear tampering in a key field; medium when something "
     "in a key field looks off but you are unsure; otherwise low. Most genuine screenshots are low. "
-    "You are not a forensic tool: keep flags factual and never exaggerate."
+    "You are not a forensic tool: keep flags factual and never exaggerate. "
+    "text_checks: look closely at each key field (amount, transaction ID, recipient, sender, date/time) and compare "
+    "its characters with other text of the same kind ON THE SAME SCREEN: other digits, the labels beside it, the "
+    "same font used elsewhere. Report a field only when its characters differ from their neighbours: bolder or "
+    "lighter strokes, a larger or smaller size, a different typeface, sitting above or below the line, uneven gaps "
+    "between digits, a different colour or edge smoothness, a flat patch or blur behind the text. Give the box "
+    "around the field. Use high only when the difference is clear at normal zoom. Return [] when the text is "
+    "consistent, which is the usual case."
 )
+
+REFERENCE_NOTE = (
+    "Image 1 is a GENUINE receipt from the same kind of app, supplied by the seller as a reference. Image 2 is the "
+    "screenshot to check. Read every field ONLY from image 2; boxes refer to image 2. Use image 1 to judge how a real "
+    "receipt draws its text: compare image 2's key fields with the same fields in image 1 (font, weight, size "
+    "relative to the label beside it, colour, alignment, spacing, where the field sits). The values differ between "
+    "payments, so compare how the characters are drawn, never the values. Different app versions or dark mode can "
+    "change the design; only flag clear differences in how a key field's text is drawn. Add the keys "
+    '"reference_used": true and "reference_same_app": true/false (false if image 1 is a different app or not a '
+    "receipt, and then ignore it). Return the JSON described."
+)
+
+ISSUE_TEXT = {
+    "bolder": ("looks bolder than the text around it", "আশেপাশের লেখার চেয়ে মোটা দেখাচ্ছে"),
+    "lighter": ("looks thinner than the text around it", "আশেপাশের লেখার চেয়ে পাতলা দেখাচ্ছে"),
+    "larger": ("is drawn larger than matching text", "মিলের লেখার চেয়ে বড় দেখাচ্ছে"),
+    "smaller": ("is drawn smaller than matching text", "মিলের লেখার চেয়ে ছোট দেখাচ্ছে"),
+    "different_font": ("uses a different font", "ভিন্ন ফন্টে লেখা"),
+    "misaligned": ("sits off the line of the text beside it", "পাশের লেখার লাইন থেকে সরে আছে"),
+    "spacing": ("has uneven gaps between characters", "অক্ষরের ফাঁক অসমান"),
+    "colour": ("has a different colour or edge", "রং বা কিনারা ভিন্ন"),
+    "patch": ("has a flat patch behind it, as if pasted on", "পেছনে সমান রঙের ছোপ, যেন বসানো হয়েছে"),
+    "blur": ("is blurred or smudged compared with the rest", "বাকি অংশের চেয়ে ঝাপসা"),
+}
+FIELD_TEXT = {"amount": ("amount", "টাকার পরিমাণ"), "trx_id": ("transaction ID", "লেনদেন আইডি"),
+              "recipient": ("receiver number", "প্রাপকের নম্বর"), "sender": ("sender number", "প্রেরকের নম্বর"),
+              "datetime": ("date and time", "তারিখ ও সময়")}
+
+
+def text_findings(extracted: dict):
+    """Typography differences in key fields: (checks, boxes for drawing on the screenshot)."""
+    ref = bool(extracted.get("reference_used")) and extracted.get("reference_same_app") is not False
+    checks, boxes = [], []
+    for t in (extracted.get("text_checks") or [])[:6]:
+        if not isinstance(t, dict):
+            continue
+        field, issue = t.get("field"), t.get("issue")
+        conf = (t.get("confidence") or "low").lower()
+        if field not in FIELD_TEXT or issue not in ISSUE_TEXT or conf not in ("medium", "high"):
+            continue
+        f_en, f_bn = FIELD_TEXT[field]
+        i_en, i_bn = ISSUE_TEXT[issue]
+        how_en = " compared with your real reference receipt" if ref else ""
+        how_bn = " আপনার দেওয়া আসল রসিদের তুলনায়" if ref else ""
+        status = ("fail" if ref else "warn") if conf == "high" else "info"
+        checks.append({
+            "id": "typography", "status": status, "field": field, "issue": issue,
+            "en": f"The {f_en} {i_en}{how_en}. Edited screenshots often change just these characters.",
+            "bn": f"{f_bn}{how_bn} {i_bn}। এডিট করা স্ক্রিনশটে প্রায়ই শুধু এই অক্ষরগুলো বদলানো হয়।",
+        })
+        box = t.get("box")
+        if isinstance(box, list) and len(box) == 4 and all(isinstance(v, (int, float)) for v in box):
+            y0, x0, y1, x1 = [max(0, min(1000, float(v))) for v in box]
+            if y1 > y0 and x1 > x0:
+                boxes.append({"box": [y0, x0, y1, x1], "field": field, "issue": issue, "confidence": conf,
+                              "label_en": f"{f_en}: {i_en}", "label_bn": f"{f_bn}: {i_bn}"})
+    return checks, boxes, ref
 
 TRX_RE = re.compile(r"^[A-Z0-9]{8,12}$")
 # a wrong transaction ID makes the whole payment wrong, whatever else matches
@@ -342,6 +409,8 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
         add("visual", "warn" if susp == "high" else "info",
             f"The AI noticed possible signs of editing: {what_en}. This is the AI's impression, not proof; check the amount in your own app.",
             f"এআই সম্পাদনার সম্ভাব্য চিহ্ন দেখেছে: {what_en}। এটি এআই-এর ধারণা, প্রমাণ নয়; নিজের অ্যাপে টাকার পরিমাণ দেখে নিন।")
+    tchecks, edit_boxes, ref_used = text_findings(extracted)
+    checks.extend(tchecks)
     status = (extracted.get("screen_status") or "").lower()
     if status in ("pending", "failed"):
         add("screen_status", "fail",
@@ -365,6 +434,8 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
     fails = [c for c in checks if c["status"] == "fail"]
     warns = [c for c in checks if c["status"] == "warn" and c["id"] != "visual"]
     ai_warn = any(c["id"] == "visual" and c["status"] == "warn" for c in checks)
+    # a clear difference in how a key field is drawn (bolder, smaller, other font) is never "no red flags"
+    typo_warn = any(c["id"] == "typography" and c["status"] == "warn" for c in checks)
     compared = any(expected.get(k) for k in ("amount", "recipient", "sender", "chat_time", "trx_id"))
     status_of = {c["id"]: c["status"] for c in checks}
     # the hard facts the seller gave us all line up
@@ -373,7 +444,7 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
     hard = any(c["id"] in HARD_FAILS for c in fails)
     if hard or len(fails) >= 2 or (fails and ai_warn):
         verdict = "likely_fake"
-    elif fails or len(warns) >= warn_limit or (ai_warn and not strong_match):
+    elif fails or len(warns) >= warn_limit or (ai_warn and not strong_match) or typo_warn:
         verdict = "suspicious"
     else:
         verdict = "consistent"
@@ -393,6 +464,8 @@ def check(extracted: dict, expected: dict, now: datetime, seen_trx: dict,
         "verdict": verdict,
         "score": score,
         "compared": compared,
+        "edit_boxes": edit_boxes,
+        "reference_used": ref_used,
         "checks": checks,
         "fields": {
             "amount": extracted.get("amount"), "trx_id": trx or None, "sender": extracted.get("sender"),

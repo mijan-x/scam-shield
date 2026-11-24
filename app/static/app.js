@@ -34,7 +34,7 @@
       pretxH: "Got a strange call or message?",
       pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
       msgLabel: "Message or what happened", msgPh: "Example: a man says he sent money to my number by mistake and wants it back",
-      recVoice: "Record voice", scanScreen: "Scan a screen", camHint: "Point the camera at the phone showing the call or message, then press Capture and check.", capture: "Capture and check", srcCam: "Camera", srcShare: "Share my screen", srcUpload: "Upload screenshot", shareHint: "Pick the window or screen with the call or chat (WhatsApp Web, Messenger, a phone-mirroring app), then press Capture and check.", fileHint: "Choose a screenshot or photo of the call or message. You can also paste one here with Ctrl+V.", autoChk: "Check again by itself when the screen changes (every 10 s)", shareNo: "Screen sharing works in a computer browser. On a phone, take a screenshot and upload it.", shareEnded: "Screen sharing stopped.", camNo: "The camera is not available here. Upload a screenshot or photo of the call or message instead.", d_incoming: "Incoming call", d_outgoing: "Outgoing call (you are calling)", d_ongoing: "Call in progress", d_missed: "Missed call", d_unknown: "Call", m_outgoing: "sent by you", k_number: "Phone number", numberH: "About this number", sureH: "How sure is this?", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
+      recVoice: "Record voice", scanScreen: "Scan a screen", camHint: "Point the camera at the phone showing the call or message, then press Capture and check.", capture: "Capture and check", srcCam: "Camera", srcShare: "Share my screen", srcUpload: "Upload screenshot", shareHint: "Pick the window or screen with the call or chat (WhatsApp Web, Messenger, a phone-mirroring app), then press Capture and check.", fileHint: "Choose a screenshot or photo of the call or message. You can also paste one here with Ctrl+V.", autoChk: "Check again by itself when the screen changes (every 10 s)", shareNo: "Screen sharing works in a computer browser. On a phone, take a screenshot and upload it.", shareEnded: "Screen sharing stopped.", camNo: "The camera is not available here. Upload a screenshot or photo of the call or message instead.", d_incoming: "Incoming call", d_outgoing: "Outgoing call (you are calling)", d_ongoing: "Call in progress", d_missed: "Missed call", d_unknown: "Call", m_outgoing: "sent by you", k_number: "Phone number", numberH: "About this number", sureH: "How sure is this?", refAdd: "Compare with a real receipt (optional)", refOn: "Comparing with your real receipt", refNote: "Saved on this device only. Use a genuine receipt from the same app.", refHint: "Add one genuine receipt from the same app (bKash, Nagad…). The AI then compares the fonts, boldness and sizes of the buyer's screenshot against it.", refSaved: "Reference receipt saved on this device.", editH: "Where it looks edited", editNote: "Boxes show where the AI saw text drawn differently. Solid red: clear; dashed: possible.", refUsedNote: "Compared with your real reference receipt.", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
       checkVoice: "Check voice", cancel: "Cancel", transcribing: "Turning your voice into text",
       micDenied: "Microphone is blocked. Allow it from the icon in the address bar, then try again.",
       noSpeech: "No words were heard. Try again closer to the microphone, or type the message.",
@@ -111,7 +111,7 @@
       pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
       pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
       msgLabel: "মেসেজ বা কী ঘটেছে", msgPh: "যেমন: একজন বলছে ভুল করে আমার নম্বরে টাকা পাঠিয়েছে, ফেরত চায়",
-      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "স্ক্রিন যাচাই", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ছবি তুলে যাচাই চাপুন।", capture: "ছবি তুলে যাচাই করুন", srcCam: "ক্যামেরা", srcShare: "নিজের স্ক্রিন শেয়ার", srcUpload: "স্ক্রিনশট দিন", shareHint: "কল বা চ্যাট যে উইন্ডো বা স্ক্রিনে আছে তা বেছে নিন (হোয়াটসঅ্যাপ ওয়েব, মেসেঞ্জার, ফোন-মিররিং অ্যাপ), তারপর ছবি তুলে যাচাই চাপুন।", fileHint: "কল বা মেসেজের স্ক্রিনশট বা ছবি বেছে নিন। Ctrl+V দিয়ে পেস্টও করতে পারেন।", autoChk: "স্ক্রিন বদলালে নিজে থেকে আবার যাচাই করুন (প্রতি ১০ সেকেন্ড)", shareNo: "স্ক্রিন শেয়ার কম্পিউটারের ব্রাউজারে কাজ করে। ফোনে স্ক্রিনশট নিয়ে আপলোড করুন।", shareEnded: "স্ক্রিন শেয়ার বন্ধ হয়েছে।", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের স্ক্রিনশট বা ছবি দিন।", d_incoming: "ইনকামিং কল", d_outgoing: "আউটগোয়িং কল (আপনি কল করছেন)", d_ongoing: "চলমান কল", d_missed: "মিসড কল", d_unknown: "কল", m_outgoing: "আপনার পাঠানো", k_number: "ফোন নম্বর", numberH: "এই নম্বর সম্পর্কে", sureH: "এই ফলাফল কতটা নিশ্চিত?", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
+      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "স্ক্রিন যাচাই", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ছবি তুলে যাচাই চাপুন।", capture: "ছবি তুলে যাচাই করুন", srcCam: "ক্যামেরা", srcShare: "নিজের স্ক্রিন শেয়ার", srcUpload: "স্ক্রিনশট দিন", shareHint: "কল বা চ্যাট যে উইন্ডো বা স্ক্রিনে আছে তা বেছে নিন (হোয়াটসঅ্যাপ ওয়েব, মেসেঞ্জার, ফোন-মিররিং অ্যাপ), তারপর ছবি তুলে যাচাই চাপুন।", fileHint: "কল বা মেসেজের স্ক্রিনশট বা ছবি বেছে নিন। Ctrl+V দিয়ে পেস্টও করতে পারেন।", autoChk: "স্ক্রিন বদলালে নিজে থেকে আবার যাচাই করুন (প্রতি ১০ সেকেন্ড)", shareNo: "স্ক্রিন শেয়ার কম্পিউটারের ব্রাউজারে কাজ করে। ফোনে স্ক্রিনশট নিয়ে আপলোড করুন।", shareEnded: "স্ক্রিন শেয়ার বন্ধ হয়েছে।", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের স্ক্রিনশট বা ছবি দিন।", d_incoming: "ইনকামিং কল", d_outgoing: "আউটগোয়িং কল (আপনি কল করছেন)", d_ongoing: "চলমান কল", d_missed: "মিসড কল", d_unknown: "কল", m_outgoing: "আপনার পাঠানো", k_number: "ফোন নম্বর", numberH: "এই নম্বর সম্পর্কে", sureH: "এই ফলাফল কতটা নিশ্চিত?", refAdd: "আসল রসিদের সাথে মেলান (ঐচ্ছিক)", refOn: "আপনার আসল রসিদের সাথে মেলানো হচ্ছে", refNote: "শুধু এই ডিভাইসে সেভ থাকে। একই অ্যাপের আসল রসিদ দিন।", refHint: "একই অ্যাপের (বিকাশ, নগদ…) একটি আসল রসিদ দিন। এআই তখন ক্রেতার স্ক্রিনশটের ফন্ট, মোটা-পাতলা ও আকার এর সাথে মেলাবে।", refSaved: "আসল রসিদ এই ডিভাইসে সেভ হয়েছে।", editH: "কোথায় এডিট করা মনে হচ্ছে", editNote: "যেখানে এআই লেখা ভিন্নভাবে আঁকা দেখেছে সেখানে বক্স। লাল: স্পষ্ট; ড্যাশ: সম্ভাব্য।", refUsedNote: "আপনার দেওয়া আসল রসিদের সাথে মেলানো হয়েছে।", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
       checkVoice: "ভয়েস যাচাই করুন", cancel: "বাতিল", transcribing: "আপনার কথা লেখায় রূপান্তর হচ্ছে",
       micDenied: "মাইক্রোফোন বন্ধ করা আছে। অ্যাড্রেস বারের আইকন থেকে অনুমতি দিয়ে আবার চেষ্টা করুন।",
       noSpeech: "কোনো কথা শোনা যায়নি। মাইক্রোফোনের কাছে এসে আবার বলুন, অথবা মেসেজটি লিখুন।",
@@ -732,6 +732,38 @@
 
   /* ------------------------------------------------------------ payment proof */
   var pFile = null;
+  // reference receipt: a genuine receipt the seller trusts, kept on this device, sent shrunk with each check
+  var refData = store.get("proofRef", null);
+  function refShow() {
+    $("#refFull").hidden = !refData; $("#refAdd").hidden = !!refData; $("#refHint").hidden = !!refData;
+    if (refData) $("#refImg").src = refData;
+  }
+  function shrink(img, max) {
+    var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h)), c = document.createElement("canvas");
+    c.width = Math.round(w * k); c.height = Math.round(h * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.85);
+  }
+  function dataToBlob(url) {
+    var parts = url.split(","), bin = atob(parts[1]), u = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return new Blob([u], { type: "image/jpeg" });
+  }
+  $("#refAdd").addEventListener("click", function () { $("#refFile").click(); });
+  $("#refFile").addEventListener("change", function (e) {
+    var f = e.target.files[0]; e.target.value = "";
+    if (!f || ["image/png", "image/jpeg", "image/webp"].indexOf(f.type) < 0) { if (f) toast(tr("badType")); return; }
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      refData = shrink(img, 1200);
+      store.set("proofRef", refData); refShow(); toast(tr("refSaved"));
+    };
+    img.src = url;
+  });
+  $("#refRemove").addEventListener("click", function () { refData = null; store.set("proofRef", null); refShow(); });
+  refShow();
+
   function setFile(f) {
     if (!f) return;
     if (["image/png", "image/jpeg", "image/webp"].indexOf(f.type) < 0) { toast(tr("badType")); return; }
@@ -761,7 +793,7 @@
   });
 
   var ICON = { ok: "✓", warn: "!", fail: "✕", info: "i" };
-  function showProof(d, fromHistory) {
+  function showProof(d, fromHistory, shotUrl) {
     var render = function (animate) {
       var el = $("#pOut");
       if (d.needs_manual) {
@@ -779,6 +811,17 @@
         return '<div class="check ' + esc(c.status) + '"><span class="ic" aria-hidden="true">' + (ICON[c.status] || "•") +
           "</span><span>" + esc(c[lang] || c.en) + "</span></div>";
       }).join("") + "</div>";
+      var marks = d.edit_boxes || [];
+      if (marks.length && shotUrl) {
+        h += '<div class="sec"><h3>' + esc(tr("editH")) + '</h3><p class="fine">' + esc(tr("editNote")) +
+          (d.reference_used ? " " + esc(tr("refUsedNote")) : "") + '</p><div class="shot-mark"><img src="' + esc(shotUrl) + '" alt="">' +
+          marks.map(function (m, i) {
+            var b = m.box;
+            return '<div class="mark ' + (m.confidence === "high" ? "" : "medium") + '" data-n="' + (i + 1) + '" style="top:' + (b[0] / 10) +
+              "%;left:" + (b[1] / 10) + "%;height:" + ((b[2] - b[0]) / 10) + "%;width:" + ((b[3] - b[1]) / 10) + '%"></div>';
+          }).join("") + '</div><ol class="mark-list">' + marks.map(function (m) { return "<li>" + esc(m["label_" + lang] || m.label_en) + "</li>"; }).join("") +
+          "</ol></div>";
+      }
       h += honestyHtml(d.honesty);
       var fl = d.fields || {}, keys = ["amount", "trx_id", "recipient", "sender", "datetime", "provider"].filter(function (k) { return fl[k] != null && fl[k] !== ""; });
       if (keys.length) {
@@ -825,6 +868,8 @@
     if (!pFile && !hasManual) { toast(tr("needInput")); return; }
     var fd = new FormData();
     if (pFile) fd.append("image", pFile, pFile.name || "screenshot.png");
+    if (pFile && refData) fd.append("reference", dataToBlob(refData), "reference.jpg");
+    var shotUrl = pFile ? URL.createObjectURL(pFile) : null;
     fd.append("expected_amount", $("#pAmount").value);
     fd.append("expected_recipient", $("#pRecipient").value);
     fd.append("expected_sender", bdMobile($("#pBuyer").value) || "");
@@ -835,7 +880,7 @@
     var btn = $("#pGo"); busy(btn, true);
     api("/api/proof", { method: "POST", body: fd })
       .then(function (d) {
-        showProof(d);
+        showProof(d, false, shotUrl);
         if (!d.needs_manual) {
           var label = ($("#pOrder").value || "") + " " + (d.fields && d.fields.amount != null ? "Tk " + d.fields.amount : "");
           addHistory("proof", { ts: Date.now(), label: label.trim() || (d.fields && d.fields.trx_id) || "Payment", res: d });
