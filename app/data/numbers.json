@@ -1,0 +1,23 @@
+{
+  "_about": "Official numbers shown by name in the Screen check. Only add numbers confirmed on the organisation's own site or a reliable news source, and note the source. A match is shown as official but scammers can fake caller ID, so the app still says never to share a PIN or OTP.",
+  "numbers": [
+    {"number": "16247", "name_en": "bKash helpline", "name_bn": "বিকাশ হেল্পলাইন", "type": "mfs", "source": "bkash.com/en/help/contact-us"},
+    {"number": "0255663001", "name_en": "bKash helpline", "name_bn": "বিকাশ হেল্পলাইন", "type": "mfs", "source": "bkash.com/en/help/contact-us (02-55663001)"},
+    {"number": "16167", "name_en": "Nagad helpline", "name_bn": "নগদ হেল্পলাইন", "type": "mfs", "source": "The Daily Star, Dec 2025 safety guide"},
+    {"number": "16216", "name_en": "Rocket (Dutch-Bangla Bank) helpline", "name_bn": "রকেট (ডাচ-বাংলা ব্যাংক) হেল্পলাইন", "type": "mfs", "source": "widely published DBBL/Rocket helpline"},
+    {"number": "16268", "name_en": "Upay helpline", "name_bn": "উপায় হেল্পলাইন", "type": "mfs", "source": "published Upay helpline"},
+    {"number": "16236", "name_en": "Bangladesh Bank complaints hotline", "name_bn": "বাংলাদেশ ব্যাংক অভিযোগ হটলাইন", "type": "gov", "source": "bb.org.bd CIPC page"},
+    {"number": "999", "name_en": "National Emergency Service", "name_bn": "জাতীয় জরুরি সেবা", "type": "gov", "source": "ICT Division"},
+    {"number": "333", "name_en": "National Helpline 333", "name_bn": "জাতীয় হেল্পলাইন ৩৩৩", "type": "gov", "source": "a2i.gov.bd"},
+    {"number": "109", "name_en": "Helpline for violence against women and children", "name_bn": "নারী ও শিশু নির্যাতন প্রতিরোধ হেল্পলাইন", "type": "gov", "source": "nhc.gov.bd"},
+    {"number": "1098", "name_en": "Child Helpline", "name_bn": "চাইল্ড হেল্পলাইন", "type": "gov", "source": "Australian High Commission Dhaka information sheet"},
+    {"number": "106", "name_en": "Anti-Corruption Commission", "name_bn": "দুর্নীতি দমন কমিশন", "type": "gov", "source": "BTRC numbering plan (Wikipedia)"},
+    {"number": "102", "name_en": "Fire Service and Civil Defence", "name_bn": "ফায়ার সার্ভিস ও সিভিল ডিফেন্স", "type": "gov", "source": "BTRC numbering plan (Wikipedia)"},
+    {"number": "105", "name_en": "NID services", "name_bn": "এনআইডি সেবা", "type": "gov", "source": "BTRC numbering plan (Wikipedia)"},
+    {"number": "131", "name_en": "Bangladesh Railway", "name_bn": "বাংলাদেশ রেলওয়ে", "type": "gov", "source": "BTRC numbering plan (Wikipedia)"},
+    {"number": "16263", "name_en": "DGHS health helpline", "name_bn": "স্বাস্থ্য অধিদপ্তর হেল্পলাইন", "type": "gov", "source": "Prothom Alo / bdnews24 hotline lists"},
+    {"number": "121", "name_en": "Mobile operator customer care", "name_bn": "মোবাইল অপারেটর কাস্টমার কেয়ার", "type": "telco", "source": "BTRC numbering plan (Wikipedia); teletalk.com.bd"},
+    {"number": "158", "name_en": "Mobile operator complaints", "name_bn": "মোবাইল অপারেটর অভিযোগ", "type": "telco", "source": "BTRC numbering plan (Wikipedia)"},
+    {"number": "01500121121", "name_en": "Teletalk customer care", "name_bn": "টেলিটক কাস্টমার কেয়ার", "type": "telco", "source": "teletalk.com.bd FAQ (01500121121-9)"}
+  ]
+}

@@ -672,7 +672,7 @@ def test_official_sender_name_is_not_flagged():
 
 def test_brand_sms_from_personal_number_and_foreign_and_spam():
     assert [x["id"] for x in scr.flags("sms", "01912345678", None, "Your Nagad account will be closed")] == ["brand_sms_from_personal"]
-    assert [x["id"] for x in scr.flags("call", "+234 801 234 5678", None, "")] == ["foreign_number"]
+    assert [x["id"] for x in scr.flags("call", "+234 801 234 5678", None, "")] == ["number_foreign"]
     assert [x["id"] for x in scr.flags("call", "01712345678", "Suspected spam", "")] == ["phone_spam_label"]
 
 
@@ -745,3 +745,53 @@ def test_unknown_direction_is_not_called_incoming(monkeypatch):
 
 def test_spam_label_ignored_on_outgoing_call():
     assert scr.flags("call", "01712345678", "Suspected spam", "", "outgoing") == []
+
+
+# ------------------------------------------------------- number patterns
+@pytest.mark.parametrize("num,kind", [
+    ("+8801812345678", "personal"), ("01712345678", "personal"), ("০১৭১২৩৪৫৬৭৮", "personal"),
+    ("+880181234567", "suspicious"), ("+88018123456789", "suspicious"), ("01212345678", "suspicious"),
+    ("16247", "official"), ("+880 2-55663001", "official"), ("999", "official"), ("01500121125", "official"),
+    ("09610016247", "ip"), ("0961001624", "suspicious"), ("+2348012345678", "foreign"), ("0044 7700 900123", "foreign"),
+    ("26969", "short"), ("Private number", "hidden"), ("02-9550128", "landline"), ("+880 2 55667788", "landline"),
+])
+def test_number_patterns(num, kind):
+    assert scr.classify(num)["kind"] == kind
+
+
+def test_official_number_shows_company_name():
+    assert scr.classify("16167")["label_en"] == "Nagad helpline"
+    assert "Nigeria" in scr.classify("+234 801 234 5678")["label_en"]
+
+
+def test_unknown_bd_number_call_is_low_even_if_ai_says_medium(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "direction": "incoming",
+                             "number": "+8801712345678", "name": None, "text": "", "risk": "medium",
+                             "reasons_en": ["Unknown caller"]})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == "low" and r["screen"]["number_kind"] == "personal"
+
+
+@pytest.mark.parametrize("num,risk", [("+880181234567", "high"), ("+2348012345678", "medium"),
+                                      ("01712345678", "low"), ("16247", "low")])
+def test_call_screen_risk_by_number(monkeypatch, num, risk):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "direction": "incoming",
+                             "number": num, "name": None, "text": "", "risk": "low"})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == risk, r
+
+
+def test_caller_id_spam_label_is_high(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "direction": "incoming",
+                             "number": "01712345678", "name": None, "text": "Spam - 2,345 reports", "risk": "low"})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == "high"
+
+
+@pytest.mark.parametrize("num,risk", [("+880181234567", "high"), ("+92 300 1234567", "medium"), ("01812345678", "low")])
+def test_message_check_on_just_a_number(monkeypatch, num, risk):
+    import app.main as m
+    m._hits.clear()
+    monkeypatch.setenv("MOCK_LLM", "1")
+    r = client.post("/api/pretx", json={"text": num}).json()
+    assert r["risk"] == risk and r["screen"]["kind"] == "number"

@@ -20,7 +20,7 @@ from fastapi import Depends
 from pydantic import BaseModel
 
 from . import forensics, llm, proof, rules, screen
-from .library import PATTERNS
+from .library import HOTLINES, PATTERNS
 from .scenarios import BY_ID, PERSONA, SCENARIOS
 
 app = FastAPI(title="Mobile Money Scam Shield")
@@ -170,11 +170,46 @@ def merge_ai(out: dict, ai: dict) -> dict:
     return out
 
 
+NUMBER_ONLY = re.compile(r"^\s*[+০-৯\d][\d০-৯\s\-().]{2,22}\s*$")
+
+
+def number_result(raw: str) -> dict:
+    """Message check on just a phone number: judge it by its pattern and the official list."""
+    c = screen.classify(raw)
+    f = screen.number_flag(raw, "call", "unknown")
+    score = f["weight"] if f else 0
+    risk = "high" if score >= rules.HIGH_AT else "medium" if score >= rules.MEDIUM_AT else "low"
+    reasons = [{"en": f["why_en"], "bn": f["why_bn"]}] if f else []
+    if c["kind"] == "official":
+        reasons.append({"en": f"This is the official number of {c['label_en']}. Scammers can fake caller ID, so never "
+                              "share a PIN or OTP even on this number.",
+                        "bn": f"এটি {c['label_bn']}-এর অফিসিয়াল নম্বর। প্রতারকেরা নম্বর নকল করতে পারে, তাই এই নম্বরেও "
+                              "পিন বা ওটিপি দেবেন না।"})
+    elif c["kind"] in ("personal", "landline", "ip"):
+        reasons.append({"en": "Nothing in the number itself looks wrong, but we cannot know who owns it. If the caller "
+                              "says they are from bKash, Nagad or a bank, hang up and call the official hotline.",
+                        "bn": "নম্বরটিতে নিজে কোনো সমস্যা দেখা যাচ্ছে না, তবে মালিক কে তা জানা সম্ভব নয়। কলকারী বিকাশ, নগদ বা "
+                              "ব্যাংক থেকে বললে কল কেটে অফিসিয়াল হটলাইনে ফোন করুন।"})
+    advice = {"high": ("Do not answer or call back, and never share a PIN or OTP. Block the number.",
+                       "উত্তর দেবেন না, ফিরতি কল দেবেন না, কখনো পিন বা ওটিপি দেবেন না। নম্বরটি ব্লক করুন।"),
+              "medium": ("Be careful: do not call back, and do not share any code or send money.",
+                         "সাবধান: ফিরতি কল দেবেন না, কোনো কোড দেবেন না বা টাকা পাঠাবেন না।"),
+              "low": ("If they ask for a PIN, OTP or money, stop and call the official hotline yourself.",
+                      "পিন, ওটিপি বা টাকা চাইলে থামুন এবং নিজে অফিসিয়াল হটলাইনে ফোন করুন।")}[risk]
+    return {"risk": risk, "score": score, "patterns": [f] if f else [], "reasons": reasons,
+            "advice_en": advice[0], "advice_bn": advice[1], "highlights": [], "entities": [],
+            "hotlines": HOTLINES, "source": "rules", "ai_error": None, "text": raw.strip(),
+            "screen": {"kind": "number", "direction": "unknown", "number": raw.strip(), "name": None,
+                       "number_kind": c["kind"], "number_label_en": c["label_en"], "number_label_bn": c["label_bn"]}}
+
+
 @app.post("/api/pretx", dependencies=[Depends(rate_limit)])
 def pretx(body: PretxIn):
     text = (body.text or "").strip()[:4000]
     if len(text) < 3:
         raise HTTPException(400, "Please enter the message or describe what is happening.")
+    if NUMBER_ONLY.match(text):
+        return number_result(text)
     out = rules_result(text)
     if llm.available():
         try:
@@ -240,11 +275,17 @@ async def screen_check(image: UploadFile = File(...), lang: str = Form("en")):
                                     "call the official hotline yourself.")
                 out["advice_bn"] = ("উত্তর দেবেন না, ফিরতি কল দেবেন না, কোনো পিন বা ওটিপি দেবেন না। চিন্তা হলে নিজে "
                                     "অফিসিয়াল হটলাইনে ফোন করুন।")
-    merge_ai(out, ai)
+    if words or kind != "call":
+        merge_ai(out, ai)
+    else:
+        # a call screen with no words: the verdict comes from the number and name only, so an unknown
+        # ordinary number is not marked risky just because it is unknown
+        out["source"] = "ai+rules"
     out["reasons"] = out["reasons"] + [n for n in screen.notes(kind, number, name, direction) if n["en"] not in {r["en"] for r in out["reasons"]}]
     out["text"] = text
+    c = screen.classify(number)
     out["screen"] = {"kind": kind, "direction": direction, "number": number, "name": name,
-                     "number_kind": screen.number_kind(number)}
+                     "number_kind": c["kind"], "number_label_en": c["label_en"], "number_label_bn": c["label_bn"]}
     return out
 
 
