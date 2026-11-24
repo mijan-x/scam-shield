@@ -335,3 +335,18 @@ mark.caution { background: linear-gradient(transparent 12%, var(--mark-caution) 
 .self-check { margin: 6px 0 4px; padding-left: 20px; }
 .self-check li { margin: 3px 0; }
 .honest .verify { margin-top: 8px; padding: 8px 10px; border-radius: var(--radius-m); background: var(--amber-wash); }
+
+/* reference receipt + edit marks */
+.ref-box { margin-top: 10px; }
+.ref-box #refAdd { width: 100%; justify-content: center; }
+.ref-full { display: flex; gap: 12px; align-items: center; padding: 8px; border: 1px dashed var(--line); border-radius: var(--radius-m); }
+.ref-full[hidden] { display: none; }
+.ref-full img { width: 56px; height: 96px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+.ref-full p { margin: 2px 0 4px; }
+.shot-mark { position: relative; display: inline-block; max-width: 100%; margin-top: 6px; }
+.shot-mark img { display: block; max-width: 100%; max-height: 520px; border-radius: 8px; border: 1px solid var(--line); }
+.shot-mark .mark { position: absolute; border: 2px solid var(--red); border-radius: 4px; background: rgba(200, 30, 30, .12); box-shadow: 0 0 0 1px #fff; }
+.shot-mark .mark.medium { border-style: dashed; border-color: var(--amber); background: rgba(200, 130, 0, .10); }
+.shot-mark .mark::after { content: attr(data-n); position: absolute; top: -11px; left: -11px; width: 20px; height: 20px; border-radius: 50%; background: var(--red); color: #fff; font: 700 12px/20px system-ui, sans-serif; text-align: center; }
+.shot-mark .mark.medium::after { background: var(--amber); }
+.mark-list { margin: 8px 0 0; padding-left: 22px; }

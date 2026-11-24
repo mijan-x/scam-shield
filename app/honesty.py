@@ -28,7 +28,7 @@ VERIFY_BN = ("আসল প্রমাণ শুধু আপনার নি�
              "টাকা ও লেনদেন আইডি খুঁজুন। সেখানে না থাকলে টাকা আসেনি, স্ক্রিনশটে যা-ই দেখাক।")
 
 # proof checks about how the picture looks, not about the payment details
-LOOK_CHECKS = {"visual", "meta_editor", "meta_crop", "meta_size", "status_bar"}
+LOOK_CHECKS = {"visual", "typography", "meta_editor", "meta_crop", "meta_size", "status_bar"}
 
 
 def _n(k: int, bn: bool = False) -> str:

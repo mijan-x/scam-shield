@@ -849,3 +849,66 @@ def test_api_proof_has_honesty_and_same_verdict():
     r = client.post("/api/proof", data={"manual": manual, "expected_amount": "3500",
                                         "expected_recipient": "01712345678"}).json()
     assert r["verdict"] in ("consistent", "suspicious") and r["honesty"]["verify_bn"]
+
+
+# ------------------------------------------------------- typography and reference receipt
+def _ext(**over):
+    base = {"amount": 3500, "trx_id": "8N7A6D5EF3", "recipient": "01712345678", "datetime": "2026-11-23 11:20",
+            "screen_status": "success", "is_payment_screenshot": True}
+    base.update(over)
+    return base
+
+
+EXP_T = {"amount": 3500, "recipient": "01712345678", "chat_time": "2026-11-23T11:30", "order_ref": "t"}
+
+
+def test_bold_amount_is_flagged_with_a_box():
+    tc = [{"field": "amount", "issue": "bolder", "confidence": "high", "detail": "x", "box": [400, 300, 460, 700]}]
+    r = proof.check(_ext(text_checks=tc), EXP_T, NOW, {})
+    t = [c for c in r["checks"] if c["id"] == "typography"]
+    assert t and t[0]["status"] == "warn" and "bolder" in t[0]["en"]
+    assert r["edit_boxes"][0]["box"] == [400.0, 300.0, 460.0, 700.0] and r["verdict"] == "suspicious"
+
+
+def test_reference_comparison_makes_a_clear_difference_a_fail():
+    tc = [{"field": "amount", "issue": "smaller", "confidence": "high", "box": [400, 300, 460, 700]}]
+    r = proof.check(_ext(text_checks=tc, reference_used=True, reference_same_app=True), EXP_T, NOW, {})
+    t = [c for c in r["checks"] if c["id"] == "typography"][0]
+    assert t["status"] == "fail" and "reference" in t["en"] and r["reference_used"] is True
+
+
+def test_reference_from_another_app_is_ignored():
+    tc = [{"field": "amount", "issue": "smaller", "confidence": "high"}]
+    r = proof.check(_ext(text_checks=tc, reference_used=True, reference_same_app=False), EXP_T, NOW, {})
+    assert [c for c in r["checks"] if c["id"] == "typography"][0]["status"] == "warn"
+
+
+def test_low_confidence_and_bad_items_are_dropped():
+    tc = [{"field": "amount", "issue": "bolder", "confidence": "low"}, {"field": "logo", "issue": "bolder", "confidence": "high"},
+          "junk", {"field": "amount", "issue": "glitter", "confidence": "high"}]
+    r = proof.check(_ext(text_checks=tc), EXP_T, NOW, {})
+    assert not [c for c in r["checks"] if c["id"] == "typography"] and r["edit_boxes"] == []
+    assert r["verdict"] == "consistent"
+
+
+def test_typography_only_counts_as_looks_for_honesty():
+    tc = [{"field": "amount", "issue": "bolder", "confidence": "high"}]
+    r = proof.check(_ext(text_checks=tc), EXP_T, NOW, {})
+    assert hon.for_proof(r)["level"] == "looks_only"
+
+
+def test_api_sends_reference_with_the_screenshot(monkeypatch):
+    from app import llm
+    import app.main as m
+    m._hits.clear(); SEEN_TRX.clear()
+    seen = {}
+
+    def fake(task, system, user, image=None, **k):
+        seen["n"] = len(image) if isinstance(image, list) else 1
+        seen["user"] = user
+        return json.dumps(_ext(reference_used=True, reference_same_app=True, text_checks=[]))
+    monkeypatch.setenv("MOCK_LLM", "1")
+    monkeypatch.setattr(llm, "complete", fake)
+    r = client.post("/api/proof", data={"expected_amount": "3500", "expected_recipient": "01712345678"},
+                    files={"image": ("s.png", _png("x"), "image/png"), "reference": ("r.jpg", _png("y"), "image/jpeg")}).json()
+    assert seen["n"] == 2 and "Image 1" in seen["user"] and r["reference_used"] is True

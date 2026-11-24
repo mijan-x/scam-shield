@@ -53,6 +53,7 @@ SEEN_TRX: dict = {}  # transaction IDs seen in this server session -> order refe
 SEEN_IMG: list = []  # (image fingerprint, order reference) seen in this server session
 RANK = {"low": 0, "medium": 1, "high": 2}
 MAX_IMAGE = 4 * 1024 * 1024  # Vercel rejects request bodies over ~4.5 MB
+MAX_REF = 1024 * 1024  # the browser shrinks the reference receipt before sending
 
 PRETX_SYSTEM = (
     "You help people in Bangladesh decide whether a message, a call description or a request about "
@@ -336,6 +337,7 @@ async def voice(audio: UploadFile = File(...), lang: str = Form("en")):
 @app.post("/api/proof", dependencies=[Depends(rate_limit)])
 async def proof_check(
     image: Optional[UploadFile] = File(None),
+    reference: Optional[UploadFile] = File(None),
     expected_amount: str = Form(""),
     expected_recipient: str = Form(""),
     expected_sender: str = Form(""),
@@ -363,11 +365,21 @@ async def proof_check(
             meta = forensics.inspect(data)
         except ValueError:
             raise HTTPException(415, "That file is not a readable image.")
+        ref = None
+        if reference is not None and reference.filename:
+            rdata = await reference.read()
+            rmedia = (reference.content_type or "").lower()
+            if rdata and len(rdata) <= MAX_REF and rmedia in ("image/png", "image/jpeg", "image/webp"):
+                ref = (rdata, rmedia)
         if llm.available():
             try:
-                extracted = llm.extract_json(llm.complete(
-                    "extract", proof.EXTRACT_SYSTEM,
-                    "Read this payment screenshot and return the JSON described.", image=(data, media)))
+                if ref:
+                    extracted = llm.extract_json(llm.complete(
+                        "extract", proof.EXTRACT_SYSTEM, proof.REFERENCE_NOTE, image=[ref, (data, media)]))
+                else:
+                    extracted = llm.extract_json(llm.complete(
+                        "extract", proof.EXTRACT_SYSTEM,
+                        "Read this payment screenshot and return the JSON described.", image=(data, media)))
             except Exception as e:  # noqa: BLE001
                 extract_error, extract_error_bn = ai_error(e)
         else:

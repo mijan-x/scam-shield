@@ -82,6 +82,10 @@ def _mock(task: str, user: str) -> str:
             "datetime": "2026-11-23 10:15", "screen_status": "success", "status_bar_visible": True,
             "status_bar_time": "10:16", "visual_flags": ["(mock) spacing around the amount looks uneven"],
             "edit_suspicion": "medium", "notes": "mock extraction",
+            "text_checks": [{"field": "amount", "issue": "bolder", "confidence": "medium",
+                             "detail": "(mock) the amount digits look heavier than the other digits",
+                             "box": [420, 300, 470, 700]}],
+            "reference_used": "Image 1" in user, "reference_same_app": True,
         })
     if task == "screen":
         return json.dumps({
@@ -114,8 +118,8 @@ def _cache_key(task, system, user, image) -> str:
     h = hashlib.sha256()
     for part in (task, system, user):
         h.update(part.encode("utf-8", "replace") + b"\0")
-    if image:
-        h.update(image[0])
+    for data, _ in _as_list(image):
+        h.update(data)
     return h.hexdigest()
 
 
@@ -160,8 +164,7 @@ def _claude(system, user, image, max_tokens) -> str:
 
     client = anthropic.Anthropic(timeout=45.0)
     content = []
-    if image:
-        data, media_type = image
+    for data, media_type in _as_list(image):
         content.append({
             "type": "image",
             "source": {"type": "base64", "media_type": media_type, "data": base64.b64encode(data).decode()},
@@ -179,6 +182,13 @@ def _claude(system, user, image, max_tokens) -> str:
     except anthropic.APIConnectionError as e:
         raise AIBusy("Claude connection problem") from e
     return "".join(b.text for b in msg.content if getattr(b, "type", "") == "text")
+
+
+def _as_list(image) -> list:
+    """One (bytes, media_type) pair, a list of them, or None."""
+    if not image:
+        return []
+    return list(image) if isinstance(image, list) else [image]
 
 
 def _fallbacks() -> list:
@@ -214,8 +224,7 @@ def _gemini(task: str, system: str, user: str, image: Optional[Tuple[bytes, str]
     import httpx
 
     parts = []
-    if image:
-        data, media_type = image
+    for data, media_type in _as_list(image):
         parts.append({"inline_data": {"mime_type": media_type, "data": base64.b64encode(data).decode()}})
     parts.append({"text": user})
     # thinking models spend part of the output budget on reasoning, so give them room
