@@ -22,7 +22,7 @@ TRANSIENT = {429, 500, 502, 503, 504}
 class AIBusy(RuntimeError):
     """The AI provider is overloaded or rate-limited; worth trying again later."""
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-JSON_TASKS = {"pretx", "extract", "trainer_grade"}
+JSON_TASKS = {"pretx", "extract", "trainer_grade", "screen"}
 
 
 def provider() -> Optional[str]:
@@ -82,6 +82,14 @@ def _mock(task: str, user: str) -> str:
             "datetime": "2026-11-23 10:15", "screen_status": "success", "status_bar_visible": True,
             "status_bar_time": "10:16", "visual_flags": ["(mock) spacing around the amount looks uneven"],
             "edit_suspicion": "medium", "notes": "mock extraction",
+        })
+    if task == "screen":
+        return json.dumps({
+            "is_phone_screen": True, "kind": "sms", "number": "01812345678", "name": "bKash Care",
+            "text": "Apnar bKash account block hoye jabe. Ekhoni ei number e call kore PIN ta bolun.",
+            "risk": "high", "pattern_ids": ["otp_pin_request"],
+            "reasons_en": ["(mock) It asks for your PIN."], "reasons_bn": ["(মক) পিন চাওয়া হয়েছে।"],
+            "advice_en": "(mock) Do not share it.", "advice_bn": "(মক) এটি কাউকে দেবেন না।",
         })
     if task == "trainer_chat":
         return "(mock scammer) Please hurry, I need the money back now!"

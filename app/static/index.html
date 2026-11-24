@@ -107,7 +107,20 @@
         </label>
         <div class="row-between">
           <span class="fine" id="tCount">0 / 4000</span>
+          <span class="in-btns">
+          <button type="button" id="sStart" class="ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span data-t="scanScreen">Scan phone screen</span></button>
           <button type="button" id="vStart" class="ghost"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Zm-7 9a7 7 0 0 0 14 0M12 19v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span data-t="recVoice">Record voice</span></button>
+          </span>
+        </div>
+        <div id="sPanel" class="voice cam" hidden aria-live="polite">
+          <p class="fine" id="sHint" data-t="camHint">Point the camera at the phone showing the call or message, then press Capture.</p>
+          <video id="sVideo" playsinline muted aria-label="Camera preview"></video>
+          <div class="voice-btns">
+            <button type="button" id="sShot" class="primary"><span data-t="capture">Capture and check</span></button>
+            <button type="button" id="sPick" class="ghost" data-t="pickPhoto">Upload a photo or screenshot</button>
+            <button type="button" id="sCancel" class="link" data-t="cancel">Cancel</button>
+          </div>
+          <input type="file" id="sFile" accept="image/*" capture="environment" hidden>
         </div>
         <div id="vPanel" class="voice" hidden aria-live="polite">
           <div class="voice-head">

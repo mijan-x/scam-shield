@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import Depends
 from pydantic import BaseModel
 
-from . import forensics, llm, proof, rules
+from . import forensics, llm, proof, rules, screen
 from .library import PATTERNS
 from .scenarios import BY_ID, PERSONA, SCENARIOS
 
@@ -128,18 +128,13 @@ class PretxIn(BaseModel):
     lang: str = "en"
 
 
-@app.post("/api/pretx", dependencies=[Depends(rate_limit)])
-def pretx(body: PretxIn):
-    text = (body.text or "").strip()[:4000]
-    if len(text) < 3:
-        raise HTTPException(400, "Please enter the message or describe what is happening.")
+def rules_result(text: str) -> dict:
     r = rules.analyze(text)
-    reasons = [{"en": p["why_en"], "bn": p["why_bn"]} for p in r["patterns"]]
-    out = {
+    return {
         "risk": r["risk"],
         "score": r["score"],
         "patterns": r["patterns"],
-        "reasons": reasons,
+        "reasons": [{"en": p["why_en"], "bn": p["why_bn"]} for p in r["patterns"]],
         "advice_en": r["advice_en"],
         "advice_bn": r["advice_bn"],
         "highlights": r["highlights"],
@@ -148,31 +143,104 @@ def pretx(body: PretxIn):
         "source": "rules",
         "ai_error": None,
     }
+
+
+def merge_ai(out: dict, ai: dict) -> dict:
+    """Add the AI's opinion to a rules result. The AI may raise the risk, never lower it."""
+    base = out["risk"]
+    ai_risk = ai.get("risk", "low") if ai.get("risk") in RANK else "low"
+    final = ai_risk if RANK[ai_risk] > RANK[base] else base
+    seen = {p["id"] for p in out["patterns"]}
+    for pid in ai.get("pattern_ids") or []:
+        if pid in {p["id"] for p in PATTERNS} and pid not in seen:
+            pat = next(p for p in PATTERNS if p["id"] == pid)
+            out["patterns"].append({k: pat[k] for k in ("id", "name_en", "name_bn", "why_en", "why_bn", "weight")})
+            seen.add(pid)
+    en, bn = ai.get("reasons_en") or [], ai.get("reasons_bn") or []
+    ai_reasons = [{"en": e, "bn": bn[i] if i < len(bn) else e} for i, e in enumerate(en) if isinstance(e, str)]
+    known = {y["en"] for y in out["reasons"]}
+    out["reasons"] = out["reasons"] + [x for x in ai_reasons if x["en"] not in known]
+    if ai.get("advice_en") and RANK[ai_risk] >= RANK[base]:
+        out["advice_en"] = ai["advice_en"]
+        out["advice_bn"] = ai.get("advice_bn") or out["advice_bn"]
+    out["risk"] = final
+    if RANK[final] > RANK[base]:
+        out["score"] = max(out["score"], {"medium": rules.MEDIUM_AT, "high": rules.HIGH_AT}[final])
+    out["source"] = "ai+rules"
+    return out
+
+
+@app.post("/api/pretx", dependencies=[Depends(rate_limit)])
+def pretx(body: PretxIn):
+    text = (body.text or "").strip()[:4000]
+    if len(text) < 3:
+        raise HTTPException(400, "Please enter the message or describe what is happening.")
+    out = rules_result(text)
     if llm.available():
         try:
-            ai = llm.extract_json(llm.complete("pretx", PRETX_SYSTEM, f"<message>\n{text}\n</message>"))
-            ai_risk = ai.get("risk", "low") if ai.get("risk") in RANK else "low"
-            # never let the AI lower a risk the rules found; it may only add to it
-            final = ai_risk if RANK[ai_risk] > RANK[out["risk"]] else out["risk"]
-            seen = {p["id"] for p in out["patterns"]}
-            for pid in ai.get("pattern_ids", []):
-                if pid in {p["id"] for p in PATTERNS} and pid not in seen:
-                    pat = next(p for p in PATTERNS if p["id"] == pid)
-                    out["patterns"].append({k: pat[k] for k in ("id", "name_en", "name_bn", "why_en", "why_bn", "weight")})
-            en, bn = ai.get("reasons_en", []), ai.get("reasons_bn", [])
-            ai_reasons = [{"en": e, "bn": bn[i] if i < len(bn) else e} for i, e in enumerate(en)]
-            if ai_reasons:
-                out["reasons"] = ai_reasons if not reasons else reasons + [
-                    x for x in ai_reasons if x["en"] not in {y["en"] for y in reasons}]
-            if ai.get("advice_en") and RANK[ai_risk] >= RANK[r["risk"]]:
-                out["advice_en"] = ai["advice_en"]
-                out["advice_bn"] = ai.get("advice_bn") or out["advice_bn"]
-            out["risk"] = final
-            if RANK[final] > RANK[r["risk"]]:
-                out["score"] = max(out["score"], {"medium": rules.MEDIUM_AT, "high": rules.HIGH_AT}[final])
-            out["source"] = "ai+rules"
+            merge_ai(out, llm.extract_json(llm.complete("pretx", PRETX_SYSTEM, f"<message>\n{text}\n</message>")))
         except Exception as e:  # keep the rules answer if the AI call fails
             out["ai_error"] = str(e)[:160]
+    return out
+
+
+# ------------------------------------------------- screen check (call / SMS photo)
+SCREEN_BUSY_EN = ("The AI is busy right now, so the photo could not be read. Try again in a minute, "
+                  "or type the message in the box and press Check message.")
+SCREEN_BUSY_BN = "এআই এখন ব্যস্ত, তাই ছবিটি পড়া যায়নি। এক মিনিট পর আবার চেষ্টা করুন, অথবা বক্সে মেসেজটি লিখে চেক করুন।"
+
+
+@app.post("/api/screen", dependencies=[Depends(rate_limit)])
+async def screen_check(image: UploadFile = File(...), lang: str = Form("en")):
+    """A photo of a phone screen showing a call or message: read it, then judge it like the Message check."""
+    if not llm.available():
+        raise HTTPException(503, "Reading a photo needs the AI key. Type the message in the box instead.")
+    data = await image.read()
+    if not data:
+        raise HTTPException(400, "The photo is empty.")
+    if len(data) > MAX_IMAGE:
+        raise HTTPException(413, "The photo is too large (over 4 MB). Take it again or crop it.")
+    media = (image.content_type or "").lower()
+    if media not in ("image/png", "image/jpeg", "image/webp"):
+        raise HTTPException(415, "Please use a PNG, JPG or WEBP photo.")
+    try:
+        ai = llm.extract_json(llm.complete("screen", screen.SCREEN_SYSTEM, "Read this phone screen.", (data, media)))
+    except llm.AIBusy:
+        return {"needs_text": True, "error": SCREEN_BUSY_EN, "error_bn": SCREEN_BUSY_BN}
+    except Exception:
+        return {"needs_text": True,
+                "error": "The photo could not be read. Try a sharper photo, or type the message in the box.",
+                "error_bn": "ছবিটি পড়া যায়নি। আরও পরিষ্কার ছবি তুলুন, অথবা বক্সে মেসেজটি লিখুন।"}
+    if ai.get("is_phone_screen") is False:
+        return {"needs_text": True,
+                "error": "This does not look like a phone screen with a call or message. Take a photo of the call or message.",
+                "error_bn": "এটি কল বা মেসেজের স্ক্রিন মনে হচ্ছে না। কল বা মেসেজের স্ক্রিনের ছবি তুলুন।"}
+    kind = ai.get("kind") if ai.get("kind") in ("call", "sms", "chat", "other") else "other"
+    number = str(ai.get("number") or "").strip()[:40] or None
+    name = str(ai.get("name") or "").strip()[:80] or None
+    words = str(ai.get("text") or "").strip()[:4000]
+    if kind == "call" and not words:
+        text = f"Incoming call from {name or number or 'an unknown caller'}"
+    else:
+        text = words or f"Message from {name or number or 'unknown'}"
+    out = rules_result(text)
+    extra = screen.flags(kind, number, name, words)
+    if extra:
+        out["patterns"] = sorted(out["patterns"] + extra, key=lambda p: -p["weight"])
+        out["reasons"] = [{"en": f["why_en"], "bn": f["why_bn"]} for f in extra] + out["reasons"]
+        out["score"] = min(out["score"] + sum(f["weight"] for f in extra), 100)
+        new = "high" if out["score"] >= rules.HIGH_AT else "medium" if out["score"] >= rules.MEDIUM_AT else "low"
+        if RANK[new] > RANK[out["risk"]]:
+            out["risk"] = new
+            if new == "high":
+                out["advice_en"] = ("Do not reply, do not call back and do not share any PIN or OTP. If you are worried, "
+                                    "call the official hotline yourself.")
+                out["advice_bn"] = ("উত্তর দেবেন না, ফিরতি কল দেবেন না, কোনো পিন বা ওটিপি দেবেন না। চিন্তা হলে নিজে "
+                                    "অফিসিয়াল হটলাইনে ফোন করুন।")
+    merge_ai(out, ai)
+    out["reasons"] = out["reasons"] + [n for n in screen.notes(kind, number, name) if n["en"] not in {r["en"] for r in out["reasons"]}]
+    out["text"] = text
+    out["screen"] = {"kind": kind, "number": number, "name": name, "number_kind": screen.number_kind(number)}
     return out
 
 

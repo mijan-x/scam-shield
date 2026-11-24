@@ -34,7 +34,7 @@
       pretxH: "Got a strange call or message?",
       pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
       msgLabel: "Message or what happened", msgPh: "Example: a man says he sent money to my number by mistake and wants it back",
-      recVoice: "Record voice", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
+      recVoice: "Record voice", scanScreen: "Scan phone screen", camHint: "Point the camera at the phone showing the call or message, then press Capture.", capture: "Capture and check", pickPhoto: "Upload a photo or screenshot", camNo: "The camera is not available here. Upload a photo or screenshot of the call or message instead.", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
       checkVoice: "Check voice", cancel: "Cancel", transcribing: "Turning your voice into text",
       micDenied: "Microphone is blocked. Allow it from the icon in the address bar, then try again.",
       noSpeech: "No words were heard. Try again closer to the microphone, or type the message.",
@@ -111,7 +111,7 @@
       pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
       pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
       msgLabel: "মেসেজ বা কী ঘটেছে", msgPh: "যেমন: একজন বলছে ভুল করে আমার নম্বরে টাকা পাঠিয়েছে, ফেরত চায়",
-      recVoice: "ভয়েস রেকর্ড করুন", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
+      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "ফোনের স্ক্রিন স্ক্যান", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ক্যাপচার চাপুন।", capture: "ছবি তুলে যাচাই করুন", pickPhoto: "ছবি বা স্ক্রিনশট দিন", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের ছবি বা স্ক্রিনশট দিন।", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
       checkVoice: "ভয়েস যাচাই করুন", cancel: "বাতিল", transcribing: "আপনার কথা লেখায় রূপান্তর হচ্ছে",
       micDenied: "মাইক্রোফোন বন্ধ করা আছে। অ্যাড্রেস বারের আইকন থেকে অনুমতি দিয়ে আবার চেষ্টা করুন।",
       noSpeech: "কোনো কথা শোনা যায়নি। মাইক্রোফোনের কাছে এসে আবার বলুন, অথবা মেসেজটি লিখুন।",
@@ -228,6 +228,7 @@
       if (on && focus) t.focus();
     });
     $$(".panel").forEach(function (p) { p.hidden = p.id !== id; });
+    if (id !== "pretx" && typeof camClose === "function" && $("#sPanel")) camClose();
     if (location.hash !== "#" + id) history.replaceState(null, "", "#" + id);
   }
   $$(".tab").forEach(function (t, i, all) {
@@ -326,6 +327,13 @@
   function showPretx(d, text, fromHistory) {
     var render = function (animate) {
       var el = $("#tOut"), h = head(d.risk, d.score, null, animate);
+      if (d.screen) {
+        var sc = d.screen, nk = sc.number_kind;
+        h += '<div class="sec"><h3>' + esc(tr("screenH")) + '</h3><div class="screen-read"><b>' + esc(tr("k_" + sc.kind)) + "</b>" +
+          (sc.name ? "<span>" + esc(sc.name) + "</span>" : "") + (sc.number ? '<code>' + esc(sc.number) + "</code>" : "") +
+          (T.en["nk_" + nk] ? '<span class="tag ' + (nk === "official" ? "good" : "bad") + '">' + esc(tr("nk_" + nk)) + "</span>" : "") +
+          "</div>" + (!(d.highlights && d.highlights.length) && d.text ? '<div class="quote">' + esc(d.text) + "</div>" : "") + "</div>";
+      }
       if (d.highlights && d.highlights.length) {
         h += '<div class="sec"><h3>' + esc(tr("yourMsg")) + '</h3><div class="quote">' + markText(text, d.highlights) + "</div>" +
           '<div class="legend"><span><i style="background:var(--mark-danger);border-bottom:2px solid var(--red)"></i>' + esc(tr("lgStrong")) +
@@ -390,6 +398,64 @@
     run.then(done)
       .catch(function (err) { $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
       .then(function () { busy(btn, false); });
+  });
+  // ---------------------------------------------------- screen check (photo of a call or message)
+  var S = { stream: null };
+  function camStop() { if (S.stream) S.stream.getTracks().forEach(function (t) { t.stop(); }); S.stream = null; $("#sVideo").srcObject = null; }
+  function camClose() { camStop(); $("#sPanel").hidden = true; }
+  function camOpen() {
+    if (aiMode === "rules" || isOffline) { toast(tr("needAI")); return; }
+    $("#sPanel").hidden = false;
+    var v = $("#sVideo"), noCam = function () {
+      v.hidden = true; $("#sShot").hidden = true; $("#sHint").textContent = tr("camNo");
+    };
+    v.hidden = false; $("#sShot").hidden = false; $("#sHint").textContent = tr("camHint");
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) { noCam(); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+      .then(function (stream) {
+        if ($("#sPanel").hidden) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+        S.stream = stream; v.srcObject = stream; v.play().catch(function () {});
+      }, noCam);
+  }
+  // shrink to at most 1600 px so phone photos stay well under the 4 MB upload limit
+  function toJpeg(source, w, h) {
+    var k = Math.min(1, 1600 / Math.max(w, h)), c = document.createElement("canvas");
+    c.width = Math.round(w * k); c.height = Math.round(h * k);
+    c.getContext("2d").drawImage(source, 0, 0, c.width, c.height);
+    return new Promise(function (ok) { c.toBlob(ok, "image/jpeg", 0.88); });
+  }
+  function screenSend(blob) {
+    camClose();
+    if (!blob) return;
+    var btn = $("#sStart"); busy(btn, true); busy($("#tGo"), true);
+    $("#tOut").innerHTML = '<p class="fine">' + esc(tr("reading")) + "</p>";
+    var fd = new FormData(); fd.append("image", blob, "screen.jpg"); fd.append("lang", lang);
+    api("/api/screen", { method: "POST", body: fd }).then(function (d) {
+      if (d.needs_text) {
+        $("#tOut").innerHTML = '<p class="err">' + esc(lang === "bn" ? d.error_bn || d.error : d.error) + "</p>";
+        $("#tText").focus(); return;
+      }
+      $("#tText").value = d.text || ""; countChars();
+      showPretx(d, d.text || "");
+      addHistory("pretx", { ts: Date.now(), label: tr("fromScreen") + ": " + (d.screen.name || d.screen.number || (d.text || "").slice(0, 40)), input: d.text, res: d });
+    }).catch(function (err) { $("#tOut").innerHTML = '<p class="err">' + esc(err.message) + "</p>"; })
+      .then(function () { busy(btn, false); busy($("#tGo"), false); });
+  }
+  $("#sStart").addEventListener("click", function () { if ($("#sPanel").hidden) camOpen(); else camClose(); });
+  $("#sCancel").addEventListener("click", camClose);
+  $("#sShot").addEventListener("click", function () {
+    var v = $("#sVideo");
+    if (!v.videoWidth) { toast(tr("camNo")); return; }
+    toJpeg(v, v.videoWidth, v.videoHeight).then(screenSend);
+  });
+  $("#sPick").addEventListener("click", function () { $("#sFile").click(); });
+  $("#sFile").addEventListener("change", function (e) {
+    var f = e.target.files[0]; e.target.value = "";
+    if (!f) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function () { URL.revokeObjectURL(url); toJpeg(img, img.naturalWidth, img.naturalHeight).then(screenSend); };
+    img.onerror = function () { URL.revokeObjectURL(url); toast(tr("camNo")); };
+    img.src = url;
   });
   $$(".chip[data-ex]").forEach(function (c) {
     c.addEventListener("click", function () { $("#tText").value = c.dataset.ex; countChars(); $("#tText").focus(); });
@@ -687,6 +753,7 @@
   });
   $("#tClear").addEventListener("click", function () {
     if (V.state !== "idle") resetVoice();
+    camClose();
     $("#tText").value = ""; countChars();
     delete rerender.pretx; empty($("#tOut"), "emptyT");
     toast(tr("cleared")); $("#tText").focus();

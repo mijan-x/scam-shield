@@ -306,3 +306,14 @@ mark.caution { background: linear-gradient(transparent 12%, var(--mark-caution) 
   .top, .form, .foot, .actions, .tabs { display: none !important; }
   .split { grid-template-columns: 1fr; }
 }
+
+/* screen check: live camera */
+.in-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+.voice.cam { border-color: var(--line); background: var(--paper); }
+#sVideo { display: block; width: 100%; max-height: 52vh; margin-top: 8px; border-radius: var(--radius-m); background: #000; object-fit: contain; }
+#sVideo[hidden] { display: none; }
+.screen-read { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline; }
+.screen-read b { font-size: 1.02rem; }
+.screen-read .tag { font-size: .8rem; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); }
+.screen-read .tag.bad { border-color: var(--red); color: var(--red); }
+.screen-read .tag.good { border-color: var(--green, #2e7d32); color: var(--green, #2e7d32); }
