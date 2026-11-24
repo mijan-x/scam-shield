@@ -113,6 +113,18 @@ def for_proof(res: dict) -> dict:
                       "Finding none does not mean the payment is real.",
                 "bn": "মেলানোর মতো তথ্য (টাকা, নম্বর) না থাকায় শুধু ছবির ভেতরের সংকেত দেখা গেছে। কিছু না পাওয়া মানে "
                       "পেমেন্ট আসল নয়।"}
+    edit_proof = [c for c in look if c["id"] == "typography" and c["status"] == "fail"]
+    if edit_proof and not fact_fails:
+        return {**base, "level": "edit_evidence",
+                "title_en": "A key field itself looks changed",
+                "title_bn": "মূল তথ্যের ঘরটিই বদলানো মনে হচ্ছে",
+                "en": "The details may match, but the text of a key field shows more than one independent sign of an "
+                      "edit (for example a smudge hiding old digits and new text in a different ink). Cropping or "
+                      "re-sending a genuine screenshot does not change one field like this. Treat it as fake until "
+                      "your own statement shows the money.",
+                "bn": "তথ্য মিলতে পারে, কিন্তু একটি মূল ঘরের লেখায় এডিটের একাধিক আলাদা চিহ্ন আছে (যেমন পুরনো সংখ্যা ঢাকতে "
+                      "ছোপ আর ভিন্ন কালিতে নতুন লেখা)। আসল স্ক্রিনশট কাটলে বা আবার পাঠালে একটি ঘর এভাবে বদলায় না। নিজের "
+                      "স্টেটমেন্টে টাকা না দেখা পর্যন্ত এটিকে নকল ধরুন।"}
     if not facts and look:
         return {**base, "level": "looks_only",
                 "title_en": "Only the picture looks edited; the details match",

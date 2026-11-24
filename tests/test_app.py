@@ -974,3 +974,57 @@ def test_api_runs_the_zoom_look(monkeypatch):
     assert tasks == ["extract", "zoom"]
     assert any(c["id"] == "typography" and c.get("field") == "amount" for c in r["checks"])
     assert any(c["id"] == "meta_editor" and c["status"] == "warn" for c in r["checks"])
+
+
+# ------------------------------------------------------- pixel check: a gallery brush hiding old digits
+def _gallery_edit(edited=True):
+    """A made-up receipt (no real data): grey values on white; the 'edit' smears a light grey brush over the
+    amount and types new pure-black digits on top, as a phone gallery's brush and text tools do."""
+    import io as _io
+    from PIL import Image as _I, ImageDraw as _D, ImageFont as _F
+    try:
+        f = _F.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 34)
+    except OSError:
+        f = _F.load_default()
+    img = _I.new("RGB", (880, 1600), "white"); d = _D.Draw(img)
+    d.text((93, 620), "05:37pm 20/11/26", font=f, fill=(60, 60, 60))
+    d.text((488, 620), "DKK1PPVLIL", font=f, fill=(60, 60, 60))
+    if edited:
+        d.ellipse((80, 772, 290, 836), fill=(238, 238, 238))
+        d.text((84, 778), "4500.00", font=f, fill=(0, 0, 0))
+    else:
+        d.text((93, 778), "3500.00", font=f, fill=(60, 60, 60))
+    buf = _io.BytesIO(); img.save(buf, "JPEG", quality=90)
+    return buf.getvalue()
+
+
+BOXES = {"amount": [481, 91, 522, 330], "datetime": [387, 105, 413, 415], "trx_id": [389, 554, 413, 767]}
+
+
+def test_pixel_check_finds_brush_and_new_ink():
+    from app import forensics
+    f = proof.pixel_findings(forensics.field_pixels(_gallery_edit(), BOXES))
+    assert len(f) == 1 and f[0]["field"] == "amount" and f[0]["issue"] == "patch" and f[0]["signs"] == 2
+
+
+def test_pixel_check_quiet_on_an_unedited_receipt():
+    from app import forensics
+    assert proof.pixel_findings(forensics.field_pixels(_gallery_edit(edited=False), BOXES)) == []
+
+
+def test_edited_amount_is_likely_fake_even_when_details_match():
+    from app import forensics
+    ext = {"amount": 4500, "trx_id": "DKK1PPVLIL", "datetime": "2026-11-20 17:37", "screen_status": "success",
+           "is_payment_screenshot": True, "field_boxes": BOXES, "text_checks": []}
+    proof.add_text_checks(ext, proof.pixel_findings(forensics.field_pixels(_gallery_edit(), BOXES)))
+    r = proof.check(ext, {"amount": 4500}, datetime(2026, 11, 20, 17, 50), {})
+    t = [c for c in r["checks"] if c["id"] == "typography"][0]
+    assert t["status"] == "fail" and "pixels" in t["en"]
+    assert r["verdict"] == "likely_fake" and r["edit_boxes"][0]["field"] == "amount"
+    assert hon.for_proof(r)["level"] == "edit_evidence"
+
+
+def test_ai_and_pixels_agreeing_count_as_two_signs():
+    ext = {"field_boxes": BOXES, "text_checks": [{"field": "amount", "issue": "different_font", "confidence": "medium"}]}
+    proof.add_text_checks(ext, [{"field": "amount", "issue": "patch", "confidence": "high", "pixels": True, "signs": 1}])
+    assert ext["text_checks"][0]["signs"] == 2 and ext["text_checks"][0]["box"] == BOXES["amount"]

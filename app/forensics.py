@@ -147,3 +147,44 @@ def zoom_strip(data: bytes, boxes: dict, order=("amount", "trx_id", "datetime", 
     buf = io.BytesIO()
     out.save(buf, "PNG")
     return buf.getvalue()
+
+
+GRID_FIELDS = ("amount", "trx_id", "datetime")  # values a receipt usually draws in the same style
+
+
+def _crop(img, b, pad_y=0.35, pad_x=0.08):
+    W, H = img.size
+    y0, x0, y1, x1 = [max(0.0, min(1000.0, float(v))) / 1000 for v in b]
+    if y1 <= y0 or x1 <= x0:
+        return None
+    ph, pw = (y1 - y0) * pad_y, (x1 - x0) * pad_x
+    box = (int(max(0, x0 - pw) * W), int(max(0, y0 - ph) * H), int(min(1, x1 + pw) * W), int(min(1, y1 + ph) * H))
+    if box[2] - box[0] < 6 or box[3] - box[1] < 6:
+        return None
+    return img.crop(box)
+
+
+def field_pixels(data: bytes, boxes: dict) -> dict:
+    """Measure each field's text in the pixels: ink tone and how much of the background around the text is
+    smudged (a brush or patch used to hide the old digits). Works in light and dark mode."""
+    from PIL import ImageFilter
+    img = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("L")
+    out = {}
+    for f, b in (boxes or {}).items():
+        if not (isinstance(b, list) and len(b) == 4 and all(isinstance(v, (int, float)) for v in b)):
+            continue
+        c = _crop(img, b)
+        if c is None:
+            continue
+        hist = c.histogram()
+        bg = max(range(256), key=lambda i: hist[i])  # the most common tone = the background
+        px = list(c.tobytes())
+        ink_px = sorted(px, key=lambda v: -abs(v - bg))[:max(1, len(px) // 30)]
+        ink = sum(ink_px) / len(ink_px)
+        if abs(ink - bg) < 60:  # no text found in the box
+            continue
+        mask = c.point(lambda v: 255 if abs(v - bg) > 60 else 0).filter(ImageFilter.MaxFilter(5))
+        around = [v for v, m in zip(px, mask.tobytes()) if m == 0]
+        smudge = sum(1 for v in around if 3 <= abs(v - bg) <= 45) / max(1, len(around))
+        out[f] = {"bg": bg, "ink": round(ink, 1), "smudge": round(smudge, 3)}
+    return out
