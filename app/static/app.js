@@ -34,7 +34,7 @@
       pretxH: "Got a strange call or message?",
       pretxHint: "Paste the SMS, or write what the caller is asking for. Bangla, English and Banglish all work. We show exactly which words are the warning signs.",
       msgLabel: "Message or what happened", msgPh: "Example: a man says he sent money to my number by mistake and wants it back",
-      recVoice: "Record voice", scanScreen: "Scan a screen", camHint: "Point the camera at the phone showing the call or message, then press Capture and check.", capture: "Capture and check", srcCam: "Camera", srcShare: "Share my screen", srcUpload: "Upload screenshot", shareHint: "Pick the window or screen with the call or chat (WhatsApp Web, Messenger, a phone-mirroring app), then press Capture and check.", fileHint: "Choose a screenshot or photo of the call or message. You can also paste one here with Ctrl+V.", autoChk: "Check again by itself when the screen changes (every 10 s)", shareNo: "Screen sharing works in a computer browser. On a phone, take a screenshot and upload it.", shareEnded: "Screen sharing stopped.", camNo: "The camera is not available here. Upload a screenshot or photo of the call or message instead.", d_incoming: "Incoming call", d_outgoing: "Outgoing call (you are calling)", d_ongoing: "Call in progress", d_missed: "Missed call", d_unknown: "Call", m_outgoing: "sent by you", k_number: "Phone number", numberH: "About this number", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
+      recVoice: "Record voice", scanScreen: "Scan a screen", camHint: "Point the camera at the phone showing the call or message, then press Capture and check.", capture: "Capture and check", srcCam: "Camera", srcShare: "Share my screen", srcUpload: "Upload screenshot", shareHint: "Pick the window or screen with the call or chat (WhatsApp Web, Messenger, a phone-mirroring app), then press Capture and check.", fileHint: "Choose a screenshot or photo of the call or message. You can also paste one here with Ctrl+V.", autoChk: "Check again by itself when the screen changes (every 10 s)", shareNo: "Screen sharing works in a computer browser. On a phone, take a screenshot and upload it.", shareEnded: "Screen sharing stopped.", camNo: "The camera is not available here. Upload a screenshot or photo of the call or message instead.", d_incoming: "Incoming call", d_outgoing: "Outgoing call (you are calling)", d_ongoing: "Call in progress", d_missed: "Missed call", d_unknown: "Call", m_outgoing: "sent by you", k_number: "Phone number", numberH: "About this number", sureH: "How sure is this?", reading: "Reading the screen…", screenH: "What we read from the screen", k_call: "Incoming call", k_sms: "SMS", k_chat: "Chat message", k_other: "Screen", nk_official: "official hotline", nk_personal: "personal 01 number", nk_foreign: "foreign number", needAI: "Reading a photo needs the AI. Type the message in the box instead.", fromScreen: "Screen photo", recording: "Recording", paused: "Paused", pause: "Pause", resume: "Resume",
       checkVoice: "Check voice", cancel: "Cancel", transcribing: "Turning your voice into text",
       micDenied: "Microphone is blocked. Allow it from the icon in the address bar, then try again.",
       noSpeech: "No words were heard. Try again closer to the microphone, or type the message.",
@@ -111,7 +111,7 @@
       pretxH: "অদ্ভুত কল বা মেসেজ পেয়েছেন?",
       pretxHint: "এসএমএসটি পেস্ট করুন, অথবা কলকারী কী চাইছে লিখুন। বাংলা, ইংরেজি ও ইংরেজি হরফে বাংলা চলবে। কোন শব্দগুলো বিপদের সংকেত তা আমরা চিহ্নিত করে দেখাব।",
       msgLabel: "মেসেজ বা কী ঘটেছে", msgPh: "যেমন: একজন বলছে ভুল করে আমার নম্বরে টাকা পাঠিয়েছে, ফেরত চায়",
-      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "স্ক্রিন যাচাই", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ছবি তুলে যাচাই চাপুন।", capture: "ছবি তুলে যাচাই করুন", srcCam: "ক্যামেরা", srcShare: "নিজের স্ক্রিন শেয়ার", srcUpload: "স্ক্রিনশট দিন", shareHint: "কল বা চ্যাট যে উইন্ডো বা স্ক্রিনে আছে তা বেছে নিন (হোয়াটসঅ্যাপ ওয়েব, মেসেঞ্জার, ফোন-মিররিং অ্যাপ), তারপর ছবি তুলে যাচাই চাপুন।", fileHint: "কল বা মেসেজের স্ক্রিনশট বা ছবি বেছে নিন। Ctrl+V দিয়ে পেস্টও করতে পারেন।", autoChk: "স্ক্রিন বদলালে নিজে থেকে আবার যাচাই করুন (প্রতি ১০ সেকেন্ড)", shareNo: "স্ক্রিন শেয়ার কম্পিউটারের ব্রাউজারে কাজ করে। ফোনে স্ক্রিনশট নিয়ে আপলোড করুন।", shareEnded: "স্ক্রিন শেয়ার বন্ধ হয়েছে।", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের স্ক্রিনশট বা ছবি দিন।", d_incoming: "ইনকামিং কল", d_outgoing: "আউটগোয়িং কল (আপনি কল করছেন)", d_ongoing: "চলমান কল", d_missed: "মিসড কল", d_unknown: "কল", m_outgoing: "আপনার পাঠানো", k_number: "ফোন নম্বর", numberH: "এই নম্বর সম্পর্কে", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
+      recVoice: "ভয়েস রেকর্ড করুন", scanScreen: "স্ক্রিন যাচাই", camHint: "যে ফোনে কল বা মেসেজ দেখা যাচ্ছে তার দিকে ক্যামেরা ধরুন, তারপর ছবি তুলে যাচাই চাপুন।", capture: "ছবি তুলে যাচাই করুন", srcCam: "ক্যামেরা", srcShare: "নিজের স্ক্রিন শেয়ার", srcUpload: "স্ক্রিনশট দিন", shareHint: "কল বা চ্যাট যে উইন্ডো বা স্ক্রিনে আছে তা বেছে নিন (হোয়াটসঅ্যাপ ওয়েব, মেসেঞ্জার, ফোন-মিররিং অ্যাপ), তারপর ছবি তুলে যাচাই চাপুন।", fileHint: "কল বা মেসেজের স্ক্রিনশট বা ছবি বেছে নিন। Ctrl+V দিয়ে পেস্টও করতে পারেন।", autoChk: "স্ক্রিন বদলালে নিজে থেকে আবার যাচাই করুন (প্রতি ১০ সেকেন্ড)", shareNo: "স্ক্রিন শেয়ার কম্পিউটারের ব্রাউজারে কাজ করে। ফোনে স্ক্রিনশট নিয়ে আপলোড করুন।", shareEnded: "স্ক্রিন শেয়ার বন্ধ হয়েছে।", camNo: "এখানে ক্যামেরা পাওয়া যাচ্ছে না। কল বা মেসেজের স্ক্রিনশট বা ছবি দিন।", d_incoming: "ইনকামিং কল", d_outgoing: "আউটগোয়িং কল (আপনি কল করছেন)", d_ongoing: "চলমান কল", d_missed: "মিসড কল", d_unknown: "কল", m_outgoing: "আপনার পাঠানো", k_number: "ফোন নম্বর", numberH: "এই নম্বর সম্পর্কে", sureH: "এই ফলাফল কতটা নিশ্চিত?", reading: "স্ক্রিন পড়া হচ্ছে…", screenH: "স্ক্রিন থেকে যা পড়া হলো", k_call: "ইনকামিং কল", k_sms: "এসএমএস", k_chat: "চ্যাট মেসেজ", k_other: "স্ক্রিন", nk_official: "অফিসিয়াল হটলাইন", nk_personal: "ব্যক্তিগত ০১ নম্বর", nk_foreign: "বিদেশি নম্বর", needAI: "ছবি পড়তে এআই লাগে। বক্সে মেসেজটি লিখে চেক করুন।", fromScreen: "স্ক্রিনের ছবি", recording: "রেকর্ড হচ্ছে", paused: "থামানো আছে", pause: "থামান", resume: "আবার শুরু",
       checkVoice: "ভয়েস যাচাই করুন", cancel: "বাতিল", transcribing: "আপনার কথা লেখায় রূপান্তর হচ্ছে",
       micDenied: "মাইক্রোফোন বন্ধ করা আছে। অ্যাড্রেস বারের আইকন থেকে অনুমতি দিয়ে আবার চেষ্টা করুন।",
       noSpeech: "কোনো কথা শোনা যায়নি। মাইক্রোফোনের কাছে এসে আবার বলুন, অথবা মেসেজটি লিখুন।",
@@ -324,9 +324,34 @@
     });
     return out + esc(cps.slice(pos).join(""));
   }
+  // "How sure is this?": what the verdict rests on (never changes the verdict)
+  var CHECKLIST = [
+    { en: "Does it ask for a PIN, OTP, password or a code that was sent to you?", bn: "পিন, ওটিপি, পাসওয়ার্ড বা আপনার কাছে আসা কোনো কোড চাইছে কি?" },
+    { en: "Does it ask you to send money first, or pay a fee to receive money or a prize?", bn: "আগে টাকা পাঠাতে বা টাকা/পুরস্কার পেতে ফি দিতে বলছে কি?" },
+    { en: "Does it rush or scare you (account blocked, last chance, police)?", bn: "তাড়া দিচ্ছে বা ভয় দেখাচ্ছে কি (অ্যাকাউন্ট বন্ধ, শেষ সুযোগ, পুলিশ)?" },
+    { en: "Does it have a link, or ask you to install an app?", bn: "কোনো লিংক আছে কি, বা অ্যাপ ইনস্টল করতে বলছে কি?" },
+    { en: "Does someone claim to be bKash, Nagad, a bank or an officer from an ordinary number?", bn: "সাধারণ নম্বর থেকে কেউ নিজেকে বিকাশ, নগদ, ব্যাংক বা কর্মকর্তা বলছে কি?" }
+  ];
+  function offlineHonesty(d) {
+    if (d.patterns && d.patterns.length) return null;
+    return { level: "unknown_rules_only", title_en: "Only known patterns were checked", title_bn: "শুধু পরিচিত ধরন যাচাই হয়েছে",
+      en: "You are offline, so only our known scam patterns were checked and none matched. A new kind of scam would not be caught. Check it yourself:",
+      bn: "আপনি অফলাইনে আছেন, তাই শুধু পরিচিত প্রতারণার ধরন যাচাই হয়েছে, কোনোটি মেলেনি। নতুন ধরনের প্রতারণা ধরা পড়বে না। নিজে যাচাই করুন:",
+      checklist: CHECKLIST, tail: { en: "If any answer is yes, stop and call the official hotline yourself.", bn: "যেকোনো উত্তর 'হ্যাঁ' হলে থামুন এবং নিজে অফিসিয়াল হটলাইনে ফোন করুন।" } };
+  }
+  function honestyHtml(hn) {
+    if (!hn) return "";
+    var x = '<div class="sec honest lvl-' + esc(hn.level) + '"><h3>' + esc(tr("sureH")) + "</h3><p><b>" + esc(hn["title_" + lang] || hn.title_en) +
+      "</b></p><p>" + esc(hn[lang] || hn.en) + "</p>";
+    if (hn.checklist) x += '<ul class="self-check">' + hn.checklist.map(function (q) { return "<li>" + esc(q[lang] || q.en) + "</li>"; }).join("") + "</ul>" +
+      (hn.tail ? '<p class="fine">' + esc(hn.tail[lang] || hn.tail.en) + "</p>" : "");
+    if (hn.verify_en) x += '<p class="verify">' + esc(hn["verify_" + lang] || hn.verify_en) + "</p>";
+    return x + "</div>";
+  }
   function showPretx(d, text, fromHistory) {
     var render = function (animate) {
       var el = $("#tOut"), h = head(d.risk, d.score, null, animate);
+      var hn = d.honesty !== undefined ? d.honesty : (d.source === "offline" ? offlineHonesty(d) : null);
       if (d.screen) {
         var sc = d.screen, nk = sc.number_kind;
         var kindLabel = sc.kind === "number" ? tr("k_number") : sc.kind === "call" ? tr("d_" + (sc.direction || "unknown")) :
@@ -357,6 +382,7 @@
             (e["reasons_" + lang] || e.reasons_en || []).map(function (r) { return "<p>" + esc(r) + "</p>"; }).join("") + "</div>";
         }).join("") + "</div></div>";
       }
+      h += honestyHtml(hn);
       h += '<div class="sec"><h3>' + esc(tr("doH")) + '</h3><div class="advice">' + esc(d["advice_" + lang] || d.advice_en) + "</div>";
       if (d.risk !== "low") h += '<p class="fine" style="margin-top:10px">' + esc(tr("hotH")) + "</p>" + hotlinesHtml(d.hotlines);
       h += "</div>" + actionsHtml();
@@ -753,6 +779,7 @@
         return '<div class="check ' + esc(c.status) + '"><span class="ic" aria-hidden="true">' + (ICON[c.status] || "•") +
           "</span><span>" + esc(c[lang] || c.en) + "</span></div>";
       }).join("") + "</div>";
+      h += honestyHtml(d.honesty);
       var fl = d.fields || {}, keys = ["amount", "trx_id", "recipient", "sender", "datetime", "provider"].filter(function (k) { return fl[k] != null && fl[k] !== ""; });
       if (keys.length) {
         h += '<div class="sec"><h3>' + esc(tr("readH")) + '</h3><dl class="fields">' + keys.map(function (k) {

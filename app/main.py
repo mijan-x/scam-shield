@@ -19,7 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import Depends
 from pydantic import BaseModel
 
-from . import forensics, llm, proof, rules, screen
+from . import forensics, honesty, llm, proof, rules, screen
 from .library import HOTLINES, PATTERNS
 from .scenarios import BY_ID, PERSONA, SCENARIOS
 
@@ -200,7 +200,8 @@ def number_result(raw: str) -> dict:
             "advice_en": advice[0], "advice_bn": advice[1], "highlights": [], "entities": [],
             "hotlines": HOTLINES, "source": "rules", "ai_error": None, "text": raw.strip(),
             "screen": {"kind": "number", "direction": "unknown", "number": raw.strip(), "name": None,
-                       "number_kind": c["kind"], "number_label_en": c["label_en"], "number_label_bn": c["label_bn"]}}
+                       "number_kind": c["kind"], "number_label_en": c["label_en"], "number_label_bn": c["label_bn"]},
+            "honesty": honesty.for_number() if c["kind"] != "official" else None}
 
 
 @app.post("/api/pretx", dependencies=[Depends(rate_limit)])
@@ -211,11 +212,13 @@ def pretx(body: PretxIn):
     if NUMBER_ONLY.match(text):
         return number_result(text)
     out = rules_result(text)
+    signs, base = len(out["patterns"]), out["risk"]
     if llm.available():
         try:
             merge_ai(out, llm.extract_json(llm.complete("pretx", PRETX_SYSTEM, f"<message>\n{text}\n</message>")))
         except Exception as e:  # keep the rules answer if the AI call fails
             out["ai_error"] = str(e)[:160]
+    out["honesty"] = honesty.for_message(signs, base, out["risk"], out["source"] == "ai+rules")
     return out
 
 
@@ -275,9 +278,13 @@ async def screen_check(image: UploadFile = File(...), lang: str = Form("en")):
                                     "call the official hotline yourself.")
                 out["advice_bn"] = ("উত্তর দেবেন না, ফিরতি কল দেবেন না, কোনো পিন বা ওটিপি দেবেন না। চিন্তা হলে নিজে "
                                     "অফিসিয়াল হটলাইনে ফোন করুন।")
+    signs, base = len(out["patterns"]), out["risk"]
     if words or kind != "call":
         merge_ai(out, ai)
+        out["honesty"] = honesty.for_message(signs, base, out["risk"], True)
     else:
+        out["honesty"] = (honesty.for_message(signs, base, out["risk"], False) if signs else
+                          None if screen.number_kind(number) == "official" else honesty.for_number())
         # a call screen with no words: the verdict comes from the number and name only, so an unknown
         # ordinary number is not marked risky just because it is unknown
         out["source"] = "ai+rules"
@@ -392,6 +399,7 @@ async def proof_check(
     res["extract_error"] = extract_error
     res["extract_error_bn"] = extract_error_bn
     res["needs_manual"] = False
+    res["honesty"] = honesty.for_proof(res)
     res["read_by_ai"] = bool(image is not None and image.filename and not extract_error)
     return res
 
