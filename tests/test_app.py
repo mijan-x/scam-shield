@@ -678,6 +678,8 @@ def test_brand_sms_from_personal_number_and_foreign_and_spam():
 
 def _screen_ai(monkeypatch, reply):
     from app import llm
+    import app.main as m
+    m._hits.clear()  # many screen calls in a row: keep clear of the per-IP rate limit
     monkeypatch.setenv("MOCK_LLM", "1")
     monkeypatch.setattr(llm, "complete", lambda *a, **k: json.dumps(reply) if isinstance(reply, dict) else (_ for _ in ()).throw(reply))
 
@@ -717,3 +719,29 @@ def test_api_screen_not_a_phone_and_busy(monkeypatch):
 def test_api_screen_rejects_non_images(monkeypatch):
     monkeypatch.setenv("MOCK_LLM", "1")
     assert client.post("/api/screen", files={"image": ("a.txt", b"hello", "text/plain")}).status_code == 415
+
+
+def test_outgoing_call_is_labelled_and_judged_as_outgoing(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "direction": "outgoing",
+                             "number": "16247", "name": "bKash", "text": "", "risk": "low"})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["screen"]["direction"] == "outgoing" and r["text"].startswith("Outgoing call to")
+    assert r["risk"] == "low" and any("calling an official hotline" in x["en"] for x in r["reasons"])
+
+
+def test_outgoing_call_to_fake_care_number_is_high(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "direction": "outgoing",
+                             "number": "01812345678", "name": "bKash Customer Care", "text": "", "risk": "low"})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["risk"] == "high" and any(p["id"] == "calling_fake_care" for p in r["patterns"])
+
+
+def test_unknown_direction_is_not_called_incoming(monkeypatch):
+    _screen_ai(monkeypatch, {"is_phone_screen": True, "kind": "call", "direction": "sideways",
+                             "number": "01712345678", "name": None, "text": ""})
+    r = client.post("/api/screen", files={"image": ("s.jpg", _png("x"), "image/jpeg")}).json()
+    assert r["screen"]["direction"] == "unknown" and "Incoming" not in r["text"]
+
+
+def test_spam_label_ignored_on_outgoing_call():
+    assert scr.flags("call", "01712345678", "Suspected spam", "", "outgoing") == []
