@@ -912,3 +912,65 @@ def test_api_sends_reference_with_the_screenshot(monkeypatch):
     r = client.post("/api/proof", data={"expected_amount": "3500", "expected_recipient": "01712345678"},
                     files={"image": ("s.png", _png("x"), "image/png"), "reference": ("r.jpg", _png("y"), "image/jpeg")}).json()
     assert seen["n"] == 2 and "Image 1" in seen["user"] and r["reference_used"] is True
+
+
+# ------------------------------------------------------- zoomed second look + re-saved files
+def _edited_jpeg():
+    import io as _io
+    from PIL import Image as _I, ImageDraw as _D
+    img = _I.new("RGB", (720, 1500), "white"); d = _D.Draw(img)
+    d.text((60, 640), "Tk 3,500.00", fill="black"); d.text((60, 800), "TrxID 8N7A6D5EF3", fill="black")
+    exif = _I.Exif(); exif[0x0132] = "2026:11:24 11:30:00"
+    exif.get_ifd(0x8769)[0x9003] = "2026:11:24 10:05:00"
+    buf = _io.BytesIO(); img.save(buf, "JPEG", exif=exif)
+    return buf.getvalue()
+
+
+def test_file_saved_again_later_is_flagged():
+    from app import forensics
+    meta = forensics.inspect(_edited_jpeg())
+    assert meta["modified_after_min"] == 85
+    c = [x for x in proof.image_checks(meta, "o", []) if x["id"] == "meta_editor" and x["status"] == "warn"]
+    assert c and "gallery" in c[0]["en"]
+
+
+def test_gallery_editor_names_are_recognised():
+    from app import forensics
+    assert forensics.EDITORS.search("Samsung Photo Editor 3.4") and forensics.EDITORS.search("Google Photos")
+    assert not forensics.EDITORS.search("G991BXXS9")  # a phone firmware string is not an editor
+
+
+def test_zoom_strip_is_an_image():
+    from app import forensics
+    png = forensics.zoom_strip(_edited_jpeg(), {"amount": [420, 60, 465, 600], "trx_id": [530, 60, 570, 600]})
+    assert png and png[:4] == b"\x89PNG"
+    assert forensics.zoom_strip(_edited_jpeg(), {"amount": [420, 60, 465, 600]}) is None  # needs 2 rows to compare
+
+
+def test_zoom_result_raises_confidence_and_keeps_box():
+    ext = {"field_boxes": {"amount": [420, 60, 465, 600]},
+           "text_checks": [{"field": "amount", "issue": "spacing", "confidence": "medium"}]}
+    proof.merge_zoom(ext, {"rows": [{"field": "amount", "edited": "likely", "issue": "bolder"},
+                                    {"field": "trx_id", "edited": "no", "issue": "bolder"},
+                                    {"field": "logo", "edited": "likely", "issue": "bolder"}]})
+    tc = ext["text_checks"]
+    assert len(tc) == 1 and tc[0]["confidence"] == "high" and tc[0]["box"] == [420, 60, 465, 600]
+
+
+def test_api_runs_the_zoom_look(monkeypatch):
+    import app.main as m
+    from app import llm
+    m._hits.clear(); SEEN_TRX.clear()
+    tasks = []
+    real = llm.complete
+
+    def spy(task, *a, **k):
+        tasks.append(task)
+        return real(task, *a, **k)
+    monkeypatch.setenv("MOCK_LLM", "1")
+    monkeypatch.setattr(llm, "complete", spy)
+    r = client.post("/api/proof", data={"expected_amount": "5000"},
+                    files={"image": ("s.jpg", _edited_jpeg(), "image/jpeg")}).json()
+    assert tasks == ["extract", "zoom"]
+    assert any(c["id"] == "typography" and c.get("field") == "amount" for c in r["checks"])
+    assert any(c["id"] == "meta_editor" and c["status"] == "warn" for c in r["checks"])
