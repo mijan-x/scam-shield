@@ -382,6 +382,13 @@ async def proof_check(
                         "Read this payment screenshot and return the JSON described.", image=(data, media)))
             except Exception as e:  # noqa: BLE001
                 extract_error, extract_error_bn = ai_error(e)
+            # measure the key fields in the pixels (no AI): smudges behind digits, ink tone
+            if extracted.get("field_boxes"):
+                try:
+                    proof.add_text_checks(extracted, proof.pixel_findings(
+                        forensics.field_pixels(data, extracted["field_boxes"])))
+                except Exception:  # noqa: BLE001
+                    pass
             # second, closer look: the key fields cut out and enlarged side by side
             if extracted.get("field_boxes"):
                 try:
