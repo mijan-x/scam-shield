@@ -795,3 +795,57 @@ def test_message_check_on_just_a_number(monkeypatch, num, risk):
     monkeypatch.setenv("MOCK_LLM", "1")
     r = client.post("/api/pretx", json={"text": num}).json()
     assert r["risk"] == risk and r["screen"]["kind"] == "number"
+
+
+# ------------------------------------------------------- honesty: what a verdict rests on
+from app import honesty as hon
+
+
+def test_new_scam_with_no_known_pattern_is_not_called_safe(monkeypatch):
+    import app.main as m
+    m._hits.clear()
+    monkeypatch.delenv("MOCK_LLM", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    r = client.post("/api/pretx", json={"text": "Hi, I am your cousin's friend, can you help me with something important today?"}).json()
+    assert r["risk"] == "low"  # detection unchanged
+    h = r["honesty"]
+    assert h["level"] == "unknown_rules_only" and "did not run" in h["en"]
+    assert len(h["checklist"]) == 5 and h["tail"]["bn"]
+
+
+def test_ai_only_warning_is_labelled_as_opinion():
+    h = hon.for_message(0, "low", "high", True)
+    assert h["level"] == "ai_only" and "not as proof" in h["en"]
+
+
+def test_ai_found_nothing_still_not_safe():
+    h = hon.for_message(0, "low", "low", True)
+    assert h["level"] == "unknown" and "does not mean safe" in h["title_en"]
+
+
+def test_known_pattern_basis():
+    assert hon.for_message(2, "high", "high", True)["level"] == "known_pattern"
+
+
+def test_genuine_payment_that_looks_edited_is_explained_not_accused():
+    res = {"verdict": "suspicious", "compared": True, "checks": [
+        {"id": "amount", "status": "ok"}, {"id": "recipient", "status": "ok"},
+        {"id": "visual", "status": "warn"}, {"id": "meta_editor", "status": "warn"}]}
+    h = hon.for_proof(res)
+    assert h["level"] == "looks_only" and "genuine" in h["en"] and h["verify_en"]
+
+
+def test_proof_levels():
+    assert hon.for_proof({"verdict": "likely_fake", "checks": [{"id": "amount", "status": "fail"}]})["level"] == "facts_contradict"
+    assert hon.for_proof({"verdict": "consistent", "compared": True, "checks": []})["level"] == "no_red_flags"
+    assert hon.for_proof({"verdict": "consistent", "compared": False, "checks": []})["level"] == "self_only"
+    assert hon.for_proof({"verdict": "suspicious", "checks": [{"id": "time", "status": "warn"}]})["level"] == "details_unclear"
+
+
+def test_api_proof_has_honesty_and_same_verdict():
+    SEEN_TRX.clear()
+    manual = json.dumps({"amount": "3500", "trx_id": "8N7A6D5EF3", "recipient": "01712345678"})
+    r = client.post("/api/proof", data={"manual": manual, "expected_amount": "3500",
+                                        "expected_recipient": "01712345678"}).json()
+    assert r["verdict"] in ("consistent", "suspicious") and r["honesty"]["verify_bn"]

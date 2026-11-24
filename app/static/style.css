@@ -325,3 +325,13 @@ mark.caution { background: linear-gradient(transparent 12%, var(--mark-caution) 
 @media (max-width: 420px) { .src-btns { grid-template-columns: 1fr 1fr; } }
 .auto-chk input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0; flex: none; box-shadow: none; }
 .screen-read .tag.warn { border-color: var(--amber); color: var(--amber); }
+
+/* How sure is this? */
+.honest { border-left: 3px solid var(--line); padding-left: 12px; }
+.honest p { margin: 4px 0; }
+.honest.lvl-unknown, .honest.lvl-unknown_rules_only, .honest.lvl-ai_only, .honest.lvl-number_only,
+.honest.lvl-looks_only, .honest.lvl-details_unclear, .honest.lvl-no_red_flags, .honest.lvl-self_only { border-left-color: var(--amber); }
+.honest.lvl-known_pattern, .honest.lvl-facts_contradict { border-left-color: var(--red); }
+.self-check { margin: 6px 0 4px; padding-left: 20px; }
+.self-check li { margin: 3px 0; }
+.honest .verify { margin-top: 8px; padding: 8px 10px; border-radius: var(--radius-m); background: var(--amber-wash); }
